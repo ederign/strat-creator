@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 scripts/frontmatter.py *)",
+      "Bash(python3 scripts/fetch_issue.py *)",
+      "Bash(python3 scripts/state.py *)",
+      "Bash(bash scripts/fetch-architecture-context.sh)",
+      "Edit(artifacts/**)",
+      "Write(artifacts/**)"
+    ]
+  }
+}
