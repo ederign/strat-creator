@@ -13,7 +13,10 @@ If `--dry-run` is in `$ARGUMENTS`, pass `--dry-run` to every skill invocation. T
 
 ## Step 1: Parse Arguments
 
-Extract RFE IDs and flags from `$ARGUMENTS`. RFE IDs look like `RHAIRFE-NNNN`. If no RFE IDs are provided, check `config/test-rfes.yaml` and offer to run on all configured RFEs.
+Extract RFE IDs and flags from `$ARGUMENTS`. Arguments can be:
+- Individual RFE IDs: `RHAIRFE-1547 RHAIRFE-1469 ...`
+- A YAML config file: `config/test-rfes.yaml` — reads all `id` fields from `test_rfes` list
+- If no RFE IDs or config file provided, ask the user what to run
 
 ## Step 2: Run strategy.create
 
