@@ -1,5 +1,5 @@
 ---
-name: architecture-review
+name: strategy-architecture-review
 description: Reviews strategy features for architectural correctness — dependencies, integration patterns, component interactions.
 context: fork
 allowed-tools: Read, Grep, Glob

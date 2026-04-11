@@ -6,9 +6,9 @@ Strategy refinement pipeline for RHAI (Red Hat AI) features. Takes approved RFEs
 
 Given an approved RFE (from the `rfe-creator` pipeline, score >= 7, no zeros), this pipeline:
 
-1. **Creates** a strategy stub from the RFE data (`strat.create`)
-2. **Refines** the stub into a structured strategy using architecture context (`strat.refine`)
-3. **Reviews** the strategy across multiple dimensions — feasibility, testability, scope, architecture (`strat.review`)
+1. **Creates** a strategy stub from the RFE data (`strategy.create`)
+2. **Refines** the stub into a structured strategy using architecture context (`strategy.refine`)
+3. **Reviews** the strategy across multiple dimensions — feasibility, testability, scope, architecture (`strategy.review`)
 4. **Revises** based on review feedback (planned)
 5. **Submits** the final strategy to Jira as a RHAISTRAT issue (planned)
 

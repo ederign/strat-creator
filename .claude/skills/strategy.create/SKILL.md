@@ -1,5 +1,5 @@
 ---
-name: strat.create
+name: strategy.create
 description: Create strategies from approved RFEs by cloning them to RHAISTRAT in Jira, or guiding the user through manual cloning.
 user-invocable: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion, mcp__atlassian__searchJiraIssuesUsingJql, mcp__atlassian__getJiraIssue, mcp__atlassian__editJiraIssue, mcp__atlassian__createJiraIssue
@@ -74,7 +74,7 @@ For each RFE below, clone it in Jira to the RHAISTRAT project:
 |------------|---------------|-------|
 | RFE-001 / RHAIRFE-NNNN | <fill in after cloning> | ... |
 
-After cloning, run `/strat.refine` to add the technical strategy.
+After cloning, run `/strategy.refine` to add the technical strategy.
 ```
 
 ## Step 4: Create Local Strategy Stubs
@@ -88,7 +88,7 @@ Write the markdown body to `artifacts/strat-tasks/STRAT-NNN.md`:
 <Full content copied from the source RFE — this is fixed input for strategy refinement>
 
 ## Strategy
-<!-- To be filled by /strat.refine -->
+<!-- To be filled by /strategy.refine -->
 ```
 
 The business need section is copied verbatim from the RFE. It must not be modified during strategy work.
@@ -129,7 +129,7 @@ If Jira cloning was done, write `artifacts/strat-tickets.md`:
 
 Tell the user:
 - Strategy stubs created in `artifacts/strat-tasks/`
-- Run `/strat.refine` to add the HOW (technical approach, dependencies, components, non-functionals)
+- Run `/strategy.refine` to add the HOW (technical approach, dependencies, components, non-functionals)
 - If Jira cloning was skipped, complete the manual cloning first using `artifacts/strat-jira-guide.md`
 
 $ARGUMENTS

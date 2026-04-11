@@ -1,5 +1,5 @@
 ---
-name: scope-review
+name: strategy-scope-review
 description: Reviews strategy features for scope — is each strategy right-sized, does the effort match the scope, should anything be split?
 context: fork
 allowed-tools: Read, Grep, Glob

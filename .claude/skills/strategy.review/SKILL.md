@@ -1,5 +1,5 @@
 ---
-name: strat.review
+name: strategy.review
 description: Adversarial review of refined strategies. Runs independent forked reviewers for feasibility, testability, scope, and architecture.
 user-invocable: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill
@@ -9,7 +9,7 @@ You are a strategy review orchestrator. Your job is to run independent adversari
 
 ## Step 1: Verify Artifacts Exist
 
-Read files in `artifacts/strat-tasks/`. If no strategy artifacts exist or they haven't been refined yet (no "Strategy" section), tell the user to run `/strat.refine` first and stop.
+Read files in `artifacts/strat-tasks/`. If no strategy artifacts exist or they haven't been refined yet (no "Strategy" section), tell the user to run `/strategy.refine` first and stop.
 
 Check if prior reviews exist in `artifacts/strat-reviews/`. If any exist for the strategies being reviewed, read them — this is a re-review after revisions.
 
@@ -23,10 +23,10 @@ bash scripts/fetch-architecture-context.sh
 
 Invoke these forked reviewer skills in parallel. Each runs in its own isolated context — no reviewer sees another's output.
 
-- **`feasibility-review`**: Can we build this with the proposed approach? Are effort estimates credible?
-- **`testability-review`**: Are acceptance criteria testable? What edge cases are missing?
-- **`scope-review`**: Is each strategy right-sized? Does the effort match the scope?
-- **`architecture-review`** (if architecture context available): Are dependencies correctly identified? Are integration patterns correct?
+- **`strategy-feasibility-review`**: Can we build this with the proposed approach? Are effort estimates credible?
+- **`strategy-testability-review`**: Are acceptance criteria testable? What edge cases are missing?
+- **`strategy-scope-review`**: Is each strategy right-sized? Does the effort match the scope?
+- **`strategy-architecture-review`** (if architecture context available): Are dependencies correctly identified? Are integration patterns correct?
 
 Each reviewer receives:
 - The strategy artifacts (`artifacts/strat-tasks/`)
@@ -81,7 +81,7 @@ Important: **Preserve disagreements.** If the feasibility reviewer says "this is
 
 Based on the results:
 - **All approved**: Tell the user strategies are ready for `/strat.prioritize`.
-- **Some need revision**: List specific issues. Tell the user to edit the strategy files and re-run `/strat.review`.
-- **Fundamental problems**: Recommend revisiting the RFE or re-running `/strat.refine` with different constraints.
+- **Some need revision**: List specific issues. Tell the user to edit the strategy files and re-run `/strategy.review`.
+- **Fundamental problems**: Recommend revisiting the RFE or re-running `/strategy.refine` with different constraints.
 
 $ARGUMENTS

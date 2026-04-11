@@ -1,5 +1,5 @@
 ---
-name: feasibility-review
+name: strategy-feasibility-review
 description: Reviews strategy features for technical feasibility, implementation complexity, and effort estimate credibility.
 context: fork
 allowed-tools: Read, Grep, Glob

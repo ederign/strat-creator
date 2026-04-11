@@ -1,5 +1,5 @@
 ---
-name: strat.refine
+name: strategy.refine
 description: Refine strategies — add the HOW, dependencies, impacted teams/components, and non-functional requirements. Uses architecture context.
 context: fork
 user-invocable: true
