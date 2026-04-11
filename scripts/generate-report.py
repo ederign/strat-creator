@@ -557,7 +557,31 @@ document.addEventListener('mouseup', () => {{ isDragging = false; }});
 
 <script type="module">
     import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-    mermaid.initialize({{ startOnLoad: true, theme: 'dark' }});
+    mermaid.initialize({{
+        startOnLoad: true,
+        theme: 'dark',
+        flowchart: {{
+            useMaxWidth: false,
+            htmlLabels: true,
+            curve: 'basis'
+        }}
+    }});
+
+    // Fit diagram to container after render
+    mermaid.run().then(() => {{
+        const svg = document.querySelector('.mermaid svg');
+        const container = document.getElementById('diagram-container');
+        if (svg && container) {{
+            const svgRect = svg.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            const scaleX = containerRect.width / svgRect.width;
+            const scaleY = containerRect.height / svgRect.height;
+            diagramScale = Math.min(scaleX, scaleY, 2) * 0.9;
+            diagramX = (containerRect.width - svgRect.width * diagramScale) / 2;
+            diagramY = (containerRect.height - svgRect.height * diagramScale) / 2;
+            updateDiagramTransform();
+        }}
+    }});
 </script>
 
 </body>
