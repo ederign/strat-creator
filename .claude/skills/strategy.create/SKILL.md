@@ -2,7 +2,7 @@
 name: strategy.create
 description: Create strategies from approved RFEs by cloning them to RHAISTRAT in Jira, or guiding the user through manual cloning.
 user-invocable: true
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion, mcp__atlassian__searchJiraIssuesUsingJql, mcp__atlassian__getJiraIssue, mcp__atlassian__editJiraIssue, mcp__atlassian__createJiraIssue
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion, mcp__atlassian__searchJiraIssuesUsingJql, mcp__atlassian__getJiraIssue
 ---
 
 You are a strategy creation assistant. Your job is to create strategies from approved RFEs by cloning them into the RHAISTRAT project, then setting up local artifacts for refinement.
