@@ -46,7 +46,9 @@ The script outputs JSON to stdout with the description already converted to mark
 
 ## Step 2: Select RFEs
 
-Present the available RFEs and ask which to create strategies for:
+**If RFE IDs were provided in `$ARGUMENTS`**: process ALL of them. Do NOT ask the user to confirm or select — the explicit IDs in the prompt are the selection. Skip straight to Step 3.
+
+**Otherwise** (no IDs in arguments): Present the available RFEs and ask which to create strategies for:
 
 ```
 | # | Title | Priority | Source |
