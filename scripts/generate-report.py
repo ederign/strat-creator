@@ -295,46 +295,52 @@ tr.clickable {{ cursor: pointer; }}
     <div class="diagram-inner" id="diagram-inner">
     <pre class="mermaid">
 graph LR
-    subgraph "Phase 1: RFE Assessment"
+    subgraph P1["Phase 1: RFE Assessment"]
         A[rfe.create] --> B[rfe.review]
         B --> C[rfe.auto-fix]
         C --> D[rfe.submit]
     end
 
-    subgraph "Phase 2: Strategy Refinement"
+    D -->|"Automatic or\nPM Jira label\nas pipeline trigger"| E
+
+    subgraph P2["Phase 2: Strategy Refinement"]
         E[strategy.create]
 
-        subgraph "strategy.refine"
+        subgraph SR["strategy.refine"]
             F1[Fetch arch context] --> F2[Technical approach]
-            F2 --> F3[Dependencies & components]
-            F3 --> F4[Effort estimate & risks]
-        end
-
-        subgraph "strategy.review (4 parallel reviewers)"
-            R1[feasibility]
-            R2[testability]
-            R3[scope]
-            R4[architecture]
+            F2 --> F3[Dependencies &\ncomponents]
+            F3 --> F4[Effort estimate\n& risks]
         end
 
         E --> F1
         F4 --> G{{refined}}
-        G --> R1 & R2 & R3 & R4
-        R1 & R2 & R3 & R4 --> Q{{approve?}}
+
+        subgraph SV["strategy.review (4 parallel)"]
+            R1[feasibility]
+            R2[testability]
+            R3[scope]
+            R4[architecture]
+            R5[other subtasks]
+        end
+
+        G --> R1 & R2 & R3 & R4 & R5
+        R1 & R2 & R3 & R4 & R5 --> CON[Consolidate\nreviews]
+        CON --> Q{{approve?}}
+        Q -->|approved| I[strategy.submit]
+        I --> KO["🚀 Kick off Phase 3"]
         Q -->|revise| P["👤 Human review"]
         P --> H[strategy.revise]
         H -->|max 2 cycles| F1
-        Q -->|approved| I[strategy.submit]
     end
 
-    subgraph "Phase 3: Feature Dev"
-        J[Feature Ready] --> K[Prioritize]
+    KO -->|"PM adds\nstrat-prioritized label"| FR
+
+    subgraph P3["Phase 3: Feature Dev"]
+        FR[feature.ready] --> J[Feature Ready]
+        J --> K[Prioritize]
         K --> L[AI-Assisted Dev]
         L --> M[PR Review]
     end
-
-    D -->|"PM adds strat-ready label"| E
-    I -->|"strategy ready"| J
 
     style A fill:#2d6a2d,color:#fff
     style B fill:#2d6a2d,color:#fff
@@ -349,11 +355,15 @@ graph LR
     style R2 fill:#c77d1a,color:#fff
     style R3 fill:#c77d1a,color:#fff
     style R4 fill:#c77d1a,color:#fff
+    style R5 fill:#21262d,color:#8b949e,stroke:#30363d,stroke-dasharray: 5 5
+    style CON fill:#c77d1a,color:#fff
     style G fill:#1f3a5f,color:#58a6ff,stroke:#58a6ff
-    style P fill:#3d1f00,color:#f0883e,stroke:#f0883e
     style Q fill:#1f3a5f,color:#58a6ff,stroke:#58a6ff
+    style P fill:#3d1f00,color:#f0883e,stroke:#f0883e
     style H fill:#555,color:#fff
     style I fill:#555,color:#fff
+    style KO fill:#1f6feb,color:#fff,stroke:#58a6ff
+    style FR fill:#555,color:#fff
     style J fill:#555,color:#fff
     style K fill:#555,color:#fff
     style L fill:#555,color:#fff
