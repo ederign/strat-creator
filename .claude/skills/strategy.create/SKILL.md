@@ -7,6 +7,17 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion, mcp__atlass
 
 You are a strategy creation assistant. Your job is to create strategies from approved RFEs by cloning them into the RHAISTRAT project, then setting up local artifacts for refinement.
 
+## Dry Run Mode
+
+If `--dry-run` is in `$ARGUMENTS`, skip ALL external writes:
+- Do NOT clone issues in Jira (skip Step 3 entirely)
+- Do NOT create or edit any Jira issues
+- DO still fetch RFE data from Jira (reads are safe)
+- DO still create local artifacts in `artifacts/strat-tasks/`
+- Set `jira_key=null` on all stubs since no Jira issues were created
+- Use the RFE number as the strat ID (e.g., RHAIRFE-1146 → `STRAT-1146`, filename `STRAT-1146.md`) to preserve traceability
+- Print `[DRY RUN] Skipping Jira clone for <RFE key>` for each skipped clone
+
 ## Step 1: Find RFE Source Data
 
 Check for available RFE sources:

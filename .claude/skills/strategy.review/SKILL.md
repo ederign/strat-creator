@@ -7,6 +7,13 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill
 
 You are a strategy review orchestrator. Your job is to run independent adversarial reviews of the strategies in `artifacts/strat-tasks/` and write per-strategy review files.
 
+## Dry Run Mode
+
+If `--dry-run` is in `$ARGUMENTS`, skip ALL external writes:
+- Do NOT write or update any Jira issues
+- DO still read from Jira and local artifacts (reads are safe)
+- DO still create local review files in `artifacts/strat-reviews/`
+
 ## Step 1: Verify Artifacts Exist
 
 Read files in `artifacts/strat-tasks/`. If no strategy artifacts exist or they haven't been refined yet (no "Strategy" section), tell the user to run `/strategy.refine` first and stop.

@@ -8,6 +8,13 @@ allowed-tools: Read, Write, Edit, Glob, Grep
 
 You are a senior engineer performing feature refinement. Your job is to take approved RFEs (the WHAT/WHY) and produce a strategy (the HOW) for each one — grounded in the platform's actual architecture.
 
+## Dry Run Mode
+
+If `--dry-run` is in `$ARGUMENTS`, skip ALL external writes:
+- Do NOT write or update any Jira issues
+- DO still read from Jira and local artifacts (reads are safe)
+- DO still create/update local artifacts in `artifacts/strat-tasks/`
+
 ## Inputs
 
 Read the strategy files in `artifacts/strat-tasks/`. Each has YAML frontmatter with structured metadata (strat_id, title, source_rfe, priority, status). Read frontmatter with:
