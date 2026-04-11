@@ -253,6 +253,20 @@ tr.clickable {{ cursor: pointer; }}
 .expand-icon {{ color: #8b949e; transition: transform 0.2s; display: inline-block; margin-right: 8px; }}
 .expand-icon.open {{ transform: rotate(90deg); }}
 .footer {{ margin-top: 32px; padding-top: 16px; border-top: 1px solid #21262d; color: #484f58; font-size: 12px; }}
+.pipeline {{ background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 24px; margin-bottom: 24px; }}
+.pipeline h2 {{ color: #f0f6fc; font-size: 16px; margin-bottom: 16px; }}
+.pipeline-flow {{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }}
+.pipeline-step {{ padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; }}
+.pipeline-arrow {{ color: #484f58; font-size: 18px; }}
+.step-done {{ background: #1a3a1a; color: #3fb950; border: 1px solid #2d6a2d; }}
+.step-current {{ background: #3d2e00; color: #d29922; border: 1px solid #c77d1a; }}
+.step-pending {{ background: #21262d; color: #484f58; border: 1px solid #30363d; }}
+.pipeline-legend {{ display: flex; gap: 16px; margin-top: 8px; }}
+.pipeline-legend span {{ font-size: 11px; color: #8b949e; }}
+.pipeline-legend .dot {{ display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }}
+.dot-done {{ background: #3fb950; }}
+.dot-current {{ background: #d29922; }}
+.dot-pending {{ background: #484f58; }}
 </style>
 </head>
 <body>
@@ -260,6 +274,36 @@ tr.clickable {{ cursor: pointer; }}
 <div class="header">
     <h1>Strategy Pipeline Report</h1>
     <div class="subtitle">Generated {timestamp} | {total} RFEs processed | Dry run mode</div>
+</div>
+
+<div class="pipeline">
+    <h2>RHAI Agentic SDLC Pipeline</h2>
+    <div class="pipeline-flow">
+        <span class="pipeline-step step-done">rfe.create</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step step-done">rfe.review</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step step-done">rfe.auto-fix</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step step-done">rfe.submit</span>
+        <span class="pipeline-arrow">&rArr;</span>
+        <span class="pipeline-step step-current">strategy.create</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step step-current">strategy.refine</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step step-current">strategy.review</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step step-pending">strategy.revise</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step step-pending">strategy.submit</span>
+        <span class="pipeline-arrow">&rArr;</span>
+        <span class="pipeline-step step-pending">Feature Dev</span>
+    </div>
+    <div class="pipeline-legend">
+        <span><span class="dot dot-done"></span> Phase 1: RFE Assessment (rfe-creator)</span>
+        <span><span class="dot dot-current"></span> Phase 2: Strategy Refinement (strat-creator)</span>
+        <span><span class="dot dot-pending"></span> Not started</span>
+    </div>
 </div>
 
 <div class="stats">
