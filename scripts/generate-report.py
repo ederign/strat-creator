@@ -318,7 +318,8 @@ graph LR
         end
 
         E --> F1
-        F4 --> R1 & R2 & R3 & R4
+        F4 --> G{{refined}}
+        G --> R1 & R2 & R3 & R4
         R1 & R2 & R3 & R4 --> Q{{approve?}}
         Q -->|revise| P["👤 Human review"]
         P --> H[strategy.revise]
@@ -348,6 +349,7 @@ graph LR
     style R2 fill:#c77d1a,color:#fff
     style R3 fill:#c77d1a,color:#fff
     style R4 fill:#c77d1a,color:#fff
+    style G fill:#1f3a5f,color:#58a6ff,stroke:#58a6ff
     style P fill:#3d1f00,color:#f0883e,stroke:#f0883e
     style Q fill:#1f3a5f,color:#58a6ff,stroke:#58a6ff
     style H fill:#555,color:#fff
