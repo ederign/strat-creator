@@ -1,63 +1,54 @@
 ---
 name: strategy.run
-description: Run the full strategy pipeline (create → refine → review) on one or more RFEs.
-user-invocable: true
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, AskUserQuestion
+description: Reference for the full strategy pipeline sequence. For batch execution, run each step as a separate Claude session.
+user-invocable: false
+allowed-tools: Read, Glob, Grep
 ---
 
-You are a pipeline orchestrator. Your job is to run the full strategy pipeline on the provided RFEs by invoking each skill in sequence. You MUST execute ALL steps (create, refine, review) in a single run — do NOT stop after any individual step. Ignore any "next steps" suggestions from sub-skills; you are the orchestrator and you decide when to stop.
+# Strategy Pipeline Sequence
 
-## Dry Run Mode
+The full pipeline runs **create → refine → review** in sequence. Artifacts on disk are the handoff between steps.
 
-If `--dry-run` is in `$ARGUMENTS`, pass `--dry-run` to every skill invocation. This prevents all Jira writes while still creating local artifacts.
+## Important: Run Each Step in a Separate Session
 
-## Step 1: Parse Arguments
+Per Lesson 1 ("The Agent Forgets Mid-Run") and Lesson 12 ("Thin Dispatcher Pattern") from the AgenticCI lessons: chaining multiple skills in a single Claude session causes context compression to destroy instructions at scale. Each step should run in its own Claude session with a fresh context window.
 
-Extract RFE IDs and flags from `$ARGUMENTS`. Arguments can be:
-- Individual RFE IDs: `RHAIRFE-1547 RHAIRFE-1469 ...`
-- A YAML config file: `config/test-rfes.yaml` — reads all `id` fields from `test_rfes` list
-- If no RFE IDs or config file provided, ask the user what to run
+### Manual (local)
 
-## Step 2: Run strategy.create
-
-Invoke `/strategy.create` with all RFE IDs and flags:
+Run each command in a **separate Claude session**:
 
 ```
-/strategy.create <RFE-IDs> [--dry-run]
+# Session 1
+/strategy.create config/test-rfes.yaml --dry-run
+
+# Session 2 (new Claude session)
+/strategy.refine --dry-run
+
+# Session 3 (new Claude session)
+/strategy.review --dry-run
 ```
 
-Wait for completion. Verify that `artifacts/strat-tasks/` contains a stub file for each RFE before proceeding. If any are missing, report the failure and stop.
+### CI (GitLab)
 
-## Step 3: Run strategy.refine
+Each step is a separate `run-claude.sh` invocation in the CI script:
 
-Invoke `/strategy.refine` with flags:
-
-```
-/strategy.refine [--dry-run]
-```
-
-Wait for completion. Verify that each strategy file in `artifacts/strat-tasks/` has status `Refined` (check frontmatter). If any failed to refine, report but continue with the ones that succeeded.
-
-## Step 4: Run strategy.review
-
-Invoke `/strategy.review` with flags:
-
-```
-/strategy.review [--dry-run]
+```yaml
+script:
+  - run-claude.sh "/strategy.create config/test-rfes.yaml --dry-run"
+  - run-claude.sh "/strategy.refine --dry-run"
+  - run-claude.sh "/strategy.review --dry-run"
 ```
 
-Wait for completion. Verify that `artifacts/strat-reviews/` contains a review file for each refined strategy.
+## Pipeline Steps
 
-## Step 5: Summary
+| Step | Skill | Input | Output | Verification |
+|------|-------|-------|--------|--------------|
+| 1 | `strategy.create` | RFE IDs or config YAML | `artifacts/strat-tasks/STRAT-*.md` (Draft) | Stub file exists for each RFE |
+| 2 | `strategy.refine` | Draft stubs + architecture context | `artifacts/strat-tasks/STRAT-*.md` (Refined) | Frontmatter status = Refined |
+| 3 | `strategy.review` | Refined strategies | `artifacts/strat-reviews/*-review.md` | Review file exists for each strategy |
 
-Print a summary table:
+## Flags
 
-```
-| RFE | Strat ID | Created | Refined | Reviewed | Recommendation |
-|-----|----------|---------|---------|----------|----------------|
-| RHAIRFE-NNNN | STRAT-NNNN | yes | yes | yes | approve/revise/reject |
-```
-
-Report any failures or skipped steps.
+- `--dry-run` — Pass to every step. Skips all Jira writes, still creates local artifacts.
 
 $ARGUMENTS
