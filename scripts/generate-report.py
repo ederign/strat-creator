@@ -373,13 +373,23 @@ function switchTab(i, tab) {{
 
 def main():
     parser = argparse.ArgumentParser(description="Generate strategy pipeline HTML report")
-    parser.add_argument("--output", "-o", default="artifacts/report.html",
-                        help="Output HTML file path (default: artifacts/report.html)")
+    parser.add_argument("--output", "-o", default=None,
+                        help="Output HTML file path (default: artifacts/reports/<timestamp>/report.html)")
     parser.add_argument("--config", "-c", default="config/test-rfes.yaml",
                         help="Test RFEs config file (default: config/test-rfes.yaml)")
     parser.add_argument("--artifacts", "-a", default="artifacts",
                         help="Artifacts directory (default: artifacts)")
     args = parser.parse_args()
+
+    # Default output: timestamped folder
+    if args.output is None:
+        ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+        report_dir = os.path.join(args.artifacts, "reports", ts)
+        os.makedirs(report_dir, exist_ok=True)
+        output_path = os.path.join(report_dir, "report.html")
+    else:
+        output_path = args.output
+        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
 
     # Load config
     config = {}
@@ -397,7 +407,7 @@ def main():
         sys.exit(1)
 
     print(f"Found {len(tasks)} strategies, {len(reviews)} reviews")
-    generate_html(tasks, reviews, config, args.output)
+    generate_html(tasks, reviews, config, output_path)
 
 if __name__ == "__main__":
     main()
