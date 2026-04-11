@@ -213,3 +213,4 @@ artifacts/**
 
 # Research notes
 eder-claude-research-notes/
+.context/
