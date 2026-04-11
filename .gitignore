@@ -205,3 +205,14 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Pipeline artifacts (outputs gitignored, structure kept via .gitkeep)
+artifacts/strat-tasks/*
+!artifacts/strat-tasks/.gitkeep
+artifacts/strat-reviews/*
+!artifacts/strat-reviews/.gitkeep
+artifacts/strat-originals/*
+!artifacts/strat-originals/.gitkeep
+
+# Research notes
+eder-claude-research-notes/
