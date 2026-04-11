@@ -253,6 +253,12 @@ tr.clickable {{ cursor: pointer; }}
 .expand-icon {{ color: #8b949e; transition: transform 0.2s; display: inline-block; margin-right: 8px; }}
 .expand-icon.open {{ transform: rotate(90deg); }}
 .footer {{ margin-top: 32px; padding-top: 16px; border-top: 1px solid #21262d; color: #484f58; font-size: 12px; }}
+.nav-tabs {{ display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid #21262d; }}
+.nav-tab {{ padding: 12px 24px; cursor: pointer; color: #8b949e; font-size: 15px; font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }}
+.nav-tab:hover {{ color: #c9d1d9; background: #161b22; }}
+.nav-tab.active {{ color: #f0f6fc; border-bottom-color: #f78166; }}
+.nav-page {{ display: none; }}
+.nav-page.active {{ display: block; }}
 .pipeline {{ background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 24px; margin-bottom: 24px; position: relative; }}
 .pipeline h2 {{ color: #f0f6fc; font-size: 16px; margin-bottom: 16px; }}
 .pipeline .mermaid {{ cursor: grab; }}
@@ -271,6 +277,13 @@ tr.clickable {{ cursor: pointer; }}
     <div class="subtitle">Generated {timestamp} | {total} RFEs processed | Dry run mode</div>
 </div>
 
+<div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchPage('pipeline')">Pipeline</div>
+    <div class="nav-tab" onclick="switchPage('summary')">Summary</div>
+    <div class="nav-tab" onclick="switchPage('details')">Details</div>
+</div>
+
+<div class="nav-page active" id="page-pipeline">
 <div class="pipeline">
     <h2>RHAI Agentic SDLC Pipeline</h2>
     <div class="zoom-controls">
@@ -349,6 +362,9 @@ graph LR
     </div>
     </div>
 </div>
+</div><!-- end page-pipeline -->
+
+<div class="nav-page" id="page-summary">
 
 <div class="stats">
     <div class="stat">
@@ -376,7 +392,6 @@ graph LR
 <table>
 <thead>
 <tr>
-    <th></th>
     <th>Strat ID</th>
     <th>Title</th>
     <th>Source RFE</th>
@@ -398,8 +413,7 @@ graph LR
         if row["cross_component"]:
             badges += ' <span class="badge badge-cross">cross-component</span>'
 
-        html += f"""<tr class="clickable" onclick="toggleDetail({i})">
-    <td><span class="expand-icon" id="icon-{i}">&#9654;</span></td>
+        html += f"""<tr>
     <td><strong>{escape_html(row["strat_id"])}</strong></td>
     <td>{escape_html(row["title"])}{badges}</td>
     <td>{escape_html(row["source_rfe"])}</td>
@@ -410,7 +424,40 @@ graph LR
     <td class="{verdict_class(row["architecture"])}">{verdict_label(row["architecture"])}</td>
     <td class="{verdict_class(row["recommendation"])}">{verdict_label(row["recommendation"])}</td>
 </tr>
-<tr><td colspan="10" style="padding:0">
+"""
+
+    html += f"""</tbody>
+</table>
+</div><!-- end page-summary -->
+
+<div class="nav-page" id="page-details">
+
+<table>
+<thead>
+<tr>
+    <th></th>
+    <th>Strat ID</th>
+    <th>Title</th>
+    <th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+"""
+
+    for i, row in enumerate(rows):
+        badges = ""
+        if row["baseline"]:
+            badges += ' <span class="badge badge-baseline">baseline</span>'
+        if row["cross_component"]:
+            badges += ' <span class="badge badge-cross">cross-component</span>'
+
+        html += f"""<tr class="clickable" onclick="toggleDetail({i})">
+    <td><span class="expand-icon" id="icon-{i}">&#9654;</span></td>
+    <td><strong>{escape_html(row["strat_id"])}</strong></td>
+    <td>{escape_html(row["title"])}{badges}</td>
+    <td class="{verdict_class(row["recommendation"])}">{verdict_label(row["recommendation"])}</td>
+</tr>
+<tr><td colspan="4" style="padding:0">
     <div class="detail-panel" id="detail-{i}">
         <h2>{escape_html(row["strat_id"])}: {escape_html(row["title"])}</h2>
         <div class="detail-tabs">
@@ -429,12 +476,20 @@ graph LR
 
     html += f"""</tbody>
 </table>
+</div><!-- end page-details -->
 
 <div class="footer">
     strat-creator pipeline | RHAI Agentic SDLC
 </div>
 
 <script>
+function switchPage(page) {{
+    document.querySelectorAll('.nav-page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    event.target.classList.add('active');
+}}
+
 function toggleDetail(i) {{
     const panel = document.getElementById('detail-' + i);
     const icon = document.getElementById('icon-' + i);
