@@ -472,6 +472,19 @@ tr.clickable {{ cursor: pointer; }}
     <div class="subtitle">Generated {timestamp} | {len(runs)} run(s) tracked</div>
 </div>
 
+<div style="background:#1c1f26;border:1px solid #30363d;border-left:4px solid #58a6ff;border-radius:8px;padding:20px 24px;margin-bottom:24px;line-height:1.7">
+    <div style="font-size:15px;font-weight:600;color:#58a6ff;margin-bottom:8px">Infrastructure Validation Phase</div>
+    <div style="font-size:13px;color:#8b949e">
+        This dashboard reflects <strong style="color:#c9d1d9">early pipeline scaffolding</strong>, not production-grade strategy assessments.
+        We are validating the end-to-end pipeline infrastructure: Jira ingestion, strategy creation, multi-reviewer orchestration, artifact storage, and automated reporting.
+        The four review dimensions (feasibility, testability, scope, architecture) are running with <strong style="color:#c9d1d9">baseline prompts</strong> that have not yet been calibrated against a scoring rubric or tuned with real-world examples.
+        <br><br>
+        <strong style="color:#c9d1d9">What to expect next:</strong> calibrated rubrics with scored examples, evidence-based review gates (every finding must cite specific strategy text), additional review dimensions (security, API readiness), and revision cycles with convergence guardrails. Approval rates will shift materially as reviewer skills are fine-tuned.
+        <br><br>
+        <span style="color:#6e7681">The goal of this phase is to prove the machinery works and begin collecting data. The goal of the next phase is to make the output trustworthy.</span>
+    </div>
+</div>
+
 <div class="nav-tabs">
     <div class="nav-tab active" onclick="switchPage('overview')">Overview</div>
     <div class="nav-tab" onclick="switchPage('run-detail')">Run Detail</div>
