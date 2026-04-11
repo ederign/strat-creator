@@ -307,7 +307,8 @@ graph LR
 
         G --> R1 & R2 & R3 & R4
         R1 & R2 & R3 & R4 --> Q{{approve?}}
-        Q -->|revise| H[strategy.revise]
+        Q -->|revise| P["👤 Human review"]
+        P --> H[strategy.revise]
         H -->|max 2 cycles| G
         Q -->|approved| I[strategy.submit]
     end
@@ -336,6 +337,7 @@ graph LR
     style R2 fill:#c77d1a,color:#fff
     style R3 fill:#c77d1a,color:#fff
     style R4 fill:#c77d1a,color:#fff
+    style P fill:#3d1f00,color:#f0883e,stroke:#f0883e
     style Q fill:#1f3a5f,color:#58a6ff,stroke:#58a6ff
     style H fill:#555,color:#fff
     style I fill:#555,color:#fff
