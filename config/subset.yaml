@@ -1,0 +1,17 @@
+test_rfes:
+  - id: RHAIRFE-1146
+    title: "Ability to hide default Workbench images"
+    size: M
+    comment: "Baseline: 9/10, 2 strats linked. Components: AI Core Dashboard, Notebooks Images, UXD, Workbenches/IDE"
+    cross_component: true
+    baseline: true
+  - id: RHAIRFE-1397
+    title: "Kubeflow Automated pipeLines Engine integration into RHOAI"
+    size: L
+    comment: "Cross-component: AI Pipelines, Notebook Server, Notebooks Extensions, UXD. Status: Stakeholder review"
+    cross_component: true
+  - id: RHAIRFE-1625
+    title: "Add Visual Status Badges to Learning Resource Tiles on the RHOAI Resources Page"
+    size: S
+    comment: "Single component: AI Core Dashboard. Status: New"
+    cross_component: false
