@@ -19,7 +19,7 @@ from pathlib import Path
 
 # Add scripts/ to path for frontmatter imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-from artifact_utils import read_frontmatter
+from artifact_utils import read_frontmatter, compute_strat_labels, label_category
 
 def load_yaml_config(path):
     """Read test-rfes.yaml and return dict keyed by RFE ID."""
@@ -172,6 +172,27 @@ def is_reject(v):
 def pct(n, total):
     return round(100 * n / total) if total > 0 else 0
 
+def label_css_class(label):
+    """Map a label to its CSS class."""
+    cat = label_category(label)
+    if cat == "gate" and label.endswith("revision-pending"):
+        return "label-gate-pending"
+    return {
+        "provenance": "label-provenance",
+        "stage": "label-stage",
+        "gate": "label-gate",
+        "escalation": "label-escalation",
+        "exclusion": "label-escalation",
+    }.get(cat, "label-provenance")
+
+def render_label_badges(labels):
+    """Render a list of labels as HTML badge spans."""
+    parts = []
+    for label in labels:
+        css = label_css_class(label)
+        parts.append(f'<span class="label-badge {css}">{escape_html(label)}</span>')
+    return " ".join(parts)
+
 def health_color(rate):
     """Green >=70%, yellow 40-70%, red <40%."""
     if rate >= 70:
@@ -211,6 +232,11 @@ def generate_html(tasks, reviews, config, output_path):
             "architecture": reviewers.get("architecture", "—"),
             "strategy_body": task.get("body", ""),
             "review_body": review.get("body", ""),
+            "labels": compute_strat_labels(
+                meta.get("status", ""),
+                rev_meta.get("recommendation", ""),
+                reviewers,
+            ),
         })
 
     # --- Executive stats ---
@@ -406,15 +432,29 @@ tr.clickable {{ cursor: pointer; }}
 .nav-tab.active {{ color: #f0f6fc; border-bottom-color: #f78166; }}
 .nav-page {{ display: none; }}
 .nav-page.active {{ display: block; }}
-.pipeline {{ background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 24px; position: relative; height: calc(100vh - 180px); display: flex; flex-direction: column; }}
+.pipeline {{ background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 24px; position: relative; }}
 .pipeline h2 {{ color: #f0f6fc; font-size: 16px; margin-bottom: 16px; flex-shrink: 0; }}
 .pipeline .mermaid {{ cursor: grab; }}
 .pipeline .mermaid:active {{ cursor: grabbing; }}
 .zoom-controls {{ position: absolute; top: 16px; right: 16px; display: flex; gap: 4px; z-index: 10; }}
 .zoom-btn {{ background: #21262d; border: 1px solid #30363d; color: #c9d1d9; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }}
 .zoom-btn:hover {{ background: #30363d; color: #f0f6fc; }}
-.diagram-container {{ overflow: hidden; position: relative; flex: 1; }}
-.diagram-inner {{ transform-origin: 0 0; transition: transform 0.1s ease; height: 100%; display: flex; align-items: center; justify-content: center; }}
+.diagram-container {{ overflow: auto; position: relative; }}
+.diagram-inner {{ transform-origin: 0 0; transition: transform 0.1s ease; display: flex; align-items: center; justify-content: center; padding: 24px 0; }}
+.diagram-inner .mermaid {{ font-size: 16px; }}
+
+/* Pipeline labels */
+.label-bar {{ display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }}
+.label-badge {{ display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }}
+.label-provenance {{ background: #1c2333; color: #8b949e; }}
+.label-stage {{ background: #0d419d; color: #58a6ff; }}
+.label-gate {{ background: #23302a; color: #3fb950; }}
+.label-gate-pending {{ background: #2d2400; color: #d29922; }}
+.label-escalation {{ background: #2d1418; color: #f85149; }}
+.label-legend {{ background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin-top: 24px; }}
+.label-legend h3 {{ color: #f0f6fc; font-size: 14px; margin-bottom: 12px; }}
+.label-legend table {{ margin-bottom: 0; }}
+.label-legend td, .label-legend th {{ font-size: 12px; padding: 6px 12px; }}
 </style>
 </head>
 <body>
@@ -547,7 +587,7 @@ graph LR
         C --> D[rfe.submit]
     end
 
-    D -->|"Automatic or\\nPM Jira label\\nas pipeline trigger"| E
+    D -->|"Automatically\\njob trigger"| E
 
     subgraph P2["Phase 2: Strategy Refinement"]
         E[strategy.create]
@@ -558,8 +598,8 @@ graph LR
             F3 --> F4[Effort estimate\\n& risks]
         end
 
-        E --> F1
-        F4 --> G{{{{refined}}}}
+        E -->|"+strat-creator-auto-created\\n+strat-creator-draft"| F1
+        F4 -->|"+strat-creator-auto-refined\\ndraft &#8594; strat-creator-refined"| G{{{{refined}}}}
 
         subgraph SV["strategy.review (4 parallel)"]
             R1[feasibility]
@@ -572,11 +612,11 @@ graph LR
         G --> R1 & R2 & R3 & R4 & R5
         R1 & R2 & R3 & R4 & R5 --> CON[Consolidate\\nreviews]
         CON --> Q{{{{approve?}}}}
-        Q -->|approved| I[strategy.submit]
+        Q -->|"+strat-creator-approved\\n+strat-creator-review-pass"| I[strategy.submit]
         I --> KO["Kick off Phase 3"]
-        Q -->|revise| P["Human review"]
+        Q -->|"+strat-creator-reviewed\\n+strat-creator-revision-pending"| P["Human review"]
         P --> H[strategy.revise]
-        H -->|max 2 cycles| F1
+        H -->|"max 2 cycles\\n+strat-creator-auto-revised\\n-strat-creator-reviewed\\n-strat-creator-revision-pending"| F1
     end
 
     KO -->|"PM adds\\nstrat-prioritized label"| FR
@@ -617,6 +657,27 @@ graph LR
     </pre>
     </div>
     </div>
+
+    <div class="label-legend">
+    <h3>Pipeline Labels (strat-creator-*)</h3>
+    <table>
+    <thead><tr><th>Label</th><th>Category</th><th>Applied When</th></tr></thead>
+    <tbody>
+    <tr><td><span class="label-badge label-provenance">strat-creator-auto-created</span></td><td>Provenance</td><td>strategy.create generates the RHAISTRAT ticket</td></tr>
+    <tr><td><span class="label-badge label-provenance">strat-creator-auto-refined</span></td><td>Provenance</td><td>strategy.refine enriches with technical approach</td></tr>
+    <tr><td><span class="label-badge label-provenance">strat-creator-auto-revised</span></td><td>Provenance</td><td>strategy.revise modifies content after review feedback</td></tr>
+    <tr><td><span class="label-badge label-stage">strat-creator-draft</span></td><td>Stage</td><td>Strategy stub exists, awaiting refinement</td></tr>
+    <tr><td><span class="label-badge label-stage">strat-creator-refined</span></td><td>Stage</td><td>Full technical approach, dependencies, NFRs added</td></tr>
+    <tr><td><span class="label-badge label-stage">strat-creator-reviewed</span></td><td>Stage</td><td>All 4 reviewers have assessed (verdict: revise/reject)</td></tr>
+    <tr><td><span class="label-badge label-stage">strat-creator-approved</span></td><td>Stage</td><td>Passed all review dimensions</td></tr>
+    <tr><td><span class="label-badge label-gate">strat-creator-review-pass</span></td><td>Gate</td><td>Approved; skip re-processing in future runs</td></tr>
+    <tr><td><span class="label-badge label-gate-pending">strat-creator-revision-pending</span></td><td>Gate</td><td>Waiting for revision cycle</td></tr>
+    <tr><td><span class="label-badge label-escalation">strat-creator-needs-attention</span></td><td>Escalation</td><td>Automation cannot resolve; human must intervene</td></tr>
+    <tr><td><span class="label-badge label-escalation">strat-creator-ignore</span></td><td>Exclusion</td><td>Permanent exclusion from pipeline (human-set only)</td></tr>
+    </tbody>
+    </table>
+    </div>
+
 </div>
 </div><!-- end page-pipeline -->
 
@@ -650,6 +711,7 @@ graph LR
 <tr><td colspan="4" style="padding:0">
     <div class="detail-panel" id="detail-{i}">
         <h2>{escape_html(row["strat_id"])}: {escape_html(row["title"])}</h2>
+        <div class="label-bar">{render_label_badges(row["labels"])}</div>
         <div class="detail-tabs">
             <div class="detail-tab active" onclick="switchTab({i}, 'review')">Review</div>
             <div class="detail-tab" onclick="switchTab({i}, 'strategy')">Strategy</div>

@@ -4,7 +4,6 @@ test_rfes:
     size: M
     comment: "Baseline: 9/10, 2 strats linked. Components: AI Core Dashboard, Notebooks Images, UXD, Workbenches/IDE"
     cross_component: true
-    baseline: true
   - id: RHAIRFE-1397
     title: "Kubeflow Automated pipeLines Engine integration into RHOAI"
     size: L

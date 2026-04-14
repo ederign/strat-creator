@@ -211,6 +211,57 @@ SCHEMAS = {
 }
 
 
+# ─── Label Derivation ────────────────────────────────────────────────────────────
+
+LABEL_CATEGORIES = {
+    "strat-creator-auto-created": "provenance",
+    "strat-creator-auto-refined": "provenance",
+    "strat-creator-auto-revised": "provenance",
+    "strat-creator-draft": "stage",
+    "strat-creator-refined": "stage",
+    "strat-creator-reviewed": "stage",
+    "strat-creator-approved": "stage",
+    "strat-creator-review-pass": "gate",
+    "strat-creator-revision-pending": "gate",
+    "strat-creator-needs-attention": "escalation",
+    "strat-creator-ignore": "exclusion",
+}
+
+
+def label_category(label):
+    """Return the category for a label (provenance/stage/gate/escalation/exclusion)."""
+    return LABEL_CATEGORIES.get(label, "unknown")
+
+
+def compute_strat_labels(status, recommendation, reviewers=None):
+    """Derive pipeline labels from strategy status and review recommendation.
+
+    Returns a list of full-prefixed label strings
+    (e.g. ["strat-creator-auto-created", "strat-creator-approved"]).
+    """
+    labels = ["strat-creator-auto-created"]
+
+    if status in ("Refined", "Reviewed"):
+        labels.append("strat-creator-auto-refined")
+
+    # Stage labels (mutually exclusive)
+    if recommendation == "approve":
+        labels.append("strat-creator-approved")
+        labels.append("strat-creator-review-pass")
+    elif recommendation in ("revise", "reject", "split"):
+        labels.append("strat-creator-reviewed")
+        if recommendation == "revise":
+            labels.append("strat-creator-revision-pending")
+        if recommendation in ("reject", "split"):
+            labels.append("strat-creator-needs-attention")
+    elif status == "Refined":
+        labels.append("strat-creator-refined")
+    elif status == "Draft":
+        labels.append("strat-creator-draft")
+
+    return labels
+
+
 # ─── Validation ─────────────────────────────────────────────────────────────────
 
 class ValidationError(Exception):
