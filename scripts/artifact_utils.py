@@ -181,6 +181,22 @@ SCHEMAS = {
             "required": True,
             "enum": ["approve", "revise", "split", "reject"],
         },
+        "needs_attention": {
+            "type": "bool",
+            "required": True,
+            "default": False,
+        },
+        "scores": {
+            "type": "dict",
+            "required": True,
+            "fields": {
+                "feasibility": {"type": "int", "required": True},
+                "testability": {"type": "int", "required": True},
+                "scope": {"type": "int", "required": True},
+                "architecture": {"type": "int", "required": True},
+                "total": {"type": "int", "required": True},
+            },
+        },
         "reviewers": {
             "type": "dict",
             "required": True,
@@ -222,7 +238,6 @@ LABEL_CATEGORIES = {
     "strat-creator-reviewed": "stage",
     "strat-creator-approved": "stage",
     "strat-creator-review-pass": "gate",
-    "strat-creator-revision-pending": "gate",
     "strat-creator-needs-attention": "escalation",
     "strat-creator-ignore": "exclusion",
 }
@@ -250,10 +265,7 @@ def compute_strat_labels(status, recommendation, reviewers=None):
         labels.append("strat-creator-review-pass")
     elif recommendation in ("revise", "reject", "split"):
         labels.append("strat-creator-reviewed")
-        if recommendation == "revise":
-            labels.append("strat-creator-revision-pending")
-        if recommendation in ("reject", "split"):
-            labels.append("strat-creator-needs-attention")
+        labels.append("strat-creator-needs-attention")
     elif status == "Refined":
         labels.append("strat-creator-refined")
     elif status == "Draft":
