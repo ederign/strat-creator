@@ -211,6 +211,9 @@ artifacts/**
 !artifacts/**/
 !artifacts/**/.gitkeep
 
+# Local Claude settings (machine-specific paths)
+.claude/settings.local.json
+
 # Research notes
 eder-claude-research-notes/
 .context/

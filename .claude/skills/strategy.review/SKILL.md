@@ -40,7 +40,13 @@ For each strategy in `artifacts/strat-tasks/`, launch a strat-scorer agent to pr
 
 Resolve the plugin root: the bootstrap script clones it to `.context/assess-strat/`. Use this path as `{PLUGIN_ROOT}`.
 
-For each strategy file, spawn one agent (model: opus, run_in_background: true, subagent_type: assess-strat:strat-scorer) with this prompt:
+Create the run directory:
+
+```bash
+mkdir -p /tmp/strat-assess/review
+```
+
+For each strategy file, spawn one agent (model: opus, run_in_background: true) with this prompt:
 
 ```
 You are a strategy quality assessor. Your task:
@@ -56,21 +62,36 @@ Substitute all placeholders:
 - `{PROMPT_PATH}` → absolute path of `{PLUGIN_ROOT}/scripts/agent_prompt.md`
 - `{DATA_FILE}` → the strategy file path (e.g., `artifacts/strat-tasks/RHAISTRAT-1469.md`)
 - `{KEY}` → the strategy key (e.g., `RHAISTRAT-1469`)
-- `{RUN_DIR}` → `/tmp/strat-assess/review` (create this directory first with `mkdir -p`)
+- `{RUN_DIR}` → `/tmp/strat-assess/review`
 
-After all scorer agents complete, read each `.result.md` file from `{RUN_DIR}` to extract scores. Parse the scoring table to get Feasibility, Testability, Scope, and Architecture scores (each 0-2).
+Wait for all scorer agents to complete.
 
-**Compute the verdict deterministically from the scores** — do not use LLM judgment:
+## Step 5: Parse Scores and Apply Verdicts (AUTOMATED — no LLM judgment)
+
+After all scorer agents have completed, run the scoring scripts to deterministically compute verdicts and apply them to review files:
+
+```bash
+# Parse .result.md files → scores.csv with deterministic verdicts
+python3 .context/assess-strat/scripts/parse_results.py /tmp/strat-assess/review/
+
+# Apply scores and verdicts to review file frontmatter
+python3 scripts/apply_scores.py /tmp/strat-assess/review/scores.csv \
+    --review-dir artifacts/strat-reviews \
+    --result-dir /tmp/strat-assess/review
+
+# Print summary statistics
+python3 .context/assess-strat/scripts/summarize_run.py /tmp/strat-assess/review/
 ```
-APPROVE:  total >= 6  AND  no zeros
-SPLIT:    scope = 0   AND  all others >= 1  AND  sum(others) >= 3
-REVISE:   total >= 3  AND  at most one zero  AND  not SPLIT
-REJECT:   total < 3   OR   2+ zeros
+
+**Do NOT manually extract scores, compute verdicts, or set frontmatter.** The scripts handle this deterministically. The verdict rules are:
+```
+APPROVE:  total >= 6  AND  no zeros       → needs_attention=false
+SPLIT:    scope = 0   AND  others >= 1    → needs_attention=true
+REVISE:   total >= 3  AND  ≤1 zero        → needs_attention=true
+REJECT:   total < 3   OR   2+ zeros       → needs_attention=true
 ```
 
-Only APPROVE gets `needs_attention=false`. Everything else gets `needs_attention=true`.
-
-## Step 5: Run Prose Reviews
+## Step 6: Run Prose Reviews
 
 Use the **Skill tool** to invoke each of these reviewer skills in parallel. Call all four via the Skill tool simultaneously — each runs in its own isolated context and no reviewer sees another's output.
 
@@ -93,57 +114,26 @@ Each reviewer receives:
 - The source RFEs (`artifacts/rfes.md`, `artifacts/rfe-tasks/`)
 - Prior review files from `artifacts/strat-reviews/` (if this is a re-review)
 
-## Step 6: Write Per-Strategy Review Files
+## Step 7: Write Prose to Review Files
 
-For each reviewed strategy, write a review file to `artifacts/strat-reviews/`. First, read the schema to know exact field names and allowed values:
-
-```bash
-python3 scripts/frontmatter.py schema strat-review
-```
-
-Then for each strategy, write the review body to `artifacts/strat-reviews/{id}-review.md`, then set frontmatter using the scores from Step 4 and prose verdicts from Step 5:
-
-```bash
-python3 scripts/frontmatter.py set artifacts/strat-reviews/<id>-review.md \
-    strat_id=<strat_id> \
-    recommendation=<verdict_from_scores> \
-    needs_attention=<true_or_false> \
-    scores.feasibility=<score> \
-    scores.testability=<score> \
-    scores.scope=<score> \
-    scores.architecture=<score> \
-    scores.total=<total> \
-    reviewers.feasibility=<prose_verdict> \
-    reviewers.testability=<prose_verdict> \
-    reviewers.scope=<prose_verdict> \
-    reviewers.architecture=<prose_verdict>
-```
-
-**The `recommendation` field comes from the numeric scores, not from the prose reviewers.** Scores govern the verdict; prose provides justification.
+For each reviewed strategy, update the review file body in `artifacts/strat-reviews/{id}-review.md` with the prose from all four reviewers. The scores table was already written by `apply_scores.py` in Step 5 — add the prose sections after it.
 
 The review file body should contain:
 
 ```markdown
 ## Scores
+[already written by apply_scores.py — do not overwrite]
 
-| Criterion | Score | Notes |
-|-----------|-------|-------|
-| Feasibility | X/2 | [from scorer agent] |
-| Testability | X/2 | [from scorer agent] |
-| Scope | X/2 | [from scorer agent] |
-| Architecture | X/2 | [from scorer agent] |
-| **Total** | **X/8** | **VERDICT** |
-
-## Feasibility
+## Feasibility Review: {STRAT_ID} — {title}
 <assessment from feasibility reviewer>
 
-## Testability
+## Testability Review: {STRAT_ID} — {title}
 <assessment from testability reviewer>
 
-## Scope
+## Scope Review: {STRAT_ID} — {title}
 <assessment from scope reviewer>
 
-## Architecture
+## Architecture Review: {STRAT_ID} — {title}
 <assessment from architecture reviewer, or "skipped — no context">
 
 ## Agreements
@@ -153,9 +143,21 @@ The review file body should contain:
 <where reviewers diverged — preserve both views>
 ```
 
-Important: **Preserve disagreements.** If the feasibility reviewer says "this is fine" but the scope reviewer says "this is too big," report both views. Do not average or harmonize.
+After writing prose, update the `reviewers.*` frontmatter fields with each prose reviewer's individual verdict:
 
-## Step 7: Advise the User
+```bash
+python3 scripts/frontmatter.py set artifacts/strat-reviews/<id>-review.md \
+    reviewers.feasibility=<prose_verdict> \
+    reviewers.testability=<prose_verdict> \
+    reviewers.scope=<prose_verdict> \
+    reviewers.architecture=<prose_verdict>
+```
+
+**Important:** The `recommendation` field is NEVER changed by prose reviewers. It comes from the numeric scores only. Prose reviewers set their own `reviewers.*` verdicts for informational purposes — these do NOT affect the gate decision.
+
+**Preserve disagreements.** If the feasibility reviewer says "this is fine" but the scope reviewer says "this is too big," report both views. Do not average or harmonize.
+
+## Step 8: Advise the User
 
 Based on the results:
 - **All approved** (`needs_attention=false`): Tell the user strategies are ready for `/strat.prioritize`.
