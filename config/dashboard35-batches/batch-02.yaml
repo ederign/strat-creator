@@ -1,0 +1,41 @@
+# Dashboard 3.5 — Batch 2 of 7
+# 10 RFEs: 5 with existing STRAT, 5 new
+test_rfes:
+- id: RHAIRFE-710
+  title: Chat Metrics & Observability (Tracing) in Playground
+  strat_key: RHAISTRAT-133
+  comment: 'Priority: Critical, Status: Approved, Cloned from RHAISTRAT-133'
+- id: RHAIRFE-727
+  title: 'Deployment of gen AI playground configurations to executable code '
+  comment: 'Priority: Critical, Status: In Progress, Related STRATs: RHAISTRAT-1067
+    (Related)'
+- id: RHAIRFE-728
+  title: User-Level Secrets Management in Gen AI Studio
+  comment: 'Priority: Critical, Status: Stakeholder review'
+- id: RHAIRFE-737
+  title: Add MaaS quotas/info to AI Asset Endpoints Page
+  comment: 'Priority: Normal, Status: Stakeholder review'
+- id: RHAIRFE-749
+  title: Improving In-Workbench Access to Example Notebooks
+  strat_key: RHAISTRAT-1239
+  comment: 'Priority: Major, Status: Approved, Cloned from RHAISTRAT-1239'
+- id: RHAIRFE-767
+  title: Include NIM in new model serving wizard UI
+  strat_key: RHAISTRAT-1202
+  comment: 'Priority: Major, Status: Approved, Cloned from RHAISTRAT-1202'
+- id: RHAIRFE-893
+  title: Add model card markdown section on Model details card
+  comment: 'Priority: Major, Status: New'
+- id: RHAIRFE-904
+  title: 'Feature Store: Real-Time Feature Monitoring & Drift Detection'
+  strat_key: RHAISTRAT-1153
+  comment: 'Priority: Major, Status: Approved, Cloned from RHAISTRAT-1153'
+- id: RHAIRFE-912
+  title: Configuration Persistence for Gen AI Studio
+  comment: 'Priority: Critical, Status: Stakeholder review, Related STRATs: RHAISTRAT-1067
+    (Related)'
+- id: RHAIRFE-1029
+  title: Homepage Refactor - Improved Feature Discovery
+  strat_key: RHAISTRAT-1474
+  comment: 'Priority: Critical, Status: Approved, Cloned from RHAISTRAT-1474, Related
+    STRATs: RHAISTRAT-987 (Depend)'

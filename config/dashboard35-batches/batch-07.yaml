@@ -1,0 +1,39 @@
+# Dashboard 3.5 — Batch 7 of 7
+# 9 RFEs: 0 with existing STRAT, 9 new
+test_rfes:
+- id: RHAIRFE-1899
+  title: '[TP] MaaS Self-Service Subscription Page for Non-Admin Users'
+  comment: 'Priority: Major, Status: Stakeholder review'
+- id: RHAIRFE-1912
+  title: ' Observability Reference Dashboards for llm-d - RHOAI'
+  comment: 'Priority: Critical, Status: Stakeholder review, Related STRATs: RHAISTRAT-930
+    (Duplicate), RHAISTRAT-332 (Informs)'
+- id: RHAIRFE-1923
+  title: MaaS Model Endpoint Detail Page — Per-Model Subscription Context and Token
+    Limits
+  comment: 'Priority: Major, Status: Stakeholder review'
+- id: RHAIRFE-1924
+  title: MaaS Navigation and Settings IA Redesign — Unified Subscription and Policy
+    Management
+  comment: 'Priority: Major, Status: Closed'
+- id: RHAIRFE-1940
+  title: 'EvalHub UI: Configurable Quality Thresholds for Benchmarks and Evaluation
+    Collections'
+  comment: 'Priority: Major, Status: Stakeholder review, Related STRATs: RHAISTRAT-26
+    (Incorporates)'
+- id: RHAIRFE-1968
+  title: 'EvalHub UI: Real-Time Run Progress and Failure Status Visibility on the
+    Evaluations Dashboard'
+  comment: 'Priority: Major, Status: Stakeholder review, Related STRATs: RHAISTRAT-26
+    (Incorporates)'
+- id: RHAIRFE-1970
+  title: Surface model cold-start and vRAM metrics in Model Catalog
+  comment: 'Priority: Critical, Status: New'
+- id: RHAIRFE-1971
+  title: 'EvalHub UI: Evaluation Run Configuration Validation and Primary Metric Selection'
+  comment: 'Priority: Major, Status: Stakeholder review, Related STRATs: RHAISTRAT-26
+    (Incorporates)'
+- id: RHAIRFE-1972
+  title: 'EvalHub UI: Side-by-Side Evaluation Run Comparison for AI Artifacts'
+  comment: 'Priority: Major, Status: Stakeholder review, Related STRATs: RHAISTRAT-26
+    (Incorporates)'

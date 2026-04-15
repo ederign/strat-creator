@@ -1,0 +1,44 @@
+# Dashboard 3.5 — Batch 4 of 7
+# 10 RFEs: 3 with existing STRAT, 7 new
+test_rfes:
+- id: RHAIRFE-1313
+  title: Enable browsing, searching, and discovering registered agents in the UI (Agent
+    Hub)
+  comment: 'Priority: Critical, Status: Stakeholder review, Related STRATs: RHAISTRAT-1215
+    (Depend), RHAISTRAT-1216 (Depend)'
+- id: RHAIRFE-1314
+  title: Experiment with Deployed Agents via the "Agent Playground"
+  comment: 'Priority: Major, Status: New, Related STRATs: RHAISTRAT-1215 (Related),
+    RHAISTRAT-1216 (Depend)'
+- id: RHAIRFE-1338
+  title: Be able to quickly query a deployed model to test it
+  comment: 'Priority: Major, Status: Stakeholder review'
+- id: RHAIRFE-1391
+  title: Decouple Guardrail Enforcement from Inference Path via Direct NeMo Guardrails
+    Integration
+  strat_key: RHAISTRAT-1299
+  comment: 'Priority: Critical, Status: Approved, Cloned from RHAISTRAT-1299'
+- id: RHAIRFE-1430
+  title: Create a Data Catalog tab in the UI
+  comment: 'Priority: Major, Status: Stakeholder review'
+- id: RHAIRFE-1447
+  title: '[Project Navigator] [UI] Floating UI widget'
+  comment: 'Priority: Major, Status: Stakeholder review'
+- id: RHAIRFE-1450
+  title: MLFlow integration for AutoRAG experiment and artifacts
+  strat_key: RHAISTRAT-1426
+  comment: 'Priority: Normal, Status: Closed, Cloned from RHAISTRAT-1426'
+- id: RHAIRFE-1452
+  title: Multi-Lingual Support for AutoRAG
+  strat_key: RHAISTRAT-1425
+  comment: 'Priority: Normal, Status: Approved, Cloned from RHAISTRAT-1425'
+- id: RHAIRFE-1485
+  title: AI Safety Evaluation & Red Teaming Report Visualization in Eval Hub
+  comment: 'Priority: Critical, Status: Stakeholder review, Related STRATs: RHAISTRAT-1180
+    (Related), RHAISTRAT-1179 (Related), RHAISTRAT-1178 (Related), RHAISTRAT-1068
+    (Related)'
+- id: RHAIRFE-1486
+  title: '[GA] MaaS Body-Based Policy Enforcement — OpenAI-Compatible /v1/chat/completions
+    Without Custom Headers'
+  comment: 'Priority: Major, Status: New, Related STRATs: RHAISTRAT-1320 (Blocks),
+    RHAISTRAT-1117 (Related)'

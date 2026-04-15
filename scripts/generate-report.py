@@ -268,7 +268,7 @@ def generate_html(tasks, reviews, config, output_path):
             "status": meta.get("status", "—"),
             "size": cfg.get("size", "—"),
             "baseline": cfg.get("baseline", False),
-            "cross_component": cfg.get("cross_component", False),
+            "cross_component": False,
             "recommendation": rev_meta.get("recommendation", "—"),
             "needs_attention": rev_meta.get("needs_attention", False),
             "feasibility": reviewers.get("feasibility", "—"),

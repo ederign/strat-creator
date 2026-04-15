@@ -1,0 +1,42 @@
+# Dashboard 3.5 — Batch 5 of 7
+# 10 RFEs: 2 with existing STRAT, 8 new
+test_rfes:
+- id: RHAIRFE-1488
+  title: Integrate OpenClaw Installer into ODH Dashboard
+  comment: 'Priority: Undefined, Status: New'
+- id: RHAIRFE-1500
+  title: Quickstart Launcher & Catalog
+  comment: 'Priority: Major, Status: Stakeholder review, Related STRATs: RHAISTRAT-1182
+    (Discovery - Connected)'
+- id: RHAIRFE-1501
+  title: Connection Security — Separate Static Configuration from Credentials
+  comment: 'Priority: Major, Status: Stakeholder review'
+- id: RHAIRFE-1502
+  title: YAML Editor GA — Bi-Directional UI/YAML Toggle in Model Serving
+  comment: 'Priority: Critical, Status: Stakeholder review'
+- id: RHAIRFE-1529
+  title: Display vLLM and llm-d versions for LLMInferenceServiceConfigs (build-time
+    plumbing)
+  strat_key: RHAISTRAT-1395
+  comment: 'Priority: Critical, Status: Approved, Cloned from RHAISTRAT-1395'
+- id: RHAIRFE-1547
+  title: Add in ability to register/Deploy an external endpoint via Model Deployments
+    Page
+  strat_key: RHAISTRAT-1431
+  comment: 'Priority: Critical, Status: Approved, Cloned from RHAISTRAT-1431'
+- id: RHAIRFE-1549
+  title: Allow project and workbench environment variables to reference existing Kubernetes
+    Secrets
+  comment: 'Priority: Major, Status: Stakeholder review, Related STRATs: RHAISTRAT-601
+    (Related)'
+- id: RHAIRFE-1586
+  title: Provide OOTB connections for Common Data Sources in UI
+  comment: 'Priority: Major, Status: New, Related STRATs: RHAISTRAT-1311 (Depend)'
+- id: RHAIRFE-1622
+  title: '[TP] MaaS Consumer Portal — Self-Service Endpoint Access, API Key Management,
+    and Usage Visibility'
+  comment: 'Priority: Major, Status: New'
+- id: RHAIRFE-1624
+  title: Surface Featured and Release-Specific Learning Resources on the RHOAI Dashboard
+    Home Page
+  comment: 'Priority: Normal, Status: New'

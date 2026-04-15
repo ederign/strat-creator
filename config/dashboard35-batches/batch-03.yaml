@@ -1,0 +1,41 @@
+# Dashboard 3.5 — Batch 3 of 7
+# 10 RFEs: 5 with existing STRAT, 5 new
+test_rfes:
+- id: RHAIRFE-1056
+  title: Red Hat AI Inference UI MVP
+  strat_key: RHAISTRAT-1172
+  comment: 'Priority: Critical, Status: Approved, Cloned from RHAISTRAT-1172'
+- id: RHAIRFE-1115
+  title: 'Introduce a “Customize” Entry Point in the Model Catalog for Example-Driven
+    Model Adaptation & Discoverability of Model Customization '
+  strat_key: RHAISTRAT-1182
+  comment: 'Priority: Normal, Status: Approved, Cloned from RHAISTRAT-1182'
+- id: RHAIRFE-1128
+  title: Inference Time Scaling (IST) in gen AI studio playground
+  comment: 'Priority: Major, Status: New, Related STRATs: RHAISTRAT-132 (Related)'
+- id: RHAIRFE-1131
+  title: MaaS Platform Admin UI
+  strat_key: RHAISTRAT-1235
+  comment: 'Priority: Blocker, Status: Closed, Cloned from RHAISTRAT-1235'
+- id: RHAIRFE-1146
+  title: ability to hide default Workbench images
+  strat_key: RHAISTRAT-1422
+  comment: 'Priority: Major, Status: Approved, Cloned from RHAISTRAT-1422'
+- id: RHAIRFE-1153
+  title: Launchable Learning Resources in OpenShift AI
+  comment: 'Priority: Normal, Status: Stakeholder review, Related STRATs: RHAISTRAT-1182
+    (Account)'
+- id: RHAIRFE-1257
+  title: '[RFE] Customers requires expose llm-d via OpenShift route in RHOAI 3'
+  comment: 'Priority: Critical, Status: Stakeholder review'
+- id: RHAIRFE-1260
+  title: Add admin and view aggregation to the TrustyAI NemoGuardrails and GuardrailsOrchestrator
+    CRs.
+  comment: 'Priority: Major, Status: Stakeholder review'
+- id: RHAIRFE-1277
+  title: Granular Role Creation UI
+  comment: 'Priority: Critical, Status: Stakeholder review'
+- id: RHAIRFE-1298
+  title: Agent Template & Demo Discovery via Dashboard Learning Resources
+  strat_key: RHAISTRAT-1376
+  comment: 'Priority: Major, Status: Approved, Cloned from RHAISTRAT-1376'

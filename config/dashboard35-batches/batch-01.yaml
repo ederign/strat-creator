@@ -1,0 +1,43 @@
+# Dashboard 3.5 — Batch 1 of 7
+# 10 RFEs: 5 with existing STRAT, 5 new
+test_rfes:
+- id: RHAIRFE-64
+  title: Integrate Feature Store with Workbenches for user friendly and secure Data
+    Science Workflows
+  strat_key: RHAISTRAT-1115
+  comment: 'Priority: Major, Status: Approved, Cloned from RHAISTRAT-1115'
+- id: RHAIRFE-158
+  title: Granular Access Control for OpenShift AI Settings Menu
+  comment: 'Priority: Major, Status: Stakeholder review'
+- id: RHAIRFE-163
+  title: Establish data provenance and lineage pipelines to enable eval-driven development
+  strat_key: RHAISTRAT-1140
+  comment: 'Priority: Major, Status: Pending Approval, Cloned from RHAISTRAT-1140'
+- id: RHAIRFE-261
+  title: Add Custom Certs to the S3 Connection Type
+  comment: 'Priority: Normal, Status: Stakeholder review'
+- id: RHAIRFE-334
+  title: Live Tracing & Basic Observability – Visualize real-time spans for chats/agents
+    to debug latency & tool calls
+  comment: 'Priority: Critical, Status: New, Related STRATs: RHAISTRAT-164 (Related)'
+- id: RHAIRFE-342
+  title: RHOAI Read Only Admin Role
+  comment: 'Priority: Normal, Status: Stakeholder review, Related STRATs: RHAISTRAT-898
+    (Incorporates)'
+- id: RHAIRFE-390
+  title: Knowledge Source Listing – AI engineers can see which vector indexes and
+    document collections are available to their project and optionally select them
+    as context for prompts or agents
+  comment: 'Priority: Critical, Status: New, Related STRATs: RHAISTRAT-902 (Related)'
+- id: RHAIRFE-442
+  title: RFE - OpenShift AI - Test data connection button - Datascience UI
+  strat_key: RHAISTRAT-1284
+  comment: 'Priority: Major, Status: Approved, Cloned from RHAISTRAT-1284'
+- id: RHAIRFE-629
+  title: Integrate Kueue Workload Scheduling Information in Workbenches Overview
+  strat_key: RHAISTRAT-497
+  comment: 'Priority: Undefined, Status: Approved, Cloned from RHAISTRAT-497'
+- id: RHAIRFE-709
+  title: Guardrails – Surface Basic Llama Stack Guardrails in playground (MVP)
+  strat_key: RHAISTRAT-313
+  comment: 'Priority: Major, Status: Approved, Cloned from RHAISTRAT-313'

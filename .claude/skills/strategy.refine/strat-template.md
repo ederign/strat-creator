@@ -30,6 +30,13 @@ Scale the output to match the strategy size. Use the appropriate section set bel
 
 ### Risks
 <List or "None identified">
+
+### Staff Engineer Input
+<!-- This section is active when the strategy is tagged needs_attention after review. -->
+<!-- After addressing the review findings: -->
+<!--   1. Remove the needs_attention label from the RHAISTRAT issue in Jira. -->
+<!--   2. The next scheduled pipeline run will automatically re-evaluate the strategy. -->
+- [ ] Review and correct strategy based on review findings
 ```
 
 ---
@@ -62,6 +69,13 @@ Scale the output to match the strategy size. Use the appropriate section set bel
 
 ### Open Questions
 - <question>
+
+### Staff Engineer Input
+<!-- This section is active when the strategy is tagged needs_attention after review. -->
+<!-- After addressing the review findings: -->
+<!--   1. Remove the needs_attention label from the RHAISTRAT issue in Jira. -->
+<!--   2. The next scheduled pipeline run will automatically re-evaluate the strategy. -->
+- [ ] Review and correct strategy based on review findings
 ```
 
 ---
@@ -107,4 +121,11 @@ Scale the output to match the strategy size. Use the appropriate section set bel
 **Delivers**: <what the RFE asks for>
 **Does NOT deliver**: <what's explicitly excluded>
 **Assumptions**: <what we're assuming to be true>
+
+### Staff Engineer Input
+<!-- This section is active when the strategy is tagged needs_attention after review. -->
+<!-- After addressing the review findings: -->
+<!--   1. Remove the needs_attention label from the RHAISTRAT issue in Jira. -->
+<!--   2. The next scheduled pipeline run will automatically re-evaluate the strategy. -->
+- [ ] Review and correct strategy based on review findings
 ```

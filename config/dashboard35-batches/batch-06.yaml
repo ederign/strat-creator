@@ -1,0 +1,35 @@
+# Dashboard 3.5 — Batch 6 of 7
+# 10 RFEs: 0 with existing STRAT, 10 new
+test_rfes:
+- id: RHAIRFE-1625
+  title: Add Visual Status Badges to Learning Resource Tiles on the RHOAI Resources
+    Page
+  comment: 'Priority: Normal, Status: New'
+- id: RHAIRFE-1626
+  title: Add Text Search to the RHOAI Resources Page
+  comment: 'Priority: Normal, Status: New'
+- id: RHAIRFE-1627
+  title: Contextual Learning Resource Suggestions During Feature Interaction on the
+    RHOAI Dashboard
+  comment: 'Priority: Normal, Status: New'
+- id: RHAIRFE-1628
+  title: Admin Curation Controls for RHOAI Dashboard Learning Resources
+  comment: 'Priority: Normal, Status: New'
+- id: RHAIRFE-1643
+  title: MCP Server Registration and Management UI in RHOAI
+  comment: 'Priority: Critical, Status: Stakeholder review'
+- id: RHAIRFE-1693
+  title: Custom Evaluation Task Builder
+  comment: 'Priority: Major, Status: Stakeholder review'
+- id: RHAIRFE-1695
+  title: Organizational Evaluation Collections
+  comment: 'Priority: Major, Status: Stakeholder review'
+- id: RHAIRFE-1755
+  title: EvalHub UI Surface for AI-Assisted Interpretation of Evaluation Results
+  comment: 'Priority: Major, Status: Stakeholder review'
+- id: RHAIRFE-1756
+  title: Ingest and Display AI-BOMs for Imported Models
+  comment: 'Priority: Critical, Status: New'
+- id: RHAIRFE-1757
+  title: Generate and Manage AI-BOMs for Modified AI Assets
+  comment: 'Priority: Critical, Status: New'
