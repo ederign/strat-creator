@@ -949,77 +949,78 @@ function renderExecutiveSummary() {{
         <div class="kpi"><div class="kpi-value" style="color:#f85149">${{e.needs_attention}}</div><div class="kpi-label">Needs Attention</div><div class="kpi-detail">${{e.needs_attention === 0 ? 'All clear' : 'Staff engineer review'}}</div></div>
     </div>`;
 
-    // Verdict distribution
-    html += `<div class="two-col">`;
+    // Verdict + Dimensions + Funnel — single 3-column row
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;margin-bottom:24px">`;
 
-    // Left: verdict donut
-    html += `<div class="chart-card"><h3>Verdict Distribution</h3>
-        <div style="display:flex;align-items:center;gap:24px">
-        <canvas id="exec-donut" width="200" height="200" style="max-width:200px"></canvas>
-        <div style="font-size:13px;line-height:2">
-            <div><span style="display:inline-block;width:12px;height:12px;background:#3fb950;border-radius:2px;margin-right:6px"></span>Approve: <strong>${{e.approved}}</strong></div>
-            <div><span style="display:inline-block;width:12px;height:12px;background:#d29922;border-radius:2px;margin-right:6px"></span>Revise: <strong>${{e.revise}}</strong></div>
-            <div><span style="display:inline-block;width:12px;height:12px;background:#f78166;border-radius:2px;margin-right:6px"></span>Split: <strong>${{e.split}}</strong></div>
-            <div><span style="display:inline-block;width:12px;height:12px;background:#f85149;border-radius:2px;margin-right:6px"></span>Reject: <strong>${{e.reject}}</strong></div>
+    // Col 1: verdict donut (compact)
+    html += `<div class="chart-card" style="padding:16px">
+        <h3 style="margin-bottom:8px">Verdict Distribution</h3>
+        <div style="display:flex;align-items:center;gap:16px">
+        <div style="width:120px;height:120px;flex-shrink:0"><canvas id="exec-donut"></canvas></div>
+        <div style="font-size:12px;line-height:1.8">
+            <div><span style="display:inline-block;width:10px;height:10px;background:#3fb950;border-radius:2px;margin-right:4px"></span>Approve: <strong>${{e.approved}}</strong></div>
+            <div><span style="display:inline-block;width:10px;height:10px;background:#d29922;border-radius:2px;margin-right:4px"></span>Revise: <strong>${{e.revise}}</strong></div>
+            <div><span style="display:inline-block;width:10px;height:10px;background:#f78166;border-radius:2px;margin-right:4px"></span>Split: <strong>${{e.split}}</strong></div>
+            <div><span style="display:inline-block;width:10px;height:10px;background:#f85149;border-radius:2px;margin-right:4px"></span>Reject: <strong>${{e.reject}}</strong></div>
         </div>
         </div>
     </div>`;
 
-    // Right: dimension health bars
-    html += `<div class="chart-card"><h3>Quality by Dimension</h3>`;
+    // Col 2: dimension health bars
+    html += `<div class="chart-card" style="padding:16px">
+        <h3 style="margin-bottom:8px">Quality by Dimension</h3>`;
     dims.forEach(dim => {{
         const ds = e.dimensions[dim];
         const drate = ds.rate;
         const pw = ds.total > 0 ? Math.round(100*(ds.pass||0)/ds.total) : 0;
         const partw = ds.total > 0 ? Math.round(100*(ds.partial||0)/ds.total) : 0;
         const fw = ds.total > 0 ? Math.round(100*(ds.fail||0)/ds.total) : 0;
-        html += `<div class="dim-row" style="margin-bottom:8px">
-            <div class="dim-label" style="width:100px">${{dim.charAt(0).toUpperCase()+dim.slice(1)}}</div>
-            <div class="dim-bar-container"><div class="dim-bar-track">
+        html += `<div class="dim-row" style="margin-bottom:6px">
+            <div class="dim-label" style="width:90px;font-size:12px">${{dim.charAt(0).toUpperCase()+dim.slice(1)}}</div>
+            <div class="dim-bar-container"><div class="dim-bar-track" style="height:20px">
                 <div class="dim-bar-seg" style="width:${{pw}}%;background:#3fb950" title="${{ds.pass||0}} scored 2/2"></div>
                 <div class="dim-bar-seg" style="width:${{partw}}%;background:#d29922" title="${{ds.partial||0}} scored 1/2"></div>
                 <div class="dim-bar-seg" style="width:${{fw}}%;background:#f85149" title="${{ds.fail||0}} scored 0/2"></div>
             </div></div>
-            <div class="dim-rate" style="color:${{healthColor(drate)}}">${{drate}}%</div>
+            <div class="dim-rate" style="width:40px;font-size:13px;color:${{healthColor(drate)}}">${{drate}}%</div>
         </div>`;
     }});
-    html += `<div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:#6e7681">
-        <span><span style="display:inline-block;width:10px;height:10px;background:#3fb950;border-radius:2px;margin-right:4px"></span>2/2 (pass)</span>
-        <span><span style="display:inline-block;width:10px;height:10px;background:#d29922;border-radius:2px;margin-right:4px"></span>1/2 (gaps)</span>
-        <span><span style="display:inline-block;width:10px;height:10px;background:#f85149;border-radius:2px;margin-right:4px"></span>0/2 (fail)</span>
+    html += `<div style="display:flex;gap:12px;margin-top:6px;font-size:10px;color:#6e7681">
+        <span><span style="display:inline-block;width:8px;height:8px;background:#3fb950;border-radius:2px;margin-right:3px"></span>Pass</span>
+        <span><span style="display:inline-block;width:8px;height:8px;background:#d29922;border-radius:2px;margin-right:3px"></span>Gaps</span>
+        <span><span style="display:inline-block;width:8px;height:8px;background:#f85149;border-radius:2px;margin-right:3px"></span>Fail</span>
     </div></div>`;
+
+    // Col 3: readiness funnel (proper narrowing)
+    const readyCount = e.reviewed - e.needs_attention;
+    const funnelMax = Math.max(e.total, 1);
+    html += `<div class="chart-card" style="padding:16px">
+        <h3 style="margin-bottom:8px">Readiness Funnel</h3>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+            <div style="display:flex;align-items:center;gap:8px;width:100%">
+                <div style="background:#23302a;border-radius:6px;height:28px;display:flex;align-items:center;justify-content:center;width:100%">
+                    <span style="color:#3fb950;font-weight:600;font-size:13px">${{e.total}} created</span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;width:${{Math.round(100*e.reviewed/funnelMax)}}%">
+                <div style="background:#1f3a5f;border-radius:6px;height:28px;display:flex;align-items:center;justify-content:center;width:100%">
+                    <span style="color:#58a6ff;font-weight:600;font-size:13px">${{e.reviewed}} reviewed</span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;width:${{Math.max(Math.round(100*readyCount/funnelMax), 15)}}%">
+                <div style="background:#23302a;border-radius:6px;height:28px;display:flex;align-items:center;justify-content:center;width:100%">
+                    <span style="color:#3fb950;font-weight:600;font-size:13px">${{readyCount}} ready</span></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;width:${{Math.max(Math.round(100*e.needs_attention/funnelMax), 15)}}%">
+                <div style="background:#2d1418;border-radius:6px;height:28px;display:flex;align-items:center;justify-content:center;width:100%">
+                    <span style="color:#f85149;font-weight:600;font-size:12px">${{e.needs_attention}} attention</span></div>
+            </div>
+        </div>
+    </div>`;
     html += `</div>`;
 
-    // Attention funnel
-    const readyCount = e.reviewed - e.needs_attention;
-    html += `<div class="two-col">
-        <div class="chart-card"><h3>Readiness Funnel</h3>
-        <div style="display:flex;flex-direction:column;gap:8px">
-            <div style="display:flex;align-items:center;gap:12px">
-                <div style="background:#23302a;border-radius:6px;height:32px;display:flex;align-items:center;padding:0 16px;width:${{e.total > 0 ? Math.max(Math.round(100*e.total/e.total), 10) : 10}}%;min-width:fit-content">
-                    <span style="color:#3fb950;font-weight:600">${{e.total}}</span></div>
-                <span style="color:#8b949e;font-size:13px">Total strategies created</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:12px">
-                <div style="background:#1f3a5f;border-radius:6px;height:32px;display:flex;align-items:center;padding:0 16px;width:${{e.total > 0 ? Math.max(Math.round(100*e.reviewed/e.total), 10) : 10}}%;min-width:fit-content">
-                    <span style="color:#58a6ff;font-weight:600">${{e.reviewed}}</span></div>
-                <span style="color:#8b949e;font-size:13px">Reviewed</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:12px">
-                <div style="background:#23302a;border-radius:6px;height:32px;display:flex;align-items:center;padding:0 16px;width:${{e.total > 0 ? Math.max(Math.round(100*readyCount/e.total), 10) : 10}}%;min-width:fit-content">
-                    <span style="color:#3fb950;font-weight:600">${{readyCount}}</span></div>
-                <span style="color:#8b949e;font-size:13px">Ready for implementation</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:12px">
-                <div style="background:#2d1418;border-radius:6px;height:32px;display:flex;align-items:center;padding:0 16px;width:${{e.total > 0 ? Math.max(Math.round(100*e.needs_attention/e.total), 10) : 10}}%;min-width:fit-content">
-                    <span style="color:#f85149;font-weight:600">${{e.needs_attention}}</span></div>
-                <span style="color:#8b949e;font-size:13px">Needs staff engineer input</span>
-            </div>
-        </div>
-        </div>
-        <div class="chart-card"><h3>Score Distribution</h3>
-            <canvas id="exec-histogram"></canvas>
-        </div>
+    // Score distribution (full width)
+    html += `<div class="chart-card full-width" style="margin-bottom:24px">
+        <h3>Score Distribution</h3>
+        <div style="max-height:200px"><canvas id="exec-histogram"></canvas></div>
     </div>`;
 
     // Per-strategy table
@@ -1068,12 +1069,13 @@ function renderExecutiveSummary() {{
                 data: [e.approved, e.revise, e.split, e.reject],
                 backgroundColor: ['#3fb950', '#d29922', '#f78166', '#f85149'],
                 borderWidth: 0,
-                hoverOffset: 6,
+                hoverOffset: 4,
             }}]
         }},
         options: {{
             responsive: true,
-            cutout: '60%',
+            maintainAspectRatio: true,
+            cutout: '55%',
             plugins: {{
                 legend: {{ display: false }},
             }},
