@@ -12,195 +12,239 @@ test_rfes:
     title: "Integrate Feature Store with Workbenches for user friendly and secure Data Science Workflows"
     strat_key: RHAISTRAT-1115
     comment: "Priority: Major, Status: Approved, Cloned from RHAISTRAT-1115"
+    owner: "Andy"
 
   - id: RHAIRFE-158
     title: "Granular Access Control for OpenShift AI Settings Menu"
     comment: "Priority: Major, Status: Stakeholder review"
+    owner: "Andy"
 
   - id: RHAIRFE-163
     title: "Establish data provenance and lineage pipelines to enable eval-driven development"
     strat_key: RHAISTRAT-1140
     comment: "Priority: Major, Status: Pending Approval, Cloned from RHAISTRAT-1140"
+    owner: "Eder"
 
   - id: RHAIRFE-261
     title: "Add Custom Certs to the S3 Connection Type"
     comment: "Priority: Normal, Status: Stakeholder review"
+    owner: "Andy"
 
   - id: RHAIRFE-334
     title: "Live Tracing & Basic Observability – Visualize real-time spans for chats/agents to debug latency & tool calls"
     comment: "Priority: Critical, Status: New, Related STRATs: RHAISTRAT-164 (Related)"
+    owner: "Eder"
 
   - id: RHAIRFE-342
     title: "RHOAI Read Only Admin Role"
     comment: "Priority: Normal, Status: Stakeholder review, Related STRATs: RHAISTRAT-898 (Incorporates)"
+    owner: "Andy"
 
   - id: RHAIRFE-390
     title: "Knowledge Source Listing – AI engineers can see which vector indexes and document collections are available to their project and optionally select them as context for prompts or agents"
     comment: "Priority: Critical, Status: New, Related STRATs: RHAISTRAT-902 (Related)"
+    owner: "Eder"
 
   - id: RHAIRFE-442
     title: "RFE - OpenShift AI - Test data connection button - Datascience UI"
     strat_key: RHAISTRAT-1284
     comment: "Priority: Major, Status: Approved, Cloned from RHAISTRAT-1284"
+    owner: "Andy"
 
   - id: RHAIRFE-629
     title: "Integrate Kueue Workload Scheduling Information in Workbenches Overview"
     strat_key: RHAISTRAT-497
     comment: "Priority: Undefined, Status: Approved, Cloned from RHAISTRAT-497"
+    owner: "Andy"
 
   - id: RHAIRFE-709
     title: "Guardrails – Surface Basic Llama Stack Guardrails in playground (MVP)"
     strat_key: RHAISTRAT-313
     comment: "Priority: Major, Status: Approved, Cloned from RHAISTRAT-313"
+    owner: "Eder"
 
   - id: RHAIRFE-710
     title: "Chat Metrics & Observability (Tracing) in Playground"
     strat_key: RHAISTRAT-133
     comment: "Priority: Critical, Status: Approved, Cloned from RHAISTRAT-133"
+    owner: "Eder"
 
   - id: RHAIRFE-727
     title: "Deployment of gen AI playground configurations to executable code "
     comment: "Priority: Critical, Status: In Progress, Related STRATs: RHAISTRAT-1067 (Related)"
+    owner: "Eder"
 
   - id: RHAIRFE-728
     title: "User-Level Secrets Management in Gen AI Studio"
     comment: "Priority: Critical, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-737
     title: "Add MaaS quotas/info to AI Asset Endpoints Page"
     comment: "Priority: Normal, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-749
     title: "Improving In-Workbench Access to Example Notebooks"
     strat_key: RHAISTRAT-1239
     comment: "Priority: Major, Status: Approved, Cloned from RHAISTRAT-1239"
+    owner: "Andy"
 
   - id: RHAIRFE-767
     title: "Include NIM in new model serving wizard UI"
     strat_key: RHAISTRAT-1202
     comment: "Priority: Major, Status: Approved, Cloned from RHAISTRAT-1202"
+    owner: "Eder"
 
   - id: RHAIRFE-893
     title: "Add model card markdown section on Model details card"
     comment: "Priority: Major, Status: New"
+    owner: "Eder"
 
   - id: RHAIRFE-904
     title: "Feature Store: Real-Time Feature Monitoring & Drift Detection"
     strat_key: RHAISTRAT-1153
     comment: "Priority: Major, Status: Approved, Cloned from RHAISTRAT-1153"
+    owner: "Andy"
 
   - id: RHAIRFE-912
     title: "Configuration Persistence for Gen AI Studio"
     comment: "Priority: Critical, Status: Stakeholder review, Related STRATs: RHAISTRAT-1067 (Related)"
+    owner: "Eder"
 
   - id: RHAIRFE-1029
     title: "Homepage Refactor - Improved Feature Discovery"
     strat_key: RHAISTRAT-1474
     comment: "Priority: Critical, Status: Approved, Cloned from RHAISTRAT-1474, Related STRATs: RHAISTRAT-987 (Depend)"
+    owner: "Eder"
 
   - id: RHAIRFE-1056
     title: "Red Hat AI Inference UI MVP"
     strat_key: RHAISTRAT-1172
     comment: "Priority: Critical, Status: Approved, Cloned from RHAISTRAT-1172"
+    owner: "Eder"
 
   - id: RHAIRFE-1115
     title: "Introduce a “Customize” Entry Point in the Model Catalog for Example-Driven Model Adaptation & Discoverability of Model Customization "
     strat_key: RHAISTRAT-1182
     comment: "Priority: Normal, Status: Approved, Cloned from RHAISTRAT-1182"
+    owner: "Andy"
 
   - id: RHAIRFE-1128
     title: "Inference Time Scaling (IST) in gen AI studio playground"
     comment: "Priority: Major, Status: New, Related STRATs: RHAISTRAT-132 (Related)"
+    owner: "Eder"
 
   - id: RHAIRFE-1131
     title: "MaaS Platform Admin UI"
     strat_key: RHAISTRAT-1235
     comment: "Priority: Blocker, Status: Closed, Cloned from RHAISTRAT-1235"
+    owner: "Eder"
 
   - id: RHAIRFE-1146
     title: "ability to hide default Workbench images"
     strat_key: RHAISTRAT-1422
     comment: "Priority: Major, Status: Approved, Cloned from RHAISTRAT-1422"
+    owner: "Andy"
 
   - id: RHAIRFE-1153
     title: "Launchable Learning Resources in OpenShift AI"
     comment: "Priority: Normal, Status: Stakeholder review, Related STRATs: RHAISTRAT-1182 (Account)"
+    owner: "Andy"
 
   - id: RHAIRFE-1257
     title: "[RFE] Customers requires expose llm-d via OpenShift route in RHOAI 3"
     comment: "Priority: Critical, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-1260
     title: "Add admin and view aggregation to the TrustyAI NemoGuardrails and GuardrailsOrchestrator CRs."
     comment: "Priority: Major, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-1277
     title: "Granular Role Creation UI"
     comment: "Priority: Critical, Status: Stakeholder review"
+    owner: "Andy"
 
   - id: RHAIRFE-1298
     title: "Agent Template & Demo Discovery via Dashboard Learning Resources"
     strat_key: RHAISTRAT-1376
     comment: "Priority: Major, Status: Approved, Cloned from RHAISTRAT-1376"
+    owner: "Eder"
 
   - id: RHAIRFE-1313
     title: "Enable browsing, searching, and discovering registered agents in the UI (Agent Hub)"
     comment: "Priority: Critical, Status: Stakeholder review, Related STRATs: RHAISTRAT-1215 (Depend), RHAISTRAT-1216 (Depend)"
+    owner: "Eder"
 
   - id: RHAIRFE-1314
     title: "Experiment with Deployed Agents via the \"Agent Playground\""
     comment: "Priority: Major, Status: New, Related STRATs: RHAISTRAT-1215 (Related), RHAISTRAT-1216 (Depend)"
+    owner: "Eder"
 
   - id: RHAIRFE-1338
     title: "Be able to quickly query a deployed model to test it"
     comment: "Priority: Major, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-1391
     title: "Decouple Guardrail Enforcement from Inference Path via Direct NeMo Guardrails Integration"
     strat_key: RHAISTRAT-1299
     comment: "Priority: Critical, Status: Approved, Cloned from RHAISTRAT-1299"
+    owner: "Eder"
 
   - id: RHAIRFE-1430
     title: "Create a Data Catalog tab in the UI"
     comment: "Priority: Major, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-1447
     title: "[Project Navigator] [UI] Floating UI widget"
     comment: "Priority: Major, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-1450
     title: "MLFlow integration for AutoRAG experiment and artifacts"
     strat_key: RHAISTRAT-1426
     comment: "Priority: Normal, Status: Closed, Cloned from RHAISTRAT-1426"
+    owner: "Eder"
 
   - id: RHAIRFE-1452
     title: "Multi-Lingual Support for AutoRAG"
     strat_key: RHAISTRAT-1425
     comment: "Priority: Normal, Status: Approved, Cloned from RHAISTRAT-1425"
+    owner: "Eder"
 
   - id: RHAIRFE-1485
     title: "AI Safety Evaluation & Red Teaming Report Visualization in Eval Hub"
     comment: "Priority: Critical, Status: Stakeholder review, Related STRATs: RHAISTRAT-1180 (Related), RHAISTRAT-1179 (Related), RHAISTRAT-1178 (Related), RHAISTRAT-1068 (Related)"
+    owner: "Eder"
 
   - id: RHAIRFE-1486
     title: "[GA] MaaS Body-Based Policy Enforcement — OpenAI-Compatible /v1/chat/completions Without Custom Headers"
     comment: "Priority: Major, Status: New, Related STRATs: RHAISTRAT-1320 (Blocks), RHAISTRAT-1117 (Related)"
+    owner: "Eder"
 
   - id: RHAIRFE-1488
     title: "Integrate OpenClaw Installer into ODH Dashboard"
     comment: "Priority: Undefined, Status: New"
+    owner: "Eder"
 
   - id: RHAIRFE-1500
     title: "Quickstart Launcher & Catalog"
     comment: "Priority: Major, Status: Stakeholder review, Related STRATs: RHAISTRAT-1182 (Discovery - Connected)"
+    owner: "Andy"
 
   - id: RHAIRFE-1501
     title: "Connection Security — Separate Static Configuration from Credentials"
     comment: "Priority: Major, Status: Stakeholder review"
+    owner: "Andy"
 
   - id: RHAIRFE-1502
     title: "YAML Editor GA — Bi-Directional UI/YAML Toggle in Model Serving"
     comment: "Priority: Critical, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-1529
     title: "Display vLLM and llm-d versions for LLMInferenceServiceConfigs (build-time plumbing)"
@@ -211,96 +255,119 @@ test_rfes:
     title: "Add in ability to register/Deploy an external endpoint via Model Deployments Page"
     strat_key: RHAISTRAT-1431
     comment: "Priority: Critical, Status: Approved, Cloned from RHAISTRAT-1431"
+    owner: "Eder"
 
   - id: RHAIRFE-1549
     title: "Allow project and workbench environment variables to reference existing Kubernetes Secrets"
     comment: "Priority: Major, Status: Stakeholder review, Related STRATs: RHAISTRAT-601 (Related)"
+    owner: "Andy"
 
   - id: RHAIRFE-1586
     title: "Provide OOTB connections for Common Data Sources in UI"
     comment: "Priority: Major, Status: New, Related STRATs: RHAISTRAT-1311 (Depend)"
+    owner: "Andy"
 
   - id: RHAIRFE-1622
     title: "[TP] MaaS Consumer Portal — Self-Service Endpoint Access, API Key Management, and Usage Visibility"
     comment: "Priority: Major, Status: New"
+    owner: "Eder"
 
   - id: RHAIRFE-1624
     title: "Surface Featured and Release-Specific Learning Resources on the RHOAI Dashboard Home Page"
     comment: "Priority: Normal, Status: New"
+    owner: "Eder"
 
   - id: RHAIRFE-1625
     title: "Add Visual Status Badges to Learning Resource Tiles on the RHOAI Resources Page"
     comment: "Priority: Normal, Status: New"
+    owner: "Andy"
 
   - id: RHAIRFE-1626
     title: "Add Text Search to the RHOAI Resources Page"
     comment: "Priority: Normal, Status: New"
+    owner: "Eder"
 
   - id: RHAIRFE-1627
     title: "Contextual Learning Resource Suggestions During Feature Interaction on the RHOAI Dashboard"
     comment: "Priority: Normal, Status: New"
+    owner: "Eder"
 
   - id: RHAIRFE-1628
     title: "Admin Curation Controls for RHOAI Dashboard Learning Resources"
     comment: "Priority: Normal, Status: New"
+    owner: "Andy"
 
   - id: RHAIRFE-1643
     title: "MCP Server Registration and Management UI in RHOAI"
     comment: "Priority: Critical, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-1693
     title: "Custom Evaluation Task Builder"
     comment: "Priority: Major, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-1695
     title: "Organizational Evaluation Collections"
     comment: "Priority: Major, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-1755
     title: "EvalHub UI Surface for AI-Assisted Interpretation of Evaluation Results"
     comment: "Priority: Major, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-1756
     title: "Ingest and Display AI-BOMs for Imported Models"
     comment: "Priority: Critical, Status: New"
+    owner: "Eder"
 
   - id: RHAIRFE-1757
     title: "Generate and Manage AI-BOMs for Modified AI Assets"
     comment: "Priority: Critical, Status: New"
+    owner: "Eder"
 
   - id: RHAIRFE-1899
     title: "[TP] MaaS Self-Service Subscription Page for Non-Admin Users"
     comment: "Priority: Major, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-1912
     title: " Observability Reference Dashboards for llm-d - RHOAI"
     comment: "Priority: Critical, Status: Stakeholder review, Related STRATs: RHAISTRAT-930 (Duplicate), RHAISTRAT-332 (Informs)"
+    owner: "Eder"
 
   - id: RHAIRFE-1923
     title: "MaaS Model Endpoint Detail Page — Per-Model Subscription Context and Token Limits"
     comment: "Priority: Major, Status: Stakeholder review"
+    owner: "Eder"
 
   - id: RHAIRFE-1924
     title: "MaaS Navigation and Settings IA Redesign — Unified Subscription and Policy Management"
     comment: "Priority: Major, Status: Closed"
+    owner: "Eder"
 
   - id: RHAIRFE-1940
     title: "EvalHub UI: Configurable Quality Thresholds for Benchmarks and Evaluation Collections"
     comment: "Priority: Major, Status: Stakeholder review, Related STRATs: RHAISTRAT-26 (Incorporates)"
+    owner: "Eder"
 
   - id: RHAIRFE-1968
     title: "EvalHub UI: Real-Time Run Progress and Failure Status Visibility on the Evaluations Dashboard"
     comment: "Priority: Major, Status: Stakeholder review, Related STRATs: RHAISTRAT-26 (Incorporates)"
+    owner: "Eder"
 
   - id: RHAIRFE-1970
     title: "Surface model cold-start and vRAM metrics in Model Catalog"
     comment: "Priority: Critical, Status: New"
+    owner: "Eder"
 
   - id: RHAIRFE-1971
     title: "EvalHub UI: Evaluation Run Configuration Validation and Primary Metric Selection"
     comment: "Priority: Major, Status: Stakeholder review, Related STRATs: RHAISTRAT-26 (Incorporates)"
+    owner: "Eder"
 
   - id: RHAIRFE-1972
     title: "EvalHub UI: Side-by-Side Evaluation Run Comparison for AI Artifacts"
     comment: "Priority: Major, Status: Stakeholder review, Related STRATs: RHAISTRAT-26 (Incorporates)"
-
+    owner: "Eder"
