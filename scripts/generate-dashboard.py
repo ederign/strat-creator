@@ -268,6 +268,11 @@ def extract_run_stats(run_dir, config):
     reviewed = [s for s in strategies if s["recommendation"] not in ("—", "")]
     total = len(strategies)
     total_reviewed = len(reviewed)
+
+    # Skip runs where review stage didn't complete (no reviewed strategies)
+    if total_reviewed == 0:
+        return None
+
     approved = sum(1 for s in reviewed if is_approve(s["recommendation"]))
     revise = sum(1 for s in reviewed if is_revise(s["recommendation"]))
 
@@ -389,6 +394,82 @@ def compute_deltas(runs):
             run["delta_revision"] = run["revision_rate"] - prev["revision_rate"]
 
 
+def compute_executive_summary(runs):
+    """Dedup strategies across all runs, keeping the most recent version of each.
+
+    For each unique strategy ID, picks the latest run that contains it.
+    Returns aggregate KPIs and the deduped strategy list.
+    """
+    # Runs are sorted oldest-first; iterate newest-first for dedup
+    seen = {}
+    for run in reversed(runs):
+        for s in run["strategies"]:
+            strat_id = s["strat_id"]
+            if strat_id not in seen:
+                seen[strat_id] = {
+                    **s,
+                    "run_id": run["run_id"],
+                    "run_label": run["label"],
+                }
+
+    strategies = sorted(seen.values(), key=lambda s: s["strat_id"])
+
+    total = len(strategies)
+    reviewed = [s for s in strategies if s["recommendation"] not in ("—", "")]
+    total_reviewed = len(reviewed)
+    approved = sum(1 for s in reviewed if is_approve(s["recommendation"]))
+    revise = sum(1 for s in reviewed if is_revise(s["recommendation"]))
+    reject = sum(1 for s in reviewed if is_reject(s["recommendation"]))
+    split_count = sum(1 for s in reviewed if is_split(s["recommendation"]))
+    needs_attention = sum(1 for s in reviewed if s.get("needs_attention", False))
+
+    dimensions = ["feasibility", "testability", "scope", "architecture"]
+    dim_stats = {}
+    for dim in dimensions:
+        scored_vals = [s["scores"][dim] for s in strategies
+                       if s.get("scores") and s["scores"].get(dim) is not None]
+        dim_total = len(scored_vals)
+        dim_pass = sum(1 for v in scored_vals if v == 2)
+        dim_partial = sum(1 for v in scored_vals if v == 1)
+        dim_fail = sum(1 for v in scored_vals if v == 0)
+        dim_sum = sum(scored_vals)
+        dim_max = dim_total * 2
+        dim_stats[dim] = {
+            "total": dim_total,
+            "pass": dim_pass,
+            "partial": dim_partial,
+            "fail": dim_fail,
+            "rate": pct(dim_sum, dim_max),
+        }
+
+    scored = [s for s in strategies
+              if s.get("scores") and s["scores"].get("total") is not None]
+    avg_total_score = (round(sum(s["scores"]["total"] for s in scored) / len(scored), 1)
+                       if scored else None)
+
+    weakest_dim = min(dimensions, key=lambda d: dim_stats[d]["rate"]) if strategies else "—"
+    strongest_dim = max(dimensions, key=lambda d: dim_stats[d]["rate"]) if strategies else "—"
+
+    return {
+        "total": total,
+        "reviewed": total_reviewed,
+        "approved": approved,
+        "revise": revise,
+        "reject": reject,
+        "split": split_count,
+        "needs_attention": needs_attention,
+        "approval_rate": pct(approved, total_reviewed),
+        "revision_rate": pct(revise, total_reviewed),
+        "reject_rate": pct(reject, total_reviewed),
+        "avg_total_score": avg_total_score,
+        "dimensions": dim_stats,
+        "weakest_dim": weakest_dim,
+        "strongest_dim": strongest_dim,
+        "strategies": strategies,
+        "total_runs": len(runs),
+    }
+
+
 # ─── HTML generation ──────────────────────────────────────────────────────────
 
 def _delta_html(current, prev, field, is_pct=True):
@@ -405,7 +486,7 @@ def _delta_html(current, prev, field, is_pct=True):
     return f'<span style="color:{color}">{sign}{delta}{suffix} vs prev</span>'
 
 
-def generate_dashboard(runs, output_path):
+def generate_dashboard(runs, exec_summary, output_path):
     """Generate the full dashboard HTML."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
     current = runs[-1] if runs else None
@@ -413,6 +494,7 @@ def generate_dashboard(runs, output_path):
 
     # Prepare JSON data (strip strategy HTML bodies for overview; keep for detail)
     runs_json = json.dumps(runs, indent=None)
+    exec_json = json.dumps(exec_summary, indent=None)
 
     # Delta arrows
     if current and current.get("delta_approval") is not None:
@@ -606,13 +688,19 @@ tr.clickable {{ cursor: pointer; }}
 </div>
 
 <div class="nav-tabs">
-    <div class="nav-tab active" onclick="switchPage('overview')">Overview</div>
+    <div class="nav-tab active" onclick="switchPage('executive')">Executive Summary</div>
+    <div class="nav-tab" onclick="switchPage('overview')">Per-Run Trends</div>
     <div class="nav-tab" onclick="switchPage('run-detail')">Run Detail</div>
     <div class="nav-tab" onclick="switchPage('pipeline')">Pipeline</div>
 </div>
 
+<!-- ═══ EXECUTIVE SUMMARY PAGE ═══ -->
+<div class="nav-page active" id="page-executive">
+<div id="exec-content"></div>
+</div>
+
 <!-- ═══ OVERVIEW PAGE ═══ -->
-<div class="nav-page active" id="page-overview">
+<div class="nav-page" id="page-overview">
 
 <div class="hero">
     <div class="hero-statement" style="color:{hero_color}">{escape_html(hero_text)}</div>
@@ -816,6 +904,7 @@ graph LR
 
 <script>
 const RUNS = {runs_json};
+const EXEC = {exec_json};
 
 // ─── Page switching ──────────────────────────────────────────────────────────
 function switchPage(page) {{
@@ -832,7 +921,213 @@ function showRunDetail(idx) {{
     document.querySelectorAll('.nav-page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
     document.getElementById('page-run-detail').classList.add('active');
-    document.querySelectorAll('.nav-tab')[1].classList.add('active');
+    document.querySelectorAll('.nav-tab')[2].classList.add('active');
+}}
+
+// ─── Executive summary ──────────────────────────────────────────────────────
+function renderExecutiveSummary() {{
+    const e = EXEC;
+    const el = document.getElementById('exec-content');
+    const dims = ['feasibility','testability','scope','architecture'];
+    const rate = e.approval_rate;
+    const heroColor = healthColor(rate);
+    const avgScoreHtml = e.avg_total_score !== null && e.avg_total_score !== undefined
+        ? `${{e.avg_total_score}}<span style="font-size:16px;color:#6e7681">/8</span>`
+        : '—';
+    const avgScorePct = e.avg_total_score !== null ? Math.round(e.avg_total_score / 8 * 100) : 0;
+
+    let html = `<div class="hero">
+        <div class="hero-statement" style="color:${{heroColor}}">${{e.approved}} of ${{e.reviewed}} unique strategies approved (${{rate}}%)</div>
+        <div class="hero-sub">${{e.total}} unique strategies across ${{e.total_runs}} pipeline runs | Deduped by most recent run per strategy</div>
+    </div>`;
+
+    // KPI cards
+    html += `<div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr)">
+        <div class="kpi"><div class="kpi-value" style="color:#58a6ff">${{e.total}}</div><div class="kpi-label">Unique Strategies</div><div class="kpi-detail">Across ${{e.total_runs}} runs</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:${{heroColor}}">${{rate}}%</div><div class="kpi-label">Approval Rate</div><div class="kpi-detail">${{e.approved}} approved</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:${{healthColor(avgScorePct)}}">${{avgScoreHtml}}</div><div class="kpi-label">Avg Score</div><div class="kpi-detail">Threshold: 6/8</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:#f85149">${{e.needs_attention}}</div><div class="kpi-label">Needs Attention</div><div class="kpi-detail">${{e.needs_attention === 0 ? 'All clear' : 'Staff engineer review'}}</div></div>
+    </div>`;
+
+    // Verdict distribution
+    html += `<div class="two-col">`;
+
+    // Left: verdict donut
+    html += `<div class="chart-card"><h3>Verdict Distribution</h3>
+        <div style="display:flex;align-items:center;gap:24px">
+        <canvas id="exec-donut" width="200" height="200" style="max-width:200px"></canvas>
+        <div style="font-size:13px;line-height:2">
+            <div><span style="display:inline-block;width:12px;height:12px;background:#3fb950;border-radius:2px;margin-right:6px"></span>Approve: <strong>${{e.approved}}</strong></div>
+            <div><span style="display:inline-block;width:12px;height:12px;background:#d29922;border-radius:2px;margin-right:6px"></span>Revise: <strong>${{e.revise}}</strong></div>
+            <div><span style="display:inline-block;width:12px;height:12px;background:#f78166;border-radius:2px;margin-right:6px"></span>Split: <strong>${{e.split}}</strong></div>
+            <div><span style="display:inline-block;width:12px;height:12px;background:#f85149;border-radius:2px;margin-right:6px"></span>Reject: <strong>${{e.reject}}</strong></div>
+        </div>
+        </div>
+    </div>`;
+
+    // Right: dimension health bars
+    html += `<div class="chart-card"><h3>Quality by Dimension</h3>`;
+    dims.forEach(dim => {{
+        const ds = e.dimensions[dim];
+        const drate = ds.rate;
+        const pw = ds.total > 0 ? Math.round(100*(ds.pass||0)/ds.total) : 0;
+        const partw = ds.total > 0 ? Math.round(100*(ds.partial||0)/ds.total) : 0;
+        const fw = ds.total > 0 ? Math.round(100*(ds.fail||0)/ds.total) : 0;
+        html += `<div class="dim-row" style="margin-bottom:8px">
+            <div class="dim-label" style="width:100px">${{dim.charAt(0).toUpperCase()+dim.slice(1)}}</div>
+            <div class="dim-bar-container"><div class="dim-bar-track">
+                <div class="dim-bar-seg" style="width:${{pw}}%;background:#3fb950" title="${{ds.pass||0}} scored 2/2"></div>
+                <div class="dim-bar-seg" style="width:${{partw}}%;background:#d29922" title="${{ds.partial||0}} scored 1/2"></div>
+                <div class="dim-bar-seg" style="width:${{fw}}%;background:#f85149" title="${{ds.fail||0}} scored 0/2"></div>
+            </div></div>
+            <div class="dim-rate" style="color:${{healthColor(drate)}}">${{drate}}%</div>
+        </div>`;
+    }});
+    html += `<div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:#6e7681">
+        <span><span style="display:inline-block;width:10px;height:10px;background:#3fb950;border-radius:2px;margin-right:4px"></span>2/2 (pass)</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#d29922;border-radius:2px;margin-right:4px"></span>1/2 (gaps)</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#f85149;border-radius:2px;margin-right:4px"></span>0/2 (fail)</span>
+    </div></div>`;
+    html += `</div>`;
+
+    // Attention funnel
+    const readyCount = e.reviewed - e.needs_attention;
+    html += `<div class="two-col">
+        <div class="chart-card"><h3>Readiness Funnel</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:12px">
+                <div style="background:#23302a;border-radius:6px;height:32px;display:flex;align-items:center;padding:0 16px;width:${{e.total > 0 ? Math.max(Math.round(100*e.total/e.total), 10) : 10}}%;min-width:fit-content">
+                    <span style="color:#3fb950;font-weight:600">${{e.total}}</span></div>
+                <span style="color:#8b949e;font-size:13px">Total strategies created</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+                <div style="background:#1f3a5f;border-radius:6px;height:32px;display:flex;align-items:center;padding:0 16px;width:${{e.total > 0 ? Math.max(Math.round(100*e.reviewed/e.total), 10) : 10}}%;min-width:fit-content">
+                    <span style="color:#58a6ff;font-weight:600">${{e.reviewed}}</span></div>
+                <span style="color:#8b949e;font-size:13px">Reviewed</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+                <div style="background:#23302a;border-radius:6px;height:32px;display:flex;align-items:center;padding:0 16px;width:${{e.total > 0 ? Math.max(Math.round(100*readyCount/e.total), 10) : 10}}%;min-width:fit-content">
+                    <span style="color:#3fb950;font-weight:600">${{readyCount}}</span></div>
+                <span style="color:#8b949e;font-size:13px">Ready for implementation</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+                <div style="background:#2d1418;border-radius:6px;height:32px;display:flex;align-items:center;padding:0 16px;width:${{e.total > 0 ? Math.max(Math.round(100*e.needs_attention/e.total), 10) : 10}}%;min-width:fit-content">
+                    <span style="color:#f85149;font-weight:600">${{e.needs_attention}}</span></div>
+                <span style="color:#8b949e;font-size:13px">Needs staff engineer input</span>
+            </div>
+        </div>
+        </div>
+        <div class="chart-card"><h3>Score Distribution</h3>
+            <canvas id="exec-histogram"></canvas>
+        </div>
+    </div>`;
+
+    // Per-strategy table
+    html += `<div class="grid-section"><h3>All Unique Strategies (deduped)</h3>
+    <table><thead><tr>
+        <th>Strat ID</th><th>Title</th><th>Source RFE</th><th>Priority</th>
+        <th>F</th><th>T</th><th>S</th><th>A</th><th>Score</th><th>Verdict</th><th>Attention</th><th>Run</th>
+    </tr></thead><tbody>`;
+    e.strategies.forEach(s => {{
+        const sc = s.scores;
+        let scoreCells = '';
+        if (sc) {{
+            ['feasibility','testability','scope','architecture'].forEach(d => {{
+                const v = sc[d];
+                scoreCells += `<td style="${{scoreStyle(v)}};text-align:center;font-weight:600">${{v !== null && v !== undefined ? v : '—'}}</td>`;
+            }});
+            const totalPct = sc.total !== null ? Math.round(sc.total / 8 * 100) : 0;
+            scoreCells += `<td style="color:${{healthColor(totalPct)}};font-weight:600;text-align:center">${{sc.total}}/8</td>`;
+        }} else {{
+            scoreCells += '<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>';
+        }}
+        const attentionHtml = s.needs_attention
+            ? '<span style="color:#f85149;font-weight:600">&#9679; Yes</span>'
+            : '<span style="color:#3fb950">&#10003;</span>';
+        html += `<tr>
+            <td><strong>${{s.strat_id}}</strong></td>
+            <td>${{s.title}}</td>
+            <td>${{s.source_rfe}}</td>
+            <td>${{s.priority}}</td>
+            ${{scoreCells}}
+            <td class="${{verdictClass(s.recommendation)}}">${{verdictLabel(s.recommendation)}}</td>
+            <td style="text-align:center">${{attentionHtml}}</td>
+            <td style="font-size:12px;color:#6e7681">${{s.run_label}}</td>
+        </tr>`;
+    }});
+    html += '</tbody></table></div>';
+
+    el.innerHTML = html;
+
+    // Donut chart
+    new Chart(document.getElementById('exec-donut'), {{
+        type: 'doughnut',
+        data: {{
+            labels: ['Approve', 'Revise', 'Split', 'Reject'],
+            datasets: [{{
+                data: [e.approved, e.revise, e.split, e.reject],
+                backgroundColor: ['#3fb950', '#d29922', '#f78166', '#f85149'],
+                borderWidth: 0,
+                hoverOffset: 6,
+            }}]
+        }},
+        options: {{
+            responsive: true,
+            cutout: '60%',
+            plugins: {{
+                legend: {{ display: false }},
+            }},
+        }},
+    }});
+
+    // Score histogram
+    const scoreBuckets = [0,0,0,0,0,0,0,0,0]; // 0-8
+    e.strategies.forEach(s => {{
+        if (s.scores && s.scores.total !== null && s.scores.total !== undefined) {{
+            scoreBuckets[s.scores.total]++;
+        }}
+    }});
+    new Chart(document.getElementById('exec-histogram'), {{
+        type: 'bar',
+        data: {{
+            labels: ['0','1','2','3','4','5','6','7','8'],
+            datasets: [{{
+                label: 'Strategies',
+                data: scoreBuckets,
+                backgroundColor: scoreBuckets.map((_, i) => i >= 6 ? '#3fb950' : i >= 3 ? '#d29922' : '#f85149'),
+                borderRadius: 4,
+            }}]
+        }},
+        options: {{
+            responsive: true,
+            plugins: {{
+                legend: {{ display: false }},
+                annotation: {{
+                    annotations: {{
+                        threshold: {{
+                            type: 'line',
+                            xMin: 5.5, xMax: 5.5,
+                            borderColor: '#3fb950',
+                            borderWidth: 2,
+                            borderDash: [6, 3],
+                            label: {{
+                                display: true,
+                                content: 'Approve threshold',
+                                position: 'start',
+                                color: '#3fb950',
+                                font: {{ size: 10 }},
+                                backgroundColor: 'rgba(0,0,0,0.7)',
+                            }}
+                        }}
+                    }}
+                }}
+            }},
+            scales: {{
+                x: {{ title: {{ display: true, text: 'Total Score', color: '#6e7681' }}, grid: {{ display: false }} }},
+                y: {{ title: {{ display: true, text: 'Count', color: '#6e7681' }}, ticks: {{ stepSize: 1 }}, grid: {{ color: '#161b22' }} }},
+            }},
+        }},
+    }});
 }}
 
 // ─── Build run list ──────────────────────────────────────────────────────────
@@ -1321,6 +1616,7 @@ if (dContainer) {{
 }}
 
 // ─── Init ────────────────────────────────────────────────────────────────────
+renderExecutiveSummary();
 buildRunList();
 buildRunSelector();
 initCharts();
@@ -1398,7 +1694,10 @@ def main():
 
     print(f"Found {len(runs)} run(s)")
     compute_deltas(runs)
-    generate_dashboard(runs, args.output)
+    exec_summary = compute_executive_summary(runs)
+    print(f"Executive summary: {exec_summary['total']} unique strategies "
+          f"({exec_summary['approved']} approved, {exec_summary['needs_attention']} need attention)")
+    generate_dashboard(runs, exec_summary, args.output)
 
 
 if __name__ == "__main__":
