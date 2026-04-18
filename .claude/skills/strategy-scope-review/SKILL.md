@@ -25,6 +25,8 @@ For each strategy:
 4. **Does it deliver a complete capability?** Will the user actually be able to do something useful when this ships? Or is it a partial delivery that needs follow-on work to be valuable?
 5. **Are there scope risks?** Phrases like "and related functionality," "all necessary changes," or "full support for" are scope traps. Flag them.
 6. **Does the strategy silently expand or shrink the RFE?** Compare the strategy's actual deliverables against the RFE's acceptance criteria. The strategy should deliver what the RFE asks for — no more, no less.
+7. **Are requirements prioritized?** Requirements should have priority markers (P0/P1/P2). A flat, unprioritized list for L/XL strategies is a scope signal — it means everything appears equally critical, which makes scope tradeoffs impossible during implementation.
+8. **Are out-of-scope items listed?** A strategy without an explicit Out-of-Scope section for L/XL effort is a scope risk. Adjacent features, future phases, and deferred integrations should be explicitly excluded to prevent scope creep.
 
 If this is a re-review:
 - What concerns from the prior review were addressed?

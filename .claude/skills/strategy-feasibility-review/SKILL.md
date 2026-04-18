@@ -28,6 +28,9 @@ For each strategy:
 3. **Is the effort estimate credible?** Given the component count, cross-team coordination, and technical complexity, does the T-shirt size make sense?
 4. **Are there hidden dependencies or integration challenges?** Things the strategy doesn't mention that will surface during implementation.
 5. **What's harder than it looks?** If something is described as straightforward but isn't, explain why.
+6. **Are Risks and Assumptions separated?** Risks (things that could go wrong) and Assumptions (things believed true but unvalidated) serve different purposes. Combined or missing sections indicate the strategy hasn't distinguished between what needs mitigation and what needs validation.
+7. **Does each risk have a concrete mitigation?** "Track closely", "monitor", or "coordinate with team" are not mitigations — a mitigation is a specific action or fallback that reduces impact if the risk materializes.
+8. **Is the Risks section populated?** An empty Risks section for a multi-team or L/XL strategy indicates unknowns haven't been surfaced, not that none exist. Every non-trivial strategy has risks — absence of listed risks is itself a red flag.
 
 If this is a re-review:
 - What concerns from the prior review were addressed?
