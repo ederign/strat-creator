@@ -46,24 +46,30 @@ If architecture context is not available, note this and produce the best refinem
 
 ## What to Produce
 
-For each strategy, use the template in `${CLAUDE_SKILL_DIR}/strat-template.md`. Fill in:
+For each strategy, use the unified template in `${CLAUDE_SKILL_DIR}/strat-template.md`. All sizes produce all sections — scale depth, not section count. Fill in:
 
-1. **Technical Approach** — How do we deliver this business need? What components are involved? What's the high-level design?
+1. **Technical Approach** — How do we deliver this business need? What components are involved? What's the high-level design? Reference specific personas and scenarios from the RFE to ground technical decisions in user outcomes. If the RFE lacks personas or scenarios, flag this in Open Questions.
 2. **Affected Components** — Which platform components are touched? Reference actual component names from the architecture context.
 3. **Impacted Teams** — Which teams own the affected components and need to be involved?
-4. **Dependencies** — What must exist or change before this can be built? External dependencies, upstream/downstream components, API contracts.
-5. **Non-Functional Requirements** — Performance, scalability, security, availability, backwards compatibility requirements implied by the RFE.
-6. **Effort Estimate** — T-shirt size (S/M/L/XL) with justification based on component count, cross-team coordination, and technical complexity.
-7. **Risks** — What could go wrong? What are we uncertain about?
-8. **Open Questions** — Things that need answers before implementation can start.
+4. **High Level Requirements** — Extract functional requirements from the RFE. Add priority markers: [P0] must have (blocks ship), [P1] should have (important, not blocking), [P2] nice to have (defer if effort exceeds estimate). If the RFE already has user stories, preserve them with priority markers added.
+5. **Dependencies** — What must exist or change before this can be built? External dependencies, upstream/downstream components, API contracts.
+6. **Non-Functional Requirements** — Performance, scalability, security, availability, backwards compatibility requirements implied by the RFE. Each NFR needs a numeric threshold where applicable. Do NOT write generic statements like "good performance", "secure access", or "high availability" — these are not testable. If the RFE doesn't specify a metric, flag the gap in Open Questions rather than inventing targets.
+7. **Out-of-Scope** — What is explicitly NOT part of this strategy. Include adjacent features that might be confused with this one, future phases, and integrations deferred to later releases. Generate for ALL sizes.
+8. **Acceptance Criteria** — Derive testable criteria from the RFE requirements and the technical approach. Prefer Given/When/Then format with "measured by" clauses where it fits naturally. Binary verification checks (e.g., "Component X is absent from config") do not need Given/When/Then framing. Mark the section as "(Proposed — requires PM/Engineering validation)". Do NOT use: "works correctly" (vague), "users can easily..." (subjective), or capability lists without verification methods.
+9. **Effort Estimate** — T-shirt size (S/M/L/XL) with justification based on component count, cross-team coordination, and technical complexity.
+10. **Risks** — What could go wrong? Each risk MUST have a concrete mitigation. "Track closely" is NOT a mitigation — a mitigation is a specific action or fallback.
+11. **Assumptions** — Statements believed true but not yet validated. Each assumption gets a validation status: confirmed, needs validation, or unknown. Flag any that must be validated before work starts.
+12. **Open Questions** — Things that need answers before implementation can start. Include gaps surfaced by other sections: missing NFR metrics, unresolved personas, dependency status unknowns, acceptance criteria that need PM confirmation.
+13. **Supporting Documentation** — Link to the source RFE, architecture context docs referenced during refinement, and any existing ADRs or design docs. Leave placeholder slots for docs that don't exist yet.
 
 ## Rules
 
 - **Ground in architecture.** Reference actual components, APIs, CRDs, and integration patterns from the architecture context. Don't invent components.
 - **Don't weaken the business case.** The RFE says what the customer needs. The strategy says how to deliver it. If the technical approach can't fully deliver the RFE, say so explicitly — don't silently reduce scope.
 - **Be honest about complexity.** If this is harder than the RFE's size estimate suggests, say so with specifics.
-- **Scale output to size.** S-sized strategies get concise treatment. XL gets the full template.
+- **Scale depth to size.** All sizes produce all sections. S-sized strategies get concise content per section. L/XL get detailed content, tables, and subsections. The template has per-section size guidance in comments.
 - **Flag scope risks.** If delivering the RFE as written would require significantly more work than a single feature, flag it.
+- **Business Need is "The Why".** The `## Business Need (from RFE)` section serves as "The Why" in the Feature Refinement Template. Do not rename, duplicate, or paraphrase it.
 
 ## Output
 
