@@ -28,95 +28,93 @@ REJECT:   total < 3   OR   zeros in 2+ dimensions
 
 **The split trigger:** Scope = 0 specifically triggers SPLIT (not REVISE) because the fix is decomposition, not revision. The other dimensions must be adequate (all >= 1) — don't split a strategy with fundamental feasibility problems.
 
+**Needs attention:** Only APPROVE passes the gate automatically. REVISE, SPLIT, and REJECT all require human review.
+
+| Verdict | Needs Attention | What it means |
+|---------|-----------------|---------------|
+| APPROVE | false | Auto-approved, done |
+| REVISE  | true  | Fixable quality issues — human reviews and fixes |
+| SPLIT   | true  | Scope problem — human decides decomposition |
+| REJECT  | true  | Fundamental problems across multiple dimensions |
+
 ## Calibration Examples
 
-All examples are from real pipeline output (strat-pipeline-data/RHAISTRAT/current/).
+All examples are from real RHOAI 3.4 Feature Refinement documents unless noted otherwise. Strategy IDs reference Jira items for traceability.
 
 ---
 
 ### Feasibility
 
-#### F=2: STRAT-1469 (Llama Stack Distribution Cleanup)
+#### F=2: RHAISTRAT-1161 (MLflow GA Integration in RHOAI)
 
-> Effort S is credible for what is essentially a config.yaml edit, Containerfile cleanup, doc update, and test update.
-
-**Why 2:** No external blockers. The strategy describes removing four inline providers from `config.yaml` and letting the build system drop transitive dependencies. The work is bounded, the effort estimate is credible, and breaking change risk is mitigated by EA status. One deliverable, one team, no design questions.
+GA promotion of existing Tech Preview — the work is bounded and precedented, not greenfield design. The support scope table enumerates 20+ MLflow sub-features with explicit In Scope/SDK/No designations, making the effort estimate verifiable. Risks are specific with mitigations: Z architecture support has a concrete fallback ("unless we get IBM support for Z builds"), and the upstream bug dependency (#21516) is tracked. No unresolved blockers on the critical path.
 
 **What to look for:**
 - Effort estimate matches the actual work described
 - No unresolved "open questions" on the critical path
 - External dependencies (if any) have known status and fallback plans
-- Risk mitigations are specific, not vague
+- Risk mitigations are specific, not vague ("track closely" is not a mitigation)
+- Risks section is populated. An empty Risks section for a multi-team or L/XL strategy indicates unknowns haven't been surfaced, not that none exist. Each risk should have a concrete mitigation.
 
-#### F=1: STRAT-1432 (Structured Output Enforcement)
+#### F=1: RHAISTRAT-1201 (API Key Management for MaaS)
 
-> The entire Phase 1 depends on xgrammar `structural_tag` (RFC #32142), which is listed as 'in progress' with unknown merge date. The strategy acknowledges this blocks Phase 1 'entirely' but offers only weak mitigation ('track RFC closely; participate in upstream review; evaluate alternative approaches').
-
-**Why 1, not 0:** The technical approach is sound — grammar-based enforcement during tool call generation is the right architecture. But the critical path dependency has no fallback. A strategy that says "track closely" for a hard blocker is not a contingency plan.
+Technical approach is sound — opaque keys, hash-only storage, Authorino gateway integration. But the Risks & Assumptions section is empty for a feature replacing the production authentication model. GA is conditional on an unresolved Jira blocker (RHOAIENG-51950) that the strategy never explains. Pluggable storage backend is hand-waved as "future support" with no design sketch. The approach is credible; the risk analysis is absent.
 
 **Also contributing to 1:**
-- Parser trigger token detection is underspecified (how does it work at the token level?)
-- Multi-tool call grammar transitions are acknowledged but undesigned
-- Streaming enforcement is treated as a testing concern, not an architecture concern
+- Hard blocker status is unknown, not just "in progress"
+- Pluggable storage mentioned without design sketch
+- Risk analysis absent for a security-critical feature
 
-**The fix that would make it a 2:** Add a Phase 0 that delivers value without `structural_tag` (e.g., `tool_choice="required"` enforcement only), and define concrete trigger detection logic for at least the two most common parser formats.
+**The fix that would make it a 2:** Populate the Risks section with specific risks and mitigations, resolve the Jira blocker status, and sketch the storage backend approach.
 
-#### F=0: STRAT-1547 (External Model Registration) — Architecture sub-dimension
+#### F=0: RHAISTRAT-1172 (RHAII UI — Inference Service SKU)
 
-> The ExternalModel handler is a stub — the strategy underestimates backend work. [...] Request/response translation is a critical unresolved question, not an open question. [...] The RFE acceptance criteria lists 'MVP providers - OpenAI, Anthropic, Bedrock' — at least two of three MVP providers require request translation. The strategy cannot defer this question.
-
-**Why 0:** The strategy sizes the work as M, but the backend alone is an M and the UI is another M. Two of three MVP providers need request translation that isn't described, sized, or assigned. The hard blocker (RHAISTRAT-1295) has unknown status. When the core scope is unknowable because a fundamental design question is deferred, feasibility is 0.
+Status is "Not started." No effort estimate exists. The feature requires a UI that "functions consistently across certified 3rd party Kubernetes engines" (AKS, EKS, OpenShift) — a massive cross-platform undertaking — with zero implementation planning. It depends on at least 3 other undelivered RHAISTRAT features. Prerequisite sections are unanswered template placeholders. This is a vision document, not a strategy — fundamental design questions aren't deferred, they haven't been asked yet.
 
 **What pushes F from 1 to 0:**
-- The strategy cannot be sized because a fundamental question is unresolved
+- The strategy cannot be sized because fundamental design questions are deferred
 - Multiple MVP scope items require work that isn't described
-- Hard blocker status is unknown (not just "in progress" — unknown)
+- Hard blocker status is unknown
 
 ---
 
 ### Testability
 
-#### T=2: STRAT-1469 (Llama Stack Distribution Cleanup)
+#### T=2: RHAISTRAT-1213 (AgentCard Discovery)
 
-> All acceptance criteria are directly testable with concrete verification steps. Each inline provider removal (AC1-4) can be verified by: (a) confirming the provider is absent from `config.yaml`, (b) confirming the corresponding Python dependencies are absent from the built image (`pip list` or `pip show` returning not-found for torch, transformers, faiss-cpu, pymilvus-lite), (c) confirming the provider cannot be instantiated at runtime. These are binary pass/fail checks.
-
-**Why 2:** Every acceptance criterion maps to a concrete, automatable verification step. Image size reduction has a measurable target (2-4 GB). The tests are binary (provider present or absent, dependency installed or not). No subjective judgment needed.
+Nine acceptance criteria in Given/When/Then format, each binary-verifiable. Criteria cover the happy path (auto-create AgentCard CR with owner reference), failure modes (CRD not installed → 404 fallback to workload-based discovery), security verification (JWS signature → SignatureVerified condition, status.validSignature, label propagation), and cleanup (garbage collection via owner references). Every criterion can be validated by an automated test — no subjective assessment required.
 
 **What to look for:**
 - Each criterion has a concrete verification method (not just "works correctly")
 - Thresholds are numeric where applicable (size reduction, latency, error rates)
-- Edge cases are identified (upgrade path from EA users who used inline providers)
+- Edge cases are identified
 - Tests are binary pass/fail, not subjective assessment
+- Non-functional requirements have numeric thresholds (latency, throughput, error rates). "Good performance" or "scalable" are not testable. Missing NFRs for L/XL strategies is a gap.
 
-#### T=1: STRAT-1625 (Resource Badges)
+#### T=1: RHAISTRAT-1161 (MLflow GA Integration)
 
-> The 'Updated' badge derivation is the weakest testability point. The strategy says 'Updated' applies when an OdhDocument's content changed in the current release but existed in a prior release. The feasibility review flagged that the dashboard has no prior-version state available client-side.
+Criteria exist and describe real user outcomes — "I can visualize metrics, artifacts and parameters from all the supported sources" — but lack concrete thresholds. Which metrics? What does "all supported sources" mean concretely? No edge cases (MLflow unavailable? artifact storage misconfigured?). The feature's support scope table is excellent documentation that enumerates 20+ sub-features, but none of that precision carries into the acceptance criteria. Good intent, insufficient specification.
 
-**Why 1, not 2:** Two of three badge types (New, Recommended) have clear verification methods. But the "Updated" badge derivation logic is undefined — the test can't be written until the exact logic is defined. One unclear criterion out of three keeps this from a 2.
+**Why 1, not 2:** Good intent but insufficient specification — the test can't be written from the criteria alone.
 
-**Why 1, not 0:** Most criteria are testable. The gap is narrow (one badge type's derivation logic) and fixable (commit to a specific derivation rule).
+**Why 1, not 0:** Criteria describe real user outcomes, not aspirational statements. The gap is precision, not relevance.
 
-#### T=0: STRAT-1432 (Structured Output Enforcement)
+#### T=0: RHAISTRAT-1208 (llm-d on xKS)
 
-> Acceptance criteria 1 ('produces only well-formed, schema-conformant tool calls') is testable in principle but lacks a verification protocol. How do you prove a negative — that malformed tool calls are 'impossible'?
-
-**Why 0:** The primary acceptance criterion asks for proof of a negative ("impossible" to produce malformed calls). No finite test suite can prove this. The test matrix is undefined (which parsers? which models? which schema complexity levels?). Multi-tool call testing is entirely absent despite being the primary production use case. The strategy's own open questions reveal that the acceptance criteria can't be tested until design questions are resolved.
+The entire acceptance criteria for a multi-team, multi-cloud, multi-quarter feature is one sentence: "Customers can easily deploy a supported llm-d instance on CKS/AKS and leverage it for our well lit paths." "Easily" is subjective. "Supported" is undefined. The four "well lit paths" (KV Cache, P/D Disaggregation, Expert Parallelism, Scheduling) are listed in requirements but have zero verification criteria. A single vague sentence for an L-sized feature across six teams is not an acceptance criterion — it's a wish.
 
 **What pushes T from 1 to 0:**
 - Primary criterion is provably untestable as written
-- No test matrix defined (parsers x models x modes x streaming)
-- Primary use case (parallel tool calls) absent from criteria entirely
-- Multiple criteria depend on unresolved design decisions
+- No test matrix defined for key dimensions
+- Primary use case absent from criteria
 
 ---
 
 ### Scope
 
-#### S=2: STRAT-1469 (Llama Stack Distribution Cleanup)
+#### S=2: RHAISTRAT-1167 (vLLM Support for MaaS)
 
-> The scope is explicitly bounded. The strategy names exactly four providers to remove (inline::milvus, inline::localfs, inline::sentence-transformers, inline::faiss). It does not use phrases like 'and related functionality' or 'all inline providers.' The scope is a closed set.
-
-**Why 2:** Finite, enumerated deliverables. No open-ended phrases. Clear definition of done ("image contains only remote providers"). One team, one component. Effort S credibly matches the work. The strategy delivers a complete capability — no follow-on work needed to realize value.
+Focused single deliverable: extend MaaS from llm-d-only to include vLLM. Four enumerated requirements (Create flow, Edit flow, OOTB configs, Existing deployments) — no "and related functionality." Out-of-scope is crisp: no auto-conversion of existing deployments, no customer ServingRuntime conversion. Single team boundary, bounded component set. The strategy knows exactly what it is and isn't.
 
 **What to look for:**
 - Deliverables are enumerated (a finite list, not "and related")
@@ -124,20 +122,19 @@ All examples are from real pipeline output (strat-pipeline-data/RHAISTRAT/curren
 - Effort estimate matches the work described
 - Single team, bounded component set
 - No scope expansion risk ("stretch goals", "and more")
+- Out-of-scope items are explicitly listed. A feature with no out-of-scope list for L/XL effort is a scope risk signal.
 
-#### S=1: STRAT-1432 (Structured Output Enforcement)
+#### S=1: RHAISTRAT-1235 (MaaS Usage Dashboard)
 
-> Effort L is underestimated given the actual scope. [...] One scope risk: multi-tool call handling. The strategy leaves parallel tool calling as an open question. In production, parallel tool calls are common for agentic workflows (the RFE's primary use case).
+Two separately-tracked Jira features combined into one document: the admin dashboard (RHAISTRAT-1235) and the metric exposure pipeline (RHAISTRAT-730). Each is individually coherent, but bundling creates confusion — acceptance criteria mix two scopes and effort is harder to validate. Tech-preview status provides a natural scope limit that prevents runaway scope. Not unbounded, but not cleanly singular either.
 
-**Why 1, not 2:** The scope is bounded by two phases, but the effort is underestimated. Multi-tool call handling is left as an "open question" but is actually the primary use case. The two-phase approach doubles the test matrix without sizing it.
+**Why 1, not 2:** Two separable features bundled in one document.
 
-**Why 1, not 0:** The work is still a single coherent capability (structured output enforcement). It doesn't bundle independent features — phases 1 and 2 are sequential stages of the same feature. The scope is underestimated but not unbounded.
+**Why 1, not 0:** Only two features (not 3+), and tech-preview status naturally bounds scope.
 
-#### S=0: STRAT-1479 (MLflow Integration)
+#### S=0: RHAISTRAT-1118 (MaaS Admin UI & API Key Management)
 
-> This is three features bundled as one. [...] Feature A: MLflow logging in KFP pipeline components (data-science-pipelines team). Feature B: Eval Hub MLflow run context passthrough (Responsible AI team). Feature C: Model Registry <-> MLflow bidirectional lineage (Data Science Pipelines + MLflow teams). Each of these is independently valuable and independently deliverable.
-
-**Why 0:** Three independent features bundled. Each has different component owners, different design challenges, and different dependencies. They're independently valuable — Feature A gives pipeline observability without Feature C's lineage. Six components across five teams. The phrase "end-to-end lineage" spanning four systems is a scope trap that invites unbounded creep.
+The document header itself lists two separate Jira features (RHOAISTRAT-638, RHAISTRAT-173). The body bundles 3+ independently shippable deliverables: Tier CRUD admin UI, API Key management for developers, and YAML/UI toggle for tier configuration. Each could ship alone and deliver value. MVP/Should Have/Nice to Have prioritization spans these separable concerns — confirming they were recognized as distinct but bundled anyway. The split test is unambiguous: three features in a trench coat.
 
 **The split test:** Can each piece ship independently and deliver value? If yes, and there are 3+ such pieces, scope = 0.
 
@@ -145,17 +142,15 @@ All examples are from real pipeline output (strat-pipeline-data/RHAISTRAT/curren
 - 3+ independently valuable features bundled
 - Different teams own different features
 - "End-to-end" or "comprehensive" scope descriptors without bounds
-- All-or-nothing delivery risk (features forced to ship together)
+- All-or-nothing delivery risk
 
 ---
 
 ### Architecture
 
-#### A=2: STRAT-1469 (Llama Stack Distribution Cleanup)
+#### A=2: RHAISTRAT-1213 (AgentCard Discovery)
 
-> Dependencies are correctly identified. The strategy lists llama-stack-distribution and llama-stack-k8s-operator as affected components. [...] Removing inline providers from `config.yaml` is the architecturally correct approach — the build system resolves dependencies from the active provider list, so removing providers drops their transitive dependencies. No other RHOAI components depend on the inline providers being present.
-
-**Why 2:** Components correctly identified. Integration pattern (config-driven build) is correct per architecture docs. No cross-component conflicts. The strategy aligns with the platform's architecture pattern of using remote backends rather than bundling ML frameworks.
+Standard Kubernetes operator pattern: labeled workloads → controller watches → HTTP fetch → CRD status caching. Three controllers with clear separation of concerns (AgentCardSync creates CRs, AgentCard fetches metadata, NetworkPolicy enforces access). Owner references for garbage collection. SPIRE integration correctly scoped as conditional. RBAC requirements explicitly listed. Every architectural claim follows documented platform patterns.
 
 **What to look for:**
 - Component list matches architecture docs
@@ -164,19 +159,20 @@ All examples are from real pipeline output (strat-pipeline-data/RHAISTRAT/curren
 - Cross-component coordination needs identified (or confirmed unnecessary)
 - Deployment model is sound
 
-#### A=1: STRAT-1625 (Resource Badges)
+#### A=1: RHAISTRAT-1120 (OIDC Integration for MaaS)
 
-> Integration patterns are correct. The strategy proposes a purely client-side computation with no new API calls or backend changes. [...] The dashboard's existing ClusterRole already has `get, list` permissions on `dashboard.opendatahub.io/odhdocuments`.
+Core integration pattern is sound: external OIDC → Authorino validation → group claim extraction → MaaS entitlement. But a requirement directly contradicts a known constraint — Requirement 4 demands "provider-agnostic" authorization while internal review confirms "groups logic *cannot* be vendor-agnostic, but must instead be vendor-specific." Neither approach is wrong individually, but claiming both creates an unresolved architectural conflict. The pattern is right; a key assumption within it is wrong.
 
-**Why 1, not 2:** The architecture is correct — all data is available client-side, no new APIs needed, RBAC already exists. The only gap: the strategy doesn't confirm that OdhDocument CRD actually includes a `version` field (it mentions `lastUpdated` as an alternative without committing). This is minor but leaves one architectural question open.
+**Why 1, not 2:** One unresolved architectural conflict (vendor-agnostic vs vendor-specific).
 
-**Why 1, not 0:** The core integration pattern is sound. The gap is a single field name confirmation, not a fundamental misunderstanding of component interaction.
+**Why 1, not 0:** The core integration pattern is sound. The conflict is within a requirement, not in the fundamental architecture.
 
+<!-- A=0 is from pipeline output (dashboard35 batch). No RHOAI 3.4 refinement doc scored A=0 — architecture errors are rare in practice; gaps (A=1) are far more common. -->
 #### A=0: STRAT-1547 (External Model Registration)
 
-> HTTPRoute cannot directly proxy to external endpoints — the strategy's core traffic routing assumption is incorrect. [...] The MaaS gateway accepts HTTPRoutes that reference internal Services. An external endpoint like `api.openai.com` is not a Kubernetes Service.
+> HTTPRoute cannot directly proxy to external endpoints — the strategy's core traffic routing assumption is incorrect. The MaaS gateway accepts HTTPRoutes that reference internal Services. An external endpoint like api.openai.com is not a Kubernetes Service.
 
-**Why 0:** The core architectural assumption is wrong. The strategy says the controller creates "an HTTPRoute to proxy requests to the external provider endpoint." But HTTPRoutes route to Kubernetes Services, not external URLs. The MaaS gateway was designed for ingress, not egress proxying. Additionally, rate limiting depends on response body parsing that differs per provider (OpenAI: `usage.prompt_tokens`, Anthropic: `input_tokens`).
+Core architectural assumption is factually wrong. HTTPRoutes route to Kubernetes Services, not external URLs. Multiple downstream decisions depend on the wrong assumption.
 
 **What pushes A from 1 to 0:**
 - A core assumption about how a component works is factually wrong
@@ -188,15 +184,21 @@ All examples are from real pipeline output (strat-pipeline-data/RHAISTRAT/curren
 
 ## Scoring Summary: Real Strategies
 
+Use these to sanity-check your scoring. If your scores diverge significantly, re-examine your reasoning. All scores are from RHOAI 3.4 Feature Refinement documents.
+
 | Strategy | F | T | S | A | Total | Verdict |
 |----------|---|---|---|---|-------|---------|
-| STRAT-1469 (Llama Stack cleanup) | 2 | 2 | 2 | 2 | 8 | APPROVE |
-| STRAT-1625 (Resource badges) | 2 | 1 | 2 | 1 | 6 | APPROVE |
-| STRAT-1432 (Structured output) | 1 | 0 | 1 | 1 | 3 | REVISE |
-| STRAT-1479 (MLflow integration) | 1 | 1 | 0 | 1 | 3 | SPLIT |
-| STRAT-1547 (External models) | 0 | 1 | 1 | 0 | 2 | REJECT |
-
-Note: STRAT-1547 scored 0 in both Feasibility and Architecture (2 zeros) — this triggers REJECT, not REVISE. The original pipeline verdict was "revise" because reviewers lacked numeric thresholds. With the rubric, two fundamental problems (infeasible scope + wrong architecture) correctly maps to REJECT.
+| RHAISTRAT-1213 (AgentCard Discovery) | 2 | 2 | 2 | 2 | 8 | APPROVE |
+| RHAISTRAT-1259 (Kagenti Cleanup) | 2 | 2 | 1 | 2 | 7 | APPROVE |
+| RHAISTRAT-1161 (MLflow GA) | 2 | 1 | 2 | 2 | 7 | APPROVE |
+| RHAISTRAT-1167 (vLLM for MaaS) | 2 | 1 | 2 | 2 | 7 | APPROVE |
+| RHAISTRAT-1084 (MCP Catalog) | 1 | 1 | 2 | 2 | 6 | APPROVE |
+| RHAISTRAT-1120 (OIDC for MaaS) | 1 | 1 | 2 | 1 | 5 | REVISE |
+| RHAISTRAT-1201 (API Key Mgmt) | 1 | 1 | 1 | 1 | 4 | REVISE |
+| RHAISTRAT-1208 (llm-d on xKS) | 1 | 0 | 1 | 1 | 3 | REVISE |
+| RHAISTRAT-1118 (MaaS Admin UI) | 1 | 1 | 0 | 1 | 3 | SPLIT |
+| RHAISTRAT-1204 (GUI AutoML) | 1 | 1 | 0 | 1 | 3 | SPLIT |
+| RHAISTRAT-1172 (RHAII UI) | 0 | 0 | 0 | 1 | 1 | REJECT |
 
 ## How Reviewers Use This Rubric
 
@@ -226,8 +228,6 @@ The orchestrator computes the verdict. Reviewers never say "approve" or "revise"
 ## Edge Cases
 
 **Disagreement between reviewers and scores:** If a reviewer writes "this is fine" but scores it 1/2, the score governs. Prose can be optimistic; numbers can't.
-
-**Score-verdict mismatch with prior system:** Some strategies that previously received "revise" may now receive "reject" (like STRAT-1547 with two zeros). This is intentional — the prior system was more lenient because the quality bar was implicit.
 
 **Split vs. Reject:** A strategy with scope=0 but feasibility=0 gets REJECT, not SPLIT. Don't decompose a strategy that has fundamental problems — fix the problems first.
 
