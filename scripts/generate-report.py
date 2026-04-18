@@ -474,6 +474,13 @@ def generate_html(tasks, reviews, review_comments, skipped, config, output_path)
             <div class="grid-verdict {rec_cls}">{verdict_label(rec)}</div>
         </div>"""
 
+    skipped_count = len(skipped)
+    skipped_tab = (
+        "" if not skipped else
+        '<div class="nav-tab" onclick="switchPage('
+        "'skipped'" ')">Skipped (%d)</div>' % skipped_count
+    )
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -608,7 +615,7 @@ tr.clickable {{ cursor: pointer; }}
 <div class="nav-tabs">
     <div class="nav-tab active" onclick="switchPage('summary')">Summary</div>
     <div class="nav-tab" onclick="switchPage('details')">Details</div>
-    {"" if not skipped else '<div class="nav-tab" onclick="switchPage(\'skipped\')">Skipped (' + str(len(skipped)) + ')</div>'}
+    {skipped_tab}
     <div class="nav-tab" onclick="switchPage('pipeline')">Pipeline</div>
 </div>
 
