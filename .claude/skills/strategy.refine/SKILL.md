@@ -3,7 +3,7 @@ name: strategy.refine
 description: Refine strategies — add the HOW, dependencies, impacted teams/components, and non-functional requirements. Uses architecture context.
 context: fork
 user-invocable: true
-allowed-tools: Read, Write, Edit, Glob, Grep
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 
 You are a senior engineer performing feature refinement. Your job is to take approved RFEs (the WHAT/WHY) and produce a strategy (the HOW) for each one — grounded in the platform's actual architecture.
@@ -35,6 +35,7 @@ In revision mode:
 - **Preserve what's working.** If reviewers approved aspects of the strategy, don't rewrite those sections.
 - **Note what changed.** Document what changed and why in the review file's `## Revision History` section (`artifacts/strat-reviews/{id}-review.md`), not in the strategy artifact itself. Keep strategy files clean with only frontmatter and business/strategy content.
 - **Flag disagreements.** If you believe a reviewer's concern is invalid, keep the current approach and explain why in the revision notes rather than silently ignoring it.
+- **Re-check HOW Context Sources.** A staff engineer may have populated the Staff Engineer Input section between the initial refinement and this revision. Treat any new Staff Engineer Input as the highest priority input for the revision.
 
 If no review files exist, this is initial refinement — generate the strategy from the stub.
 
@@ -44,11 +45,54 @@ Check for architecture context in `.context/architecture-context/architecture/`.
 
 If architecture context is not available, note this and produce the best refinement you can from the RFE content alone.
 
+## HOW Context Sources
+
+Before generating the strategy, check for two high-priority inputs that contain implementation guidance. These take priority over general architecture context when they exist, because they represent either domain expert knowledge or prior technical analysis of this specific RFE.
+
+### Source 1: Removed Implementation Context from RFE
+
+Read the strategy's frontmatter to get the `source_rfe` key (e.g., RHAIRFE-710). Always fetch fresh comments from Jira — do not rely on a cached comments file from a previous run, as new comments may have been added since creation.
+
+```bash
+python3 scripts/fetch_issue.py RHAIRFE-NNNN --fields comment --markdown
+```
+
+Parse the JSON output and write the comments to `artifacts/strat-originals/{source_rfe}-comments.md` (overwriting any existing file):
+
+```markdown
+# Comments: RHAIRFE-NNNN
+
+## Author Name — YYYY-MM-DD
+
+<comment body in markdown>
+```
+
+Then scan the comments for one containing the marker `[RFE Creator]` followed by "The following technical implementation details were removed from the RFE description during review." This comment contains implementation details that rfe-creator deliberately stripped from the RFE to keep it "open to how" — these details are explicitly described as "better suited for a RHAISTRAT."
+
+Extract the content after the marker. This is high-priority input for the Technical Approach section. The removed context often contains proposed solution architectures, component-level design decisions, API designs, and integration patterns.
+
+Use this content as a primary input when writing the Technical Approach. It should inform and ground the technical decisions, though you may extend, refine, or disagree with specific recommendations based on the architecture context.
+
+If Jira is unavailable, fall back to reading the cached file at `artifacts/strat-originals/{source_rfe}-comments.md`. If neither Jira nor a cached file is available, proceed without it.
+
+### Source 2: Staff Engineer Input
+
+Read the strategy file being refined. Check the `## Staff Engineer Input` section for content beyond the default template placeholder (HTML comments only).
+
+If a staff engineer has added guidance, corrections, or domain expertise to this section, treat it as the highest-priority input. Staff engineer input overrides both architecture context and removed RFE context when they conflict, because it represents direct human expert judgment on this specific strategy.
+
+When Staff Engineer Input has content:
+- Address each point in the Technical Approach
+- If the input contradicts your analysis, follow the staff engineer's direction and note the reasoning
+- Do not remove or modify the Staff Engineer Input content — it is a human-authored section
+
+If the section contains only HTML comments, it has no actionable input — skip it.
+
 ## What to Produce
 
 For each strategy, use the unified template in `${CLAUDE_SKILL_DIR}/strat-template.md`. All sizes produce all sections — scale depth, not section count. Fill in:
 
-1. **Technical Approach** — How do we deliver this business need? What components are involved? What's the high-level design? Reference specific personas and scenarios from the RFE to ground technical decisions in user outcomes. If the RFE lacks personas or scenarios, flag this in Open Questions.
+1. **Technical Approach** — How do we deliver this business need? What components are involved? What's the high-level design? Reference specific personas and scenarios from the RFE to ground technical decisions in user outcomes. If the RFE lacks personas or scenarios, flag this in Open Questions. If removed implementation context or Staff Engineer Input is available (see HOW Context Sources above), use it as primary input for this section.
 2. **Affected Components** — Which platform components are touched? Reference actual component names from the architecture context.
 3. **Impacted Teams** — Which teams own the affected components and need to be involved?
 4. **High Level Requirements** — Extract functional requirements from the RFE. Add priority markers: [P0] must have (blocks ship), [P1] should have (important, not blocking), [P2] nice to have (defer if effort exceeds estimate). If the RFE already has user stories, preserve them with priority markers added.
@@ -71,9 +115,21 @@ For each strategy, use the unified template in `${CLAUDE_SKILL_DIR}/strat-templa
 - **Flag scope risks.** If delivering the RFE as written would require significantly more work than a single feature, flag it.
 - **Business Need is "The Why".** The `## Business Need (from RFE)` section serves as "The Why" in the Feature Refinement Template. Do not rename, duplicate, or paraphrase it.
 
+## Section Ownership
+
+Each strategy file has three top-level sections with strict ownership rules:
+
+| Section | Owner | Rules |
+|---------|-------|-------|
+| `## Business Need (from RFE)` | RFE (verbatim) | NEVER modify — character-for-character copy from the source RFE |
+| `## Strategy (AI Generated by Agentic SDLC Pipeline)` | Pipeline | Your content goes here. Regenerate on each run. |
+| `## Staff Engineer Input` | Human | NEVER modify, remove, or reorder — read-only input for you |
+
+On initial refinement, generate the `## Strategy` section content. On revision runs, regenerate the `## Strategy` section content informed by review feedback, Staff Engineer Input, and removed RFE context. Never touch the other two sections.
+
 ## Output
 
-Update each file in `artifacts/strat-tasks/` with the completed strategy. The `## Business Need (from RFE)` section MUST remain VERBATIM — identical to what `strategy.create` wrote. Do not touch it. The strategy section header MUST be `## Strategy (AI Generated by Agentic SDLC Pipeline)`.
+Update each file in `artifacts/strat-tasks/` with the completed strategy. Only write within the `## Strategy (AI Generated by Agentic SDLC Pipeline)` section. The `## Business Need (from RFE)` and `## Staff Engineer Input` sections MUST remain untouched.
 
 After writing the strategy content, update the frontmatter status:
 
