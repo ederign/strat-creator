@@ -27,7 +27,7 @@ Each step runs in its own Claude session. Artifacts on disk are the handoff betw
 | `strategy-architecture-review` | Implemented | Platform fit and dependency correctness |
 | `strategy.run` | Reference | Pipeline sequence documentation (not invocable — each step runs in its own session) |
 | `generate-report.py` | Implemented | HTML report with summary table and drill-down details |
-| `strategy.revise` | Not started | Revision cycle with guardrails (max 2 cycles) |
+| `strategy.revise` | Not started | Revision cycle until rubric-pass or human exclusion |
 | `strategy.submit` | Not started | Deterministic Jira writes via script |
 | `security-review` | Not started | Security dimension reviewer |
 | `api-readiness-review` | Not started | API readiness dimension reviewer |

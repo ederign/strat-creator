@@ -35,8 +35,7 @@ done
 # Replace the resolution paragraph with a hardcoded path.
 ASSESS_SKILL=".claude/skills/assess-strat/SKILL.md"
 if [ -f "$ASSESS_SKILL" ]; then
-  ABS_CONTEXT_DIR="$(cd "$CONTEXT_DIR" && pwd)"
-  sed -i '' "s|When this skill is invoked, resolve the absolute path of the plugin root directory. This SKILL.md is at \`<plugin_root>/skills/assess-strat/SKILL.md\` — the plugin root is two levels up. Determine this path once at the start and use it for all script and file references. Store it as \`{PLUGIN_ROOT}\` for substitution into commands and agent prompts.|The plugin root is \`$ABS_CONTEXT_DIR\`. Use this as \`{PLUGIN_ROOT}\` for all script and file references.|" "$ASSESS_SKILL"
+  sed -i '' "s|When this skill is invoked, resolve the absolute path of the plugin root directory. This SKILL.md is at \`<plugin_root>/skills/assess-strat/SKILL.md\` — the plugin root is two levels up. Determine this path once at the start and use it for all script and file references. Store it as \`{PLUGIN_ROOT}\` for substitution into commands and agent prompts.|The plugin root is \`.context/assess-strat\`. Use this as \`{PLUGIN_ROOT}\` for all script and file references.|" "$ASSESS_SKILL"
 fi
 
 # Install agent definitions
