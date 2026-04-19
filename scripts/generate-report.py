@@ -809,8 +809,9 @@ graph LR
 
         JIRA --> Q{{{{&#8805;6/8\\nno zeros?}}}}
         Q -->|"APPROVE\\n+strat-creator-rubric-pass"| PA["Jira &#8594;\\nPending Approval"]
-        Q -->|"REVISE / REJECT\\n+strat-creator-needs-attention"| HR["Human review\\nstakeholder feedback\\non Jira"]
-        HR -->|"Fixes &\\nremoves label"| G
+        Q -->|"REVISE / SPLIT / REJECT\\n+strat-creator-needs-attention"| HR["Human review\\nstakeholder feedback\\non Jira"]
+        HR -->|"Path A: Update\\narchitecture context"| F0
+        HR -->|"Path B: Edit\\nStaff Engineer Input"| F0
     end
 
     PA -->|"PM adds\\nstrat-prioritized"| FR

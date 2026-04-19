@@ -418,6 +418,73 @@ def load_skipped_file(path):
     return skipped
 
 
+def load_run_from_json(run_dir, config):
+    """Load run data from pipeline-data.json, converting to dashboard format."""
+    json_path = os.path.join(run_dir, "pipeline-data.json")
+    if not os.path.exists(json_path):
+        return None
+
+    with open(json_path, encoding="utf-8") as f:
+        data = json.load(f)
+
+    strategies = []
+    for s in data.get("strategies", []):
+        source_rfe = s.get("source_rfe", "")
+        cfg = config.get(source_rfe, {})
+        body = s.get("body", {})
+        reviewers = s.get("reviewers") or {}
+
+        strategies.append({
+            "strat_id": s.get("strat_id", ""),
+            "title": s.get("title", ""),
+            "source_rfe": source_rfe,
+            "priority": s.get("priority", "—"),
+            "size": cfg.get("size") or s.get("size") or "—",
+            "baseline": cfg.get("baseline", False),
+            "cross_component": False,
+            "recommendation": s.get("recommendation", "—"),
+            "needs_attention": s.get("needs_attention", False),
+            "feasibility": reviewers.get("feasibility", "—"),
+            "testability": reviewers.get("testability", "—"),
+            "scope": reviewers.get("scope", "—"),
+            "architecture": reviewers.get("architecture", "—"),
+            "scores": s.get("scores"),
+            "rfe_html": md_to_html(body.get("rfe", "")) if body else "",
+            "strategy_html": md_to_html(body.get("strategy", "")) if body else "",
+            "review_html": md_to_html(body.get("review", "")) if body else "",
+            "comment_html": md_to_html(body.get("review_comment", "")) if body else "",
+            "labels": s.get("labels", []),
+        })
+
+    stats = data.get("stats", {})
+    return {
+        "total": stats.get("total", len(strategies)),
+        "reviewed": stats.get("reviewed", 0),
+        "approved": stats.get("approved", 0),
+        "revise": stats.get("revise", 0),
+        "split": stats.get("split", 0),
+        "reject": stats.get("reject", 0),
+        "needs_attention": stats.get("needs_attention", 0),
+        "approval_rate": stats.get("approval_rate", 0),
+        "revision_rate": pct(stats.get("revise", 0), stats.get("reviewed", 1)),
+        "quality_score": 0,
+        "has_scores": any(s.get("scores") for s in strategies),
+        "avg_total_score": stats.get("avg_total_score"),
+        "dim_avg_scores": {},
+        "dimensions": stats.get("dimensions", {}),
+        "weakest_dim": min(stats.get("dimensions", {"feasibility": {"rate": 0}}),
+                          key=lambda d: stats.get("dimensions", {}).get(d, {}).get("rate", 0))
+                      if stats.get("dimensions") else "—",
+        "weakest_rate": 0,
+        "strongest_dim": max(stats.get("dimensions", {"feasibility": {"rate": 0}}),
+                            key=lambda d: stats.get("dimensions", {}).get(d, {}).get("rate", 0))
+                        if stats.get("dimensions") else "—",
+        "strongest_rate": 0,
+        "strategies": strategies,
+        "skipped": data.get("skipped", []),
+    }
+
+
 def scan_all_runs(data_dir, config, max_runs=30):
     """Discover all timestamped run directories and extract stats."""
     runs = []
@@ -438,7 +505,9 @@ def scan_all_runs(data_dir, config, max_runs=30):
             continue
 
         print(f"  Scanning run {entry}...")
-        stats = extract_run_stats(entry_path, config)
+        stats = load_run_from_json(entry_path, config)
+        if stats is None:
+            stats = extract_run_stats(entry_path, config)
         if stats is None:
             print(f"    Skipped (no artifacts)")
             continue
@@ -939,8 +1008,9 @@ graph LR
 
         JIRA --> Q{{{{&#8805;6/8\\nno zeros?}}}}
         Q -->|"APPROVE\\n+strat-creator-rubric-pass"| PA["Jira &#8594;\\nPending Approval"]
-        Q -->|"REVISE / REJECT\\n+strat-creator-needs-attention"| HR["Human review\\nstakeholder feedback\\non Jira"]
-        HR -->|"Fixes &\\nremoves label"| G
+        Q -->|"REVISE / SPLIT / REJECT\\n+strat-creator-needs-attention"| HR["Human review\\nstakeholder feedback\\non Jira"]
+        HR -->|"Path A: Update\\narchitecture context"| F0
+        HR -->|"Path B: Edit\\nStaff Engineer Input"| F0
     end
 
     PA -->|"PM adds\\nstrat-prioritized"| FR
@@ -1051,7 +1121,7 @@ function renderExecutiveSummary() {{
     // KPI cards
     const skippedCount = e.skipped ? e.skipped.length : 0;
     html += `<div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr)">
-        <div class="kpi"><div class="kpi-value" style="color:#f0f6fc">${{e.total_rfes}}</div><div class="kpi-label">Total RFEs</div><div class="kpi-detail">${{e.total}} strategies + ${{skippedCount}} skipped</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:#f0f6fc">${{e.total_rfes}}</div><div class="kpi-label">Total RFEs</div><div class="kpi-detail">${{e.total}} strategies + ${{skippedCount}} skipped<br><span style="color:#6e7681;font-size:0.85em">(One RFE may contain 1+ strategies)</span></div></div>
         <div class="kpi"><div class="kpi-value" style="color:#58a6ff">${{e.total}}</div><div class="kpi-label">Strategies Created</div><div class="kpi-detail">Across ${{e.total_runs}} runs</div></div>
         <div class="kpi"><div class="kpi-value" style="color:${{heroColor}}">${{rate}}%</div><div class="kpi-label">Approval Rate</div><div class="kpi-detail">${{e.approved}} approved</div></div>
         <div class="kpi"><div class="kpi-value" style="color:${{healthColor(avgScorePct)}}">${{avgScoreHtml}}</div><div class="kpi-label">Avg Score</div><div class="kpi-detail">Threshold: 6/8</div></div>
