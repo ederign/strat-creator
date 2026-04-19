@@ -427,13 +427,6 @@ def scan_all_runs(data_dir, config, max_runs=30):
     if os.path.islink(current_link):
         current_target = os.readlink(current_link)
 
-    # Load global strat-skipped.md from repo root (parent of data_dir)
-    global_skipped = load_skipped_file(
-        os.path.join(os.path.dirname(data_dir), "strat-skipped.md")
-    )
-    if global_skipped:
-        print(f"  Found global strat-skipped.md with {len(global_skipped)} entries")
-
     for entry in sorted(os.listdir(data_dir)):
         entry_path = os.path.join(data_dir, entry)
         if not os.path.isdir(entry_path) or os.path.islink(entry_path):
@@ -449,10 +442,6 @@ def scan_all_runs(data_dir, config, max_runs=30):
         if stats is None:
             print(f"    Skipped (no artifacts)")
             continue
-
-        # Use global skipped data as fallback when run has none
-        if not stats.get("skipped") and global_skipped:
-            stats["skipped"] = global_skipped
 
         stats["run_id"] = entry
         stats["timestamp"] = ts.isoformat()
