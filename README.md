@@ -1,6 +1,6 @@
 # strat-creator
 
-Strategy refinement pipeline for RHAI (Red Hat AI) features. Takes approved RFEs from the RFE assessment pipeline and produces structured strategy documents ready for development planning.
+Takes approved RFEs, which describe the WHAT and WHY, and produces the HOW: actionable implementation strategies grounded in real platform architecture. The pipeline checks technical feasibility against architecture context and scores every strategy so the team knows what's ready and what needs attention.
 
 ## What This Does
 
@@ -9,7 +9,6 @@ Given an approved RFE (from the `rfe-creator` pipeline), this pipeline:
 1. **Creates** a strategy stub from the RFE data (`strategy.create`)
 2. **Refines** the stub into a structured strategy using architecture context (`strategy.refine`)
 3. **Reviews** the strategy across 4 dimensions — feasibility, testability, scope, architecture (`strategy.review`)
-
 
 Each step runs in its own Claude session. Artifacts on disk are the handoff between steps.
 
@@ -71,9 +70,15 @@ strat-creator/
 
 ## Documentation
 
-- [Human Review Guide](docs/human-review-guide.md) — How staff engineers and tech leads handle strategies flagged by the pipeline
+- [Human Review Guide](docs/human-review-guide.md) — How staff engineers and architects handle strategies flagged by the pipeline
+- [Dashboard](https://strat-dashboard-0f1209.gitlab.io/) — Live dashboard with aggregate stats, per-run trends, and pipeline diagram
+- [JSON API](https://strat-dashboard-0f1209.gitlab.io/summary.json) — Aggregated pipeline data for external consumers
+  - Per-run data: `https://strat-dashboard-0f1209.gitlab.io/runs/<timestamp>.json` (e.g. `runs/20260419-093253.json`)
 
 ## Related Projects
 
 - **rfe-creator** — Phase 1: RFE assessment pipeline (upstream). Has `strat.*` skill stubs that these skills were forked from.
+- **assess-strat** — Claude Code plugin that scores RHAISTRAT strategies against the quality rubric. Runs as a parallel 30-agent pipeline in CI, producing pass/fail verdicts per strategy.
 - **strat-pipeline** (GitLab) — CI runner for this pipeline
+- **strat-pipeline-data** (GitLab) — Data repo with timestamped run artifacts and JSON outputs
+- **strat-dashboard** (GitLab) — GitLab Pages site serving the dashboard and JSON API

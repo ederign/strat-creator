@@ -1,8 +1,22 @@
 # Human Review Guide
 
-How to handle strategies that the pipeline flagged as needing attention. Written for staff engineers and tech leads who review strategy output.
+How to handle strategies that the pipeline flagged as needing attention?
 
-> **Audience**: Staff engineers on RHAI team who receive `strat-creator-needs-attention` notifications from the strategy pipeline.
+> **Audience**: Staff engineers and architects on the RHAI team who receive `strat-creator-needs-attention` notifications from the strategy pipeline.
+>
+> **Entry gate labels**: `strat-creator-3.5` + (`rfe-creator-autofix-rubric-pass` or `tech-reviewed`)
+> **Approval label**: `strat-creator-rubric-pass`
+> **Human Escalation label**: `strat-creator-needs-attention`
+>
+> **WARNING: Always use `--dry-run` when running locally.** Dry-run mode reads from Jira but never writes back — no labels, no comments, no tickets are modified. Running without `--dry-run` will create and update real Jira tickets.
+
+## What Is This?
+
+The strategy pipeline (strat-creator) takes approved RFEs, which describe the WHAT and WHY, and produces the HOW: actionable implementation strategies grounded in real platform architecture. It runs three phases: **create** (fetch the RFE and produce a strategy stub), **refine** (enrich it with technical approach, dependencies, and NFRs), and **review** (score it on feasibility, testability, scope, and architecture). Strategies that pass review are ready for team planning. Strategies that don't pass land here, with you.
+
+The quality of the pipeline's output depends directly on the quality of its inputs. The single most important input is the **architecture and design context** maintained in `opendatahub-io/architecture-context`. This is the brain of the system, it's what the pipeline uses to check technical feasibility against architecture context, understand component boundaries, integration patterns, dependencies, and platform constraints. When the pipeline produces a strategy with wrong dependencies or misunderstood component interactions, the root cause is almost always that the architecture context is incomplete or outdated.
+
+This means that improving the architecture context is the highest-leverage fix you can make. It doesn't just fix one strategy, it improves every future strategy the pipeline generates. If you find yourself repeatedly correcting the same kind of issue, that's a strong signal that the architecture context needs updating. Please flag these gaps to the architecture context maintainers (James Tanner, Luca Burgazzoli) so the source material stays accurate for everyone. Staff engineers and architects are the ones who know the platform best , your corrections make the whole system smarter.
 
 ## When Does This Happen?
 
@@ -15,11 +29,13 @@ The strategy pipeline scores every strategy on four dimensions (Feasibility, Tes
 
 ## What You'll See
 
+> **Note:** Jira integration is not yet active. The pipeline currently runs in dry-run mode, so Jira labels and comments described below are planned but not yet applied. For now, use the [strat-creator dashboard](https://strat-dashboard-0f1209.gitlab.io/) to browse strategies, scores, and review details.
+
+Once Jira integration is live, you will see:
+
 1. A **Jira comment** on the RHAISTRAT ticket with the score table and a summary of issues
 2. The `strat-creator-needs-attention` label on the ticket
 3. A **review file** in `artifacts/strat-reviews/STRAT-NNN-review.md` with detailed prose from 4 independent reviewers (feasibility, testability, scope, architecture)
-
-You can browse review files in the [strat-creator dashboard](https://strat-dashboard-0f1209.gitlab.io/) (temporary dry-run URL), or run the pipeline locally in dry-run mode to see the full review output. Dry-run mode is recommended for exploring reviews without side effects.
 
 Read the review file first. It tells you exactly what each AI reviewer found.
 
@@ -69,9 +85,15 @@ Run the full pipeline in dry-run mode for the RFE you want to work on. Dry-run i
 
 ```bash
 # Replace RHAIRFE-1146 with the RFE ID for your strategy
-claude -p "/strategy.create RHAIRFE-1146 --dry-run"
+claude -p "/strategy.create RHAIRFE-1397 --dry-run"
 claude -p "/strategy.refine --dry-run"
 claude -p "/strategy.review --dry-run"
+```
+
+To see real-time progress, run interactively instead (drop the `-p` flag):
+
+```bash
+claude "/strategy.create RHAIRFE-1397 --dry-run"
 ```
 
 After the run completes, you'll have:
