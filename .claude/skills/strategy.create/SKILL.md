@@ -78,7 +78,7 @@ RFEs that were not processed due to missing required labels.
 | RHAIRFE-NNNN | ... | label1, label2 | rfe-creator-autofix-rubric-pass or tech-reviewed |
 ```
 
-If the file already exists, append rows (do not overwrite previous entries). Print `[SKIPPED] RHAIRFE-NNNN — missing required labels: <list>` for each skipped RFE.
+Each pipeline run writes its own `strat-skipped.md` with only that run's skipped RFEs. Print `[SKIPPED] RHAIRFE-NNNN — missing required labels: <list>` for each skipped RFE.
 
 If **all** selected RFEs are skipped, stop and tell the user none of the provided RFEs have the required labels.
 
