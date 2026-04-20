@@ -121,6 +121,13 @@ For each matched overlay, read its `## Fact` and `## Impact on Strategies` secti
 
 **Priority**: Overlays are human-authored corrections that are more recent than the generated architecture context. When an overlay contradicts the architecture docs, follow the overlay. Staff Engineer Input still takes precedence over overlays when they conflict.
 
+When overlays are applied, print which ones were used:
+
+```
+Overlays applied:
+- 0001: KFP SDK updated to 2.16 in RHOAI 3.4
+```
+
 If no overlays directory exists or no overlays match, proceed without them.
 
 ## What to Produce

@@ -30,6 +30,13 @@ Check for overlay files in `.context/architecture-context/overlays/`. If the dir
 
 When reviewing a strategy's architecture claims, check whether any active overlay corrects or updates the information the strategy references. If a strategy uses outdated information that an overlay corrects (e.g., references KFP SDK 2.15 when an overlay says 2.16), flag it as a finding. Overlays take precedence over the generated architecture docs when they conflict.
 
+When overlays are applied, print which ones were used:
+
+```
+Overlays applied:
+- 0001: KFP SDK updated to 2.16 in RHOAI 3.4
+```
+
 ## What to Assess
 
 For each strategy:
