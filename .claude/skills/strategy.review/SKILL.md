@@ -23,6 +23,14 @@ Check if prior reviews exist in `artifacts/strat-reviews/`. If any exist for the
 
 ## Step 2: Fetch Architecture Context
 
+If `--architecture-context <path>` is in `$ARGUMENTS`, use the local path:
+
+```bash
+bash scripts/fetch-architecture-context.sh <path>
+```
+
+Otherwise, fetch from remote:
+
 ```bash
 bash scripts/fetch-architecture-context.sh
 ```

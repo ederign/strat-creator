@@ -15,6 +15,20 @@ If `--dry-run` is in `$ARGUMENTS`, skip ALL external writes:
 - DO still read from Jira and local artifacts (reads are safe)
 - DO still create/update local artifacts in `artifacts/strat-tasks/`
 
+## Local Architecture Context
+
+If `--architecture-context <path>` is in `$ARGUMENTS`, link the local path before reading:
+
+```bash
+bash scripts/fetch-architecture-context.sh <path>
+```
+
+Otherwise, if `.context/architecture-context/` does not exist, fetch from remote:
+
+```bash
+bash scripts/fetch-architecture-context.sh
+```
+
 ## Inputs
 
 Read the strategy files in `artifacts/strat-tasks/`. Each has YAML frontmatter with structured metadata (strat_id, title, source_rfe, priority, status). Read frontmatter with:

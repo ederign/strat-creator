@@ -86,5 +86,17 @@ Not yet implemented for strat-creator. Strategy submission to Jira will be added
 Strategy skills fetch architecture context from opendatahub-io/architecture-context into `.context/architecture-context/`. Used during refinement and review to ground feedback in real platform architecture.
 
 ```bash
+# Fetch from remote (default)
 bash scripts/fetch-architecture-context.sh
+
+# Use a local checkout (e.g., to test overlays before pushing)
+bash scripts/fetch-architecture-context.sh /path/to/local/architecture-context
 ```
+
+When a local path is provided, the script symlinks `.context/architecture-context/` to it instead of cloning from remote. This lets staff engineers test overlay changes locally before pushing upstream.
+
+### Architecture Context Overlays
+
+Overlays are cross-strategy architectural patches that live in the `overlays/` directory of the architecture-context repo. They capture facts that emerged between architecture context regeneration cycles (version bumps, maturity changes, dependency shifts). The fetch script includes `overlays/` in the sparse checkout automatically.
+
+See the [Overlays README](https://github.com/opendatahub-io/architecture-context/blob/main/overlays/README.md) for the format and lifecycle.
