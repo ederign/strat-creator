@@ -114,38 +114,24 @@ Browse the review in our [dashboard](https://strat-dashboard-0f1209.gitlab.io/),
 
 | Path | When to Use | What to Edit | What to Rerun |
 |------|------------|-------------|---------------|
-| **A: Update architecture context** (recommended) | The reviewer found wrong dependencies, missing integration patterns, outdated platform info, or component gaps | Architecture context repo (opendatahub-io/architecture-context) | refine → review |
-| **A2: Add an overlay** | A version bump, maturity change, or dependency shift affects multiple strategies but the architecture context hasn't been regenerated yet | `overlays/` directory in opendatahub-io/architecture-context | refine → review |
+| **A: Add an overlay** (recommended) | The reviewer found wrong dependencies, outdated platform info, version mismatches, or component gaps that affect multiple strategies | `overlays/` directory in opendatahub-io/architecture-context | refine → review |
 | **B: Strategy-specific fix** | The issue is specific to this one strategy (wrong effort estimate, missing test criteria, scope needs narrowing) | `## Staff Engineer Input` section in the strategy file | refine → review |
-| **C: Combination** | Architecture gaps AND strategy-specific issues | Architecture context or overlays AND Staff Engineer Input | refine → review |
+| **C: Update architecture context directly** | Major structural changes to component docs (ownership, boundaries, integration patterns) | Architecture context repo (opendatahub-io/architecture-context) | refine → review |
+| **D: Combination** | Architecture gaps AND strategy-specific issues | Overlays or architecture context AND Staff Engineer Input | refine → review |
 
-**Path A is the recommended default.** Architecture context fixes are durable. They improve all future strategies, not just the one you're fixing. If the pipeline produced a bad strategy, the most likely root cause is that the architecture context was missing or wrong. Fix the source, not the symptom.
-
-**Path A2 is for time-sensitive corrections.** When a fact changed (e.g., SDK version bump, feature maturity shift) and the architecture docs haven't been regenerated yet, write an overlay. Overlays apply across all matching strategies and are faster to create than regenerating the full architecture context. See the [Overlays README](https://github.com/opendatahub-io/architecture-context/blob/main/overlays/README.md) for the format.
+**Path A (overlays) is the recommended default.** Overlays are fast to create, easy to test locally, and apply across all matching strategies. They are the right tool for version bumps, maturity changes, dependency shifts, and factual corrections. The process for updating the generated architecture docs directly is being defined by James Tanner, Kevin Bader, and Luca Burgazzoli — until that process is finalized, use overlays.
 
 Use Path B only when the issue is truly unique to one strategy (e.g., a specific effort estimate or a scope decision that doesn't generalize).
+
+Use Path C only for major structural changes that overlays can't express (e.g., adding a new component, restructuring component boundaries).
 
 **All paths require rerunning refine then review.** Refine regenerates the strategy text using your inputs. Review re-scores the regenerated output.
 
 ### Step 3: Write Your Input
 
-#### Path A: Update Architecture Context (Recommended)
+#### Path A: Add an Overlay (Recommended)
 
-If the reviewer flagged a wrong dependency, missing component, or outdated integration pattern, the fix belongs in the architecture context repo, not in the strategy file. Update the relevant docs in opendatahub-io/architecture-context. This makes the fix permanent for all future pipeline runs.
-
-> **Need help?** Contact James Tanner or Luca Burgazzoli for instructions on how to update the architecture context repo.
-
-Common architecture context updates:
-- Component ownership or boundaries changed
-- A new integration pattern was adopted
-- A dependency was added, removed, or deprecated
-- Platform constraints that affect multiple strategies
-
-After updating the architecture context, rerun `/strategy.refine`. It will fetch the updated context and regenerate the strategy accordingly.
-
-#### Path A2: Add an Overlay
-
-If the correction is a recent change (version bump, maturity shift, new dependency) and the architecture context hasn't been regenerated yet, write an overlay instead. Overlays are architecture updates that apply across all matching strategies.
+Overlays are architecture updates that apply across all matching strategies. They are the fastest way to correct version mismatches, maturity changes, dependency shifts, and other factual gaps in the architecture context.
 
 ##### How to Create an Overlay
 
@@ -275,6 +261,14 @@ be a separate RFE.
 ```
 
 > **Important:** If you edited the `## Staff Engineer Input` section during this dry-run stage, send the updated markdown file to Eder so he can include it in the production run on Jira.
+
+#### Path C: Update Architecture Context Directly
+
+For major structural changes that overlays can't express (adding a new component, restructuring component boundaries, rewriting integration patterns), update the generated docs in opendatahub-io/architecture-context directly.
+
+> **Note:** The process for updating architecture context docs is being defined by James Tanner, Kevin Bader, and Luca Burgazzoli. Contact them for instructions. Until that process is finalized, prefer overlays (Path A) for most corrections.
+
+After updating the architecture context, rerun `/strategy.refine`. It will fetch the updated context and regenerate the strategy accordingly.
 
 ### Step 4: Rerun the Pipeline
 
