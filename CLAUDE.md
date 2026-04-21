@@ -56,6 +56,10 @@ python3 scripts/state.py clean
 - **Local pre-submission**: Use `STRAT-NNN.md` naming
 - **On submit**: `STRAT-NNN.md` files are renamed to `RHAISTRAT-NNNN.md`
 
+## Pipeline Gates
+
+Gate logic (label checks, skip conditions) is duplicated across all three skills: `strategy-create`, `strategy-refine`, and `strategy-review`. When changing a gate, update all three skills to keep them consistent.
+
 ## Jira Integration
 
 ### Read Operations

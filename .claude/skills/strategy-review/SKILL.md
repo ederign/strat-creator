@@ -21,6 +21,21 @@ Read files in `artifacts/strat-tasks/`. If no strategy artifacts exist or they h
 
 Check if prior reviews exist in `artifacts/strat-reviews/`. If any exist for the strategies being reviewed, read them — this is a re-review after revisions.
 
+## Step 1a: Pipeline Label Gate
+
+For each strategy found in `artifacts/strat-tasks/`, read its frontmatter to get the `jira_key`. If `jira_key` is not null, fetch the STRAT's labels from Jira:
+
+```bash
+python3 ${CLAUDE_SKILL_DIR}/scripts/fetch_issue.py RHAISTRAT-NNNN --fields labels --markdown
+```
+
+If the STRAT has either `strat-creator-rubric-pass` or `strat-creator-needs-attention` in its labels, **skip this strategy** — it has already been processed by the pipeline:
+- Do NOT review it
+- Print `[SKIP] RHAISTRAT-NNNN — already has <label>, skipping review`
+- Continue to the next strategy
+
+If all strategies are skipped, print a summary and stop.
+
 ## Step 2: Fetch Architecture Context
 
 If `--architecture-context <path>` is in `$ARGUMENTS`, use the local path:
