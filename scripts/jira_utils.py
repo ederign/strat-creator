@@ -189,7 +189,8 @@ def create_issue_link(server, user, token, type_name, inward_key, outward_key):
     api_call_with_retry(server, "/issueLink", user, token, body=body)
 
 
-def add_attachment(server, user, token, issue_key, filepath, filename=None):
+def add_attachment(server, user, token, issue_key, filepath, filename=None,
+                   max_retries=3):
     """POST /rest/api/3/issue/{key}/attachments — upload a file."""
     import mimetypes
     if filename is None:
@@ -212,9 +213,29 @@ def add_attachment(server, user, token, issue_key, filepath, filename=None):
         "Content-Type": f"multipart/form-data; boundary={boundary}",
         "X-Atlassian-Token": "no-check",
     }
-    req = urllib.request.Request(url, data=body, headers=headers, method="POST")
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        return json.loads(resp.read())
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            req = urllib.request.Request(url, data=body, headers=headers,
+                                        method="POST")
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                return json.loads(resp.read())
+        except urllib.error.HTTPError as e:
+            if e.code in (429, 502, 503, 504):
+                wait = max(int(e.headers.get("Retry-After", 1)), 4 ** attempt)
+                print(f"  HTTP {e.code}, retrying in {wait}s...",
+                      file=sys.stderr)
+                time.sleep(wait)
+                last_error = e
+                continue
+            raise
+        except urllib.error.URLError as e:
+            wait = 4 ** attempt
+            print(f"  Network error: {e.reason}, retrying in {wait}s...",
+                  file=sys.stderr)
+            time.sleep(wait)
+            last_error = e
+    raise last_error
 
 
 def get_transitions(server, user, token, issue_key):
