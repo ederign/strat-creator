@@ -245,7 +245,22 @@ python3 scripts/frontmatter.py set artifacts/strat-tasks/<filename>.md \
 
 Use `jira_key=null` if Jira cloning was not done (dry-run mode).
 
-## Step 6: Write Artifacts
+## Step 6: Apply Labels
+
+If not in dry-run mode and a RHAISTRAT was created or imported (i.e., `jira_key` is not null), add the provenance label:
+
+```bash
+python3 -c "
+import sys; sys.path.insert(0, 'scripts')
+from jira_utils import add_labels, require_env
+s, u, t = require_env()
+add_labels(s, u, t, 'RHAISTRAT-NNNN', ['strat-creator-auto-created'])
+"
+```
+
+Print `[LABEL] strat-creator-auto-created added to RHAISTRAT-NNNN`.
+
+## Step 7: Write Artifacts
 
 If Jira cloning was done, write `artifacts/strat-tickets.md`:
 

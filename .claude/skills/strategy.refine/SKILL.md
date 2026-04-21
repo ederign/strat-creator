@@ -180,4 +180,27 @@ python3 scripts/frontmatter.py set artifacts/strat-tasks/<filename>.md \
     status=Refined
 ```
 
+### Push Strategy to Jira
+
+If NOT in dry-run mode and the strategy has a real `jira_key` (not null), push the Strategy section to the RHAISTRAT issue in Jira. This updates only the Strategy section — the existing description (Business Need) is preserved.
+
+```bash
+python3 scripts/push_strategy.py RHAISTRAT-NNNN artifacts/strat-tasks/RHAISTRAT-NNNN.md
+```
+
+Then add the provenance label:
+
+```bash
+python3 -c "
+import sys; sys.path.insert(0, 'scripts')
+from jira_utils import add_labels, require_env
+s, u, t = require_env()
+add_labels(s, u, t, 'RHAISTRAT-NNNN', ['strat-creator-auto-refined'])
+"
+```
+
+Print `[JIRA] Strategy section pushed to RHAISTRAT-NNNN` and `[LABEL] strat-creator-auto-refined added to RHAISTRAT-NNNN`.
+
+If in dry-run mode, skip both and print `[DRY RUN] Skipping Jira update for RHAISTRAT-NNNN`.
+
 $ARGUMENTS

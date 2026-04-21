@@ -189,6 +189,34 @@ def create_issue_link(server, user, token, type_name, inward_key, outward_key):
     api_call_with_retry(server, "/issueLink", user, token, body=body)
 
 
+def add_attachment(server, user, token, issue_key, filepath, filename=None):
+    """POST /rest/api/3/issue/{key}/attachments — upload a file."""
+    import mimetypes
+    if filename is None:
+        filename = os.path.basename(filepath)
+    boundary = f"----JiraAttachment{int(time.time() * 1000)}"
+    with open(filepath, "rb") as f:
+        file_data = f.read()
+    mime_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    body = (
+        f"--{boundary}\r\n"
+        f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'
+        f"Content-Type: {mime_type}\r\n\r\n"
+    ).encode() + file_data + f"\r\n--{boundary}--\r\n".encode()
+
+    url = f"{server.rstrip('/')}/rest/api/3/issue/{issue_key}/attachments"
+    credentials = base64.b64encode(f"{user}:{token}".encode()).decode()
+    headers = {
+        "Authorization": f"Basic {credentials}",
+        "Accept": "application/json",
+        "Content-Type": f"multipart/form-data; boundary={boundary}",
+        "X-Atlassian-Token": "no-check",
+    }
+    req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        return json.loads(resp.read())
+
+
 def get_transitions(server, user, token, issue_key):
     """GET available transitions for an issue."""
     path = f"/issue/{issue_key}/transitions"

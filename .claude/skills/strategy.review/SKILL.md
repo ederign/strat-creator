@@ -215,6 +215,45 @@ add_comment(os.environ['JIRA_SERVER'], os.environ['JIRA_USER'],
 - **Dry-run mode**: Write the comment markdown to `artifacts/strat-reviews/{id}-review-comment.md` instead. Print `[DRY RUN] Review comment saved to artifacts/strat-reviews/{id}-review-comment.md`.
 - **Jira credentials unavailable**: Save to file (same as dry-run) and notify the user.
 
+## Step 7b: Attach Full Review File to Jira
+
+If NOT in dry-run mode and `jira_key` is not null, attach the full review file to the RHAISTRAT issue as a Jira attachment. This gives reviewers access to the complete prose reviews alongside the summary comment.
+
+```bash
+python3 -c "
+import sys; sys.path.insert(0, 'scripts')
+from jira_utils import add_attachment, require_env
+s, u, t = require_env()
+add_attachment(s, u, t, sys.argv[1], sys.argv[2])
+" RHAISTRAT-NNNN artifacts/strat-reviews/{id}-review.md
+```
+
+Print `[ATTACHMENT] Review file attached to RHAISTRAT-NNNN`.
+
+In dry-run mode, skip and print `[DRY RUN] Skipping attachment for RHAISTRAT-NNNN`.
+
+## Step 7c: Apply Verdict Labels
+
+If NOT in dry-run mode and `jira_key` is not null, add the appropriate label based on the verdict:
+
+```bash
+python3 -c "
+import sys; sys.path.insert(0, 'scripts')
+from jira_utils import add_labels, require_env
+s, u, t = require_env()
+add_labels(s, u, t, sys.argv[1], sys.argv[2:])
+" RHAISTRAT-NNNN <labels>
+```
+
+Labels by verdict:
+- **APPROVE**: add `strat-creator-rubric-pass`
+- **REVISE**: add `strat-creator-needs-attention`
+- **REJECT**: add `strat-creator-needs-attention`
+
+Print `[LABEL] <label> added to RHAISTRAT-NNNN`.
+
+In dry-run mode, skip and print `[DRY RUN] Skipping labels for RHAISTRAT-NNNN`.
+
 ## Step 8: Advise the User
 
 Based on the results:
