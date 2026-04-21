@@ -200,6 +200,7 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/fetch_issue.py RHAISTRAT-NNNN --fields summa
 ## Staff Engineer Input
 <!-- HIGH-PRIORITY: Content here is used as primary guidance during strategy refinement. -->
 <!-- Add technical corrections, architectural direction, component preferences, or domain expertise. -->
+<!-- Write it using declarative, cumulative form; policy and statement that shall always be valid in any iteration of the STRAT Refinement -->
 <!-- This input takes priority over architecture context and removed-context when they conflict. -->
 <!-- After review: address findings below, then remove the needs_attention label from Jira. -->
 ```
@@ -245,6 +246,7 @@ echo "[CLONE] $STRAT_KEY cloned from RHAIRFE-NNNN"
 ## Staff Engineer Input
 <!-- HIGH-PRIORITY: Content here is used as primary guidance during strategy refinement. -->
 <!-- Add technical corrections, architectural direction, component preferences, or domain expertise. -->
+<!-- Write it using declarative, cumulative form; policy and statement that shall always be valid in any iteration of the STRAT Refinement -->
 <!-- This input takes priority over architecture context and removed-context when they conflict. -->
 <!-- After review: address findings below, then remove the needs_attention label from Jira. -->
 ```
