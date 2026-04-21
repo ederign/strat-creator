@@ -11,3 +11,8 @@ test_rfes:
     size: M
     comment: "Tests mixed batch: RHAIRFE-1397 should skip (already processed), this one should run."
     cross_component: false
+  - id: RHAIRFE-2053
+    title: "Default Vector Store for Gen AI Studio and Auto Rag"
+    size: M
+    comment: "Blocker priority. Tests new RFE in mixed batch with two already-processed STRATs."
+    cross_component: false
