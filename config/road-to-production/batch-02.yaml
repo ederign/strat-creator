@@ -1,0 +1,17 @@
+# Road to production — Batch 2
+test_rfes:
+  - id: RHAIRFE-1547
+    title: "Add in ability to register/Deploy an external endpoint via Model Deployments Page"
+    size: M
+  - id: RHAIRFE-710
+    title: "Chat Metrics & Observability (Tracing) in Playground"
+    size: M
+  - id: RHAIRFE-911
+    title: "Chat Persistence for Gen AI Studio"
+    size: M
+  - id: RHAIRFE-912
+    title: "Configuration Persistence for Gen AI Studio"
+    size: M
+  - id: RHAIRFE-1502
+    title: "YAML Editor GA — Bi-Directional UI/YAML Toggle in Model Serving"
+    size: M
