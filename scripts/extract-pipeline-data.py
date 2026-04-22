@@ -415,13 +415,18 @@ def main():
         print("No runs found.", file=sys.stderr)
         sys.exit(1)
 
+    prod_runs = [r for r in runs if not r.get("dry_run", True)]
+
     summary = compute_summary(runs)
+    prod_summary = compute_summary(prod_runs)
 
     if args.no_body:
         for run in runs:
             for s in run["strategies"]:
                 s.pop("body", None)
         for s in summary["strategies"]:
+            s.pop("body", None)
+        for s in prod_summary["strategies"]:
             s.pop("body", None)
 
     if args.output_dir:
@@ -433,11 +438,23 @@ def main():
             json.dump(runs_data, f, indent=2)
         print(f"Wrote {runs_path}", file=sys.stderr)
 
+        prod_runs_data = {"generated_at": generated_at, "runs": prod_runs}
+        prod_runs_path = os.path.join(args.output_dir, "runs-production.json")
+        with open(prod_runs_path, "w") as f:
+            json.dump(prod_runs_data, f, indent=2)
+        print(f"Wrote {prod_runs_path}", file=sys.stderr)
+
         summary_data = {"generated_at": generated_at, **summary}
         summary_path = os.path.join(args.output_dir, "summary.json")
         with open(summary_path, "w") as f:
             json.dump(summary_data, f, indent=2)
         print(f"Wrote {summary_path}", file=sys.stderr)
+
+        prod_summary_data = {"generated_at": generated_at, **prod_summary}
+        prod_summary_path = os.path.join(args.output_dir, "summary-production.json")
+        with open(prod_summary_path, "w") as f:
+            json.dump(prod_summary_data, f, indent=2)
+        print(f"Wrote {prod_summary_path}", file=sys.stderr)
 
     if args.output:
         combined = {
@@ -448,6 +465,17 @@ def main():
         with open(args.output, "w") as f:
             json.dump(combined, f, indent=2)
         print(f"Wrote {args.output}", file=sys.stderr)
+
+        base, ext = os.path.splitext(args.output)
+        prod_output = f"{base}-production{ext}"
+        prod_combined = {
+            "generated_at": generated_at,
+            "summary": prod_summary,
+            "runs": prod_runs,
+        }
+        with open(prod_output, "w") as f:
+            json.dump(prod_combined, f, indent=2)
+        print(f"Wrote {prod_output}", file=sys.stderr)
 
 
 if __name__ == "__main__":
