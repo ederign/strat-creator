@@ -15,6 +15,10 @@ Scale output depth to match the strategy size. All sizes produce all sections â€
 <!-- DO NOT manually modify this section. It is generated and maintained by the pipeline. -->
 <!-- Use the Staff Engineer Input section below to provide corrections or guidance. -->
 
+### TL;DR
+<!-- 2-3 sentences max. What does this strategy do and how? -->
+<!-- A reader should know within a minute whether this strategy is on the right track. -->
+
 **Components**: <list>
 
 ### Technical Approach
