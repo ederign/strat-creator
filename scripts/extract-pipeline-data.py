@@ -377,7 +377,7 @@ def main():
     parser.add_argument("--no-body", action="store_true",
                         help="Exclude strategy/review body text (metadata only)")
     parser.add_argument("--dry-run", action="store_true",
-                        default=bool(os.environ.get("DRY_RUN", "")),
+                        default=bool(os.environ.get("DRY_RUN", "").strip()),
                         help="Mark this run as a dry run (no Jira writes). "
                              "Also auto-detected from DRY_RUN env var.")
     args = parser.parse_args()
