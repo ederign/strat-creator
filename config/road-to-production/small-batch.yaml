@@ -1,0 +1,5 @@
+# Road to production — Small batch
+test_rfes:
+  - id: RHAIRFE-1277
+    title: "Granular Role Creation UI"
+    size: S
