@@ -271,8 +271,10 @@ def scan_runs(data_dir, max_runs=30):
             with open(json_path, encoding="utf-8") as f:
                 pdata = json.load(f)
             run_data["dry_run"] = pdata.get("dry_run", True)
+            run_data["config"] = pdata.get("config")
         else:
             run_data["dry_run"] = True
+            run_data["config"] = None
 
         runs.append(run_data)
 
@@ -380,6 +382,9 @@ def main():
                         default=bool(os.environ.get("DRY_RUN", "").strip()),
                         help="Mark this run as a dry run (no Jira writes). "
                              "Also auto-detected from DRY_RUN env var.")
+    parser.add_argument("--config", default=os.environ.get("CONFIG_FILE", ""),
+                        help="Config file used for this run (recorded in output). "
+                             "Also auto-detected from CONFIG_FILE env var.")
     args = parser.parse_args()
 
     if not args.output_dir and not args.output:
@@ -398,7 +403,8 @@ def main():
         if args.no_body:
             for s in run_data["strategies"]:
                 s.pop("body", None)
-        result = {"generated_at": generated_at, "dry_run": args.dry_run, **run_data}
+        result = {"generated_at": generated_at, "dry_run": args.dry_run,
+                  "config": args.config or None, **run_data}
         out = args.output or os.path.join(args.output_dir, "pipeline-data.json")
         if args.output_dir:
             os.makedirs(args.output_dir, exist_ok=True)
