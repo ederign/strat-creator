@@ -23,13 +23,29 @@ Exit codes:
 """
 
 import argparse
+import base64
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
+import urllib.request
 
 from jira_utils import require_env, get_issue, get_comments, adf_to_markdown
+
+
+MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024  # 10 MB
+
+TEXT_EXTENSIONS = {
+    ".md", ".txt", ".csv", ".json", ".yaml", ".yml", ".xml",
+    ".html", ".htm", ".rst", ".adoc", ".log", ".conf", ".cfg",
+    ".ini", ".toml", ".properties", ".sh", ".bash", ".py",
+    ".java", ".go", ".js", ".ts",
+}
+
+TEXT_MIME_PREFIXES = ("text/", "application/json", "application/xml",
+                      "application/yaml", "application/x-yaml")
 
 
 def _desc_to_markdown(desc_raw):
@@ -49,6 +65,123 @@ def _format_comment_date(iso_date):
     return iso_date[:10]
 
 
+def _sanitize_filename(name):
+    """Remove path traversal characters and unsafe chars from a filename."""
+    name = os.path.basename(name)
+    name = re.sub(r'[^\w.\-() ]', '_', name)
+    return name or "unnamed"
+
+
+def _is_text_attachment(attachment):
+    """Check if an attachment is text-based and within size limits."""
+    size = attachment.get("size", 0)
+    if size > MAX_ATTACHMENT_BYTES:
+        return False
+    filename = attachment.get("filename", "")
+    mime = attachment.get("mimeType", "")
+    _, ext = os.path.splitext(filename.lower())
+    if ext in TEXT_EXTENSIONS:
+        return True
+    if any(mime.startswith(p) for p in TEXT_MIME_PREFIXES):
+        return True
+    return False
+
+
+def _download_attachment(url, dest_path, user, token):
+    """Download a Jira attachment file using basic auth."""
+    credentials = base64.b64encode(f"{user}:{token}".encode()).decode()
+    headers = {
+        "Authorization": f"Basic {credentials}",
+    }
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        with open(dest_path, "wb") as f:
+            f.write(resp.read())
+
+
+def _fetch_attachments(attachments, issue_key, artifacts_dir, user, token):
+    """Download text-based attachments to artifacts/attachments/{key}/."""
+    if not attachments:
+        return
+    att_dir = os.path.join(artifacts_dir, "attachments", issue_key)
+    os.makedirs(att_dir, exist_ok=True)
+    count = 0
+    for att in attachments:
+        if not _is_text_attachment(att):
+            filename = att.get("filename", "?")
+            size_kb = att.get("size", 0) // 1024
+            print(f"  Skipping attachment {filename} "
+                  f"(type={att.get('mimeType')}, {size_kb}KB)",
+                  file=sys.stderr)
+            continue
+        filename = _sanitize_filename(att.get("filename", "unnamed"))
+        dest = os.path.join(att_dir, filename)
+        content_url = att.get("content", "")
+        if not content_url:
+            continue
+        try:
+            _download_attachment(content_url, dest, user, token)
+            count += 1
+            print(f"  Downloaded attachment: {filename}", file=sys.stderr)
+        except Exception as e:
+            print(f"  Error downloading {filename}: {e}", file=sys.stderr)
+    if count == 0:
+        os.rmdir(att_dir)
+    else:
+        print(f"  {count} attachment(s) saved to {att_dir}", file=sys.stderr)
+
+
+def _fetch_linked_issues(issuelinks, issue_key, artifacts_dir,
+                         server, user, token):
+    """Fetch summary + description from linked issues (one level deep)."""
+    if not issuelinks:
+        return
+    tasks_dir = os.path.join(artifacts_dir, "rfe-tasks")
+    os.makedirs(tasks_dir, exist_ok=True)
+    links_path = os.path.join(tasks_dir, f"{issue_key}-links.md")
+
+    sections = []
+    for link in issuelinks:
+        link_type = link.get("type", {}).get("name", "Related")
+        inward = link.get("inwardIssue")
+        outward = link.get("outwardIssue")
+        linked = inward or outward
+        if not linked:
+            continue
+        linked_key = linked.get("key", "")
+        direction = "inward" if inward else "outward"
+        relation = link.get("type", {}).get(direction, link_type)
+
+        try:
+            linked_issue = get_issue(server, user, token, linked_key,
+                                     fields=["summary", "description"])
+            fields = linked_issue.get("fields", {})
+            summary = fields.get("summary", "")
+            desc_md = _desc_to_markdown(fields.get("description"))
+            sections.append(
+                f"## {linked_key}: {summary}\n\n"
+                f"**Relationship**: {relation}\n\n"
+                f"{desc_md}\n"
+            )
+            print(f"  Fetched linked issue: {linked_key} ({relation})",
+                  file=sys.stderr)
+        except Exception as e:
+            sections.append(
+                f"## {linked_key}\n\n"
+                f"**Relationship**: {relation}\n\n"
+                f"Error fetching: {e}\n"
+            )
+            print(f"  Error fetching linked {linked_key}: {e}",
+                  file=sys.stderr)
+
+    if sections:
+        with open(links_path, "w", encoding="utf-8") as f:
+            f.write(f"# Linked Issues: {issue_key}\n\n")
+            f.write("\n".join(sections))
+        print(f"  {len(sections)} linked issue(s) saved to {links_path}",
+              file=sys.stderr)
+
+
 def _fetch_all(issue_key, artifacts_dir, server, user, token):
     """Fetch issue and write all artifact files.
 
@@ -59,11 +192,12 @@ def _fetch_all(issue_key, artifacts_dir, server, user, token):
     os.makedirs(tasks_dir, exist_ok=True)
     os.makedirs(originals_dir, exist_ok=True)
 
-    # Fetch issue fields
+    # Fetch issue fields (including attachments and links for context)
     try:
         issue = get_issue(server, user, token, issue_key,
                           fields=["summary", "description", "priority",
-                                  "labels", "status"])
+                                  "labels", "status", "attachment",
+                                  "issuelinks"])
     except Exception as e:
         print(f"Error fetching issue {issue_key}: {e}", file=sys.stderr)
         return 1
@@ -130,6 +264,15 @@ def _fetch_all(issue_key, artifacts_dir, server, user, token):
                 else:
                     body = ""
                 f.write(f"## {author} — {date}\n\n{body}\n\n")
+
+    # Fetch and save text-based attachments
+    attachments = fields.get("attachment", [])
+    _fetch_attachments(attachments, issue_key, artifacts_dir, user, token)
+
+    # Fetch linked issue summaries + descriptions (one level deep)
+    issuelinks = fields.get("issuelinks", [])
+    _fetch_linked_issues(issuelinks, issue_key, artifacts_dir,
+                         server, user, token)
 
     print(f"OK: wrote {task_path}, {orig_path}, {comments_path}")
     return 0
