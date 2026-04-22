@@ -858,6 +858,7 @@ tr.clickable {{ cursor: pointer; }}
     <div class="nav-tab active" onclick="switchPage('executive')">Executive Summary</div>
     <div class="nav-tab" onclick="switchPage('overview')">Per-Run Trends</div>
     <div class="nav-tab" onclick="switchPage('run-detail')">Run Detail</div>
+    <div class="nav-tab" onclick="switchPage('attention')">Needs Attention</div>
     <div class="nav-tab" onclick="switchPage('pipeline')">Pipeline</div>
 </div>
 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#8b949e;padding:8px 16px;background:#161b22;border:1px solid #30363d;border-radius:6px;user-select:none;white-space:nowrap">
@@ -874,44 +875,7 @@ tr.clickable {{ cursor: pointer; }}
 <!-- ═══ OVERVIEW PAGE ═══ -->
 <div class="nav-page" id="page-overview">
 
-<div class="hero">
-    <div class="hero-statement" style="color:{hero_color}">{escape_html(hero_text)}</div>
-    <div class="hero-delta">vs previous run: {delta_arrow}</div>
-    <div class="hero-sub">{len(runs)} pipeline run(s) | Latest: {current["label"] if current else "none"}</div>
-</div>
-
-<div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr);">
-    <div class="kpi">
-        <div class="kpi-value" style="color:#58a6ff">{len(runs)}</div>
-        <div class="kpi-label">Pipeline Runs</div>
-        <div class="kpi-detail">{current["cumulative_reviewed"] if current else 0} strategies total</div>
-    </div>
-    <div class="kpi">
-        <div class="kpi-value" style="color:#f0f6fc">{current["reviewed"] if current else 0}</div>
-        <div class="kpi-label">Strategies Reviewed</div>
-        <div class="kpi-detail">{_delta_html(current, prev, "reviewed", is_pct=False)}</div>
-    </div>
-    <div class="kpi">
-        <div class="kpi-value" style="color:{health_color(current["approval_rate"]) if current else '#8b949e'}">{current["approval_rate"] if current else 0}%</div>
-        <div class="kpi-label">Approval Rate</div>
-        <div class="kpi-detail">{_delta_html(current, prev, "approval_rate")}</div>
-    </div>
-    <div class="kpi">
-        <div class="kpi-value" style="color:{health_color(int(current["avg_total_score"] / 8 * 100) if current and current.get("avg_total_score") else 0) if current else '#8b949e'}">{current["avg_total_score"] if current and current.get("avg_total_score") is not None else "—"}<span style="font-size:16px;color:#6e7681">/8</span></div>
-        <div class="kpi-label">Avg Score</div>
-        <div class="kpi-detail">{"Rubric: F+T+S+A (0-2 each)" if current and current.get("has_scores") else "Scoring not yet enabled"}</div>
-    </div>
-    <div class="kpi">
-        <div class="kpi-value" style="color:#f85149">{current["needs_attention"] if current else 0}</div>
-        <div class="kpi-label">Needs Attention</div>
-        <div class="kpi-detail">{"Human review required" if current and current.get("needs_attention", 0) > 0 else "All clear"}</div>
-    </div>
-    <div class="kpi">
-        <div class="kpi-value" style="color:{health_color(current["weakest_rate"]) if current else '#8b949e'}">{current["weakest_rate"] if current else 0}%</div>
-        <div class="kpi-label">Weakest: {current["weakest_dim"].title() if current else "—"}</div>
-        <div class="kpi-detail">Strongest: {current["strongest_dim"].title() if current else "—"} ({current["strongest_rate"] if current else 0}%)</div>
-    </div>
-</div>
+<div id="overview-kpis"></div>
 
 <div class="charts-grid">
     <div class="chart-card">
@@ -953,6 +917,11 @@ tr.clickable {{ cursor: pointer; }}
         </select>
     </div>
     <div id="run-detail-content"></div>
+</div>
+
+<!-- ═══ NEEDS ATTENTION PAGE ═══ -->
+<div class="nav-page" id="page-attention">
+<div id="attention-content"></div>
 </div>
 
 <!-- ═══ PIPELINE PAGE ═══ -->
@@ -1190,6 +1159,8 @@ function toggleDryRuns() {{
             : 'Production runs — data written to Jira.';
     }}
     renderExecutiveSummary();
+    renderOverviewKPIs();
+    renderAttention();
     buildRunList();
     buildRunSelector();
     initCharts();
@@ -1211,6 +1182,110 @@ function showRunDetail(idx) {{
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
     document.getElementById('page-run-detail').classList.add('active');
     document.querySelectorAll('.nav-tab')[2].classList.add('active');
+}}
+
+// ─── Overview KPIs (Per-Run Trends page) ────────────────────────────────────
+function renderOverviewKPIs() {{
+    const el = document.getElementById('overview-kpis');
+    const cur = RUNS.length > 0 ? RUNS[RUNS.length - 1] : null;
+    const prev = RUNS.length > 1 ? RUNS[RUNS.length - 2] : null;
+    const deltaHtml = (cur, prev, key, isPct) => {{
+        if (!cur || !prev) return '';
+        const d = cur[key] - prev[key];
+        if (d === 0) return '<span style="color:#6e7681">→ no change</span>';
+        const arrow = d > 0 ? '↑' : '↓';
+        const color = d > 0 ? '#3fb950' : '#f85149';
+        return `<span style="color:${{color}}">${{arrow}} ${{Math.abs(d)}}${{isPct !== false ? '%' : ''}}</span>`;
+    }};
+    const rate = cur ? cur.approval_rate : 0;
+    const heroColor = healthColor(rate);
+    const prevRate = prev ? prev.approval_rate : null;
+    const deltaVal = prevRate !== null ? rate - prevRate : null;
+    const deltaArrow = deltaVal === null ? '—' : deltaVal === 0 ? '→ no change'
+        : deltaVal > 0 ? `<span style="color:#3fb950">↑ ${{deltaVal}}%</span>`
+        : `<span style="color:#f85149">↓ ${{Math.abs(deltaVal)}}%</span>`;
+    const avgScore = cur && cur.avg_total_score != null ? cur.avg_total_score : null;
+    const avgScorePct = avgScore != null ? Math.round(avgScore / 8 * 100) : 0;
+    const avgScoreHtml = avgScore != null ? `${{avgScore}}<span style="font-size:16px;color:#6e7681">/8</span>` : '—';
+    const weakDim = cur ? cur.weakest_dim || '—' : '—';
+    const weakRate = cur ? cur.weakest_rate || 0 : 0;
+    const strongDim = cur ? cur.strongest_dim || '—' : '—';
+    const strongRate = cur ? cur.strongest_rate || 0 : 0;
+
+    let html = `<div class="hero">
+        <div class="hero-statement" style="color:${{heroColor}}">${{cur ? cur.approved : 0}} of ${{cur ? cur.reviewed : 0}} strategies approved (${{rate}}%)</div>
+        <div class="hero-delta">vs previous run: ${{deltaArrow}}</div>
+        <div class="hero-sub">${{RUNS.length}} pipeline run(s) | Latest: ${{cur ? cur.label : 'none'}}</div>
+    </div>`;
+    html += `<div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr);">
+        <div class="kpi"><div class="kpi-value" style="color:#58a6ff">${{RUNS.length}}</div><div class="kpi-label">Pipeline Runs</div><div class="kpi-detail">${{cur ? cur.cumulative_reviewed || cur.reviewed : 0}} strategies total</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:#f0f6fc">${{cur ? cur.reviewed : 0}}</div><div class="kpi-label">Strategies Reviewed</div><div class="kpi-detail">${{deltaHtml(cur, prev, 'reviewed', false)}}</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:${{heroColor}}">${{rate}}%</div><div class="kpi-label">Approval Rate</div><div class="kpi-detail">${{deltaHtml(cur, prev, 'approval_rate', true)}}</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:${{healthColor(avgScorePct)}}">${{avgScoreHtml}}</div><div class="kpi-label">Avg Score</div><div class="kpi-detail">Rubric: F+T+S+A (0-2 each)</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:#f85149">${{cur ? cur.needs_attention || 0 : 0}}</div><div class="kpi-label">Needs Attention</div><div class="kpi-detail">${{cur && cur.needs_attention > 0 ? 'Human review required' : 'All clear'}}</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:${{healthColor(weakRate)}}">${{weakRate}}%</div><div class="kpi-label">Weakest: ${{weakDim.charAt(0).toUpperCase() + weakDim.slice(1)}}</div><div class="kpi-detail">Strongest: ${{strongDim.charAt(0).toUpperCase() + strongDim.slice(1)}} (${{strongRate}}%)</div></div>
+    </div>`;
+    el.innerHTML = html;
+}}
+
+// ─── Needs Attention page ───────────────────────────────────────────────────
+function renderAttention() {{
+    const el = document.getElementById('attention-content');
+    const attn = EXEC.strategies.filter(s => s.needs_attention);
+    const total = attn.length;
+
+    let html = `<div class="hero">
+        <div class="hero-statement" style="color:${{total > 0 ? '#f85149' : '#3fb950'}}">${{total}} ${{total === 1 ? 'strategy' : 'strategies'}} need${{total === 1 ? 's' : ''}} attention</div>
+        <div class="hero-sub">Strategies with REVISE or REJECT verdict requiring human review</div>
+    </div>`;
+
+    if (total === 0) {{
+        html += `<div style="text-align:center;padding:48px;color:#3fb950;font-size:16px">All strategies passed review — no action needed.</div>`;
+        el.innerHTML = html;
+        return;
+    }}
+
+    html += `<table><thead><tr>
+        <th>Strategy</th><th>Title</th><th>Verdict</th><th>Score</th>
+        <th>F</th><th>T</th><th>S</th><th>A</th><th>Run</th>
+    </tr></thead><tbody>`;
+    attn.forEach((s, idx) => {{
+        const v = s.recommendation || '—';
+        const sc = s.scores || {{}};
+        const total = sc.total != null ? sc.total + '/8' : '—';
+        html += `<tr class="clickable" onclick="toggleAttentionDetail(${{idx}})">
+            <td>${{s.strat_id}}</td>
+            <td>${{s.title}}</td>
+            <td><span class="${{verdictClass(v)}}">${{verdictLabel(v)}}</span></td>
+            <td>${{total}}</td>
+            <td style="${{scoreStyle(sc.feasibility)}};padding:4px 8px;border-radius:4px">${{scoreText(sc.feasibility)}}</td>
+            <td style="${{scoreStyle(sc.testability)}};padding:4px 8px;border-radius:4px">${{scoreText(sc.testability)}}</td>
+            <td style="${{scoreStyle(sc.scope)}};padding:4px 8px;border-radius:4px">${{scoreText(sc.scope)}}</td>
+            <td style="${{scoreStyle(sc.architecture)}};padding:4px 8px;border-radius:4px">${{scoreText(sc.architecture)}}</td>
+            <td style="font-size:12px;color:#8b949e">${{s.run_id || '—'}}</td>
+        </tr>
+        <tr><td colspan="9" style="padding:0">
+            <div id="attn-panel-${{idx}}" class="detail-panel">
+                <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                    <div>
+                        <h4 style="color:#58a6ff;margin-bottom:8px">Review Comment</h4>
+                        <div style="color:#c9d1d9;font-size:13px;white-space:pre-wrap">${{s.body && s.body.review_comment ? s.body.review_comment : 'No review comment available'}}</div>
+                    </div>
+                    <div>
+                        <h4 style="color:#58a6ff;margin-bottom:8px">Review Summary</h4>
+                        <div style="color:#c9d1d9;font-size:13px;white-space:pre-wrap">${{s.body && s.body.review ? s.body.review.substring(0, 1500) : 'No review available'}}</div>
+                    </div>
+                </div>
+            </div>
+        </td></tr>`;
+    }});
+    html += '</tbody></table>';
+    el.innerHTML = html;
+}}
+
+function toggleAttentionDetail(idx) {{
+    const panel = document.getElementById(`attn-panel-${{idx}}`);
+    panel.classList.toggle('open');
 }}
 
 // ─── Executive summary ──────────────────────────────────────────────────────
@@ -1977,6 +2052,8 @@ if (dContainer) {{
 
 // ─── Init ────────────────────────────────────────────────────────────────────
 renderExecutiveSummary();
+renderOverviewKPIs();
+renderAttention();
 buildRunList();
 buildRunSelector();
 initCharts();
