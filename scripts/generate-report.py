@@ -94,6 +94,7 @@ def load_artifacts(artifacts_dir):
 
     # Load skipped RFEs
     skipped = []
+    pending_review = []
     skipped_path = os.path.join(artifacts_dir, "strat-skipped.md")
     if os.path.exists(skipped_path):
         with open(skipped_path, encoding="utf-8") as f:
@@ -102,14 +103,22 @@ def load_artifacts(artifacts_dir):
                 if line.startswith("|") and not line.startswith("| RFE") and not line.startswith("|--"):
                     cols = [c.strip() for c in line.split("|")[1:-1]]
                     if len(cols) >= 4:
-                        skipped.append({
+                        reason = cols[2]
+                        entry = {
                             "rfe_key": cols[0],
                             "title": cols[1],
-                            "labels": cols[2],
-                            "missing": cols[3],
-                        })
+                            "reason": reason,
+                            "run": cols[3],
+                        }
+                        if "already processed" in reason:
+                            if "needs-attention" in reason:
+                                strat_match = re.match(r'(\S+)\s+already processed', reason)
+                                entry["strat_key"] = strat_match.group(1) if strat_match else ""
+                                pending_review.append(entry)
+                        else:
+                            skipped.append(entry)
 
-    return tasks, reviews, review_comments, skipped
+    return tasks, reviews, review_comments, skipped, pending_review
 
 def md_to_html(md_text):
     """Minimal markdown to HTML conversion for rendering in report."""
@@ -300,7 +309,7 @@ def health_color(rate):
         return "#d29922"
     return "#f85149"
 
-def generate_html(tasks, reviews, review_comments, skipped, config, output_path):
+def generate_html(tasks, reviews, review_comments, skipped, pending_review, config, output_path):
     """Generate the full HTML report."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
@@ -480,6 +489,11 @@ def generate_html(tasks, reviews, review_comments, skipped, config, output_path)
         '<div class="nav-tab" onclick="switchPage('
         "'skipped'" ')">Skipped (%d)</div>' % skipped_count
     )
+    pending_tab = (
+        "" if not pending_review else
+        '<div class="nav-tab" onclick="switchPage('
+        "'pending'" ')">Pending Review (%d)</div>' % len(pending_review)
+    )
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -616,6 +630,7 @@ tr.clickable {{ cursor: pointer; }}
     <div class="nav-tab active" onclick="switchPage('summary')">Summary</div>
     <div class="nav-tab" onclick="switchPage('details')">Details</div>
     {skipped_tab}
+    {pending_tab}
     <div class="nav-tab" onclick="switchPage('pipeline')">Pipeline</div>
 </div>
 
@@ -665,6 +680,7 @@ tr.clickable {{ cursor: pointer; }}
         <div class="kpi-detail">Strongest: {strongest_dim.title()} ({strongest_rate}%)</div>
     </div>
     {"" if not skipped else '<div class="kpi"><div class="kpi-value" style="color:#d29922">' + str(len(skipped)) + '</div><div class="kpi-label">Skipped</div><div class="kpi-detail">Missing required labels</div></div>'}
+    {"" if not pending_review else '<div class="kpi"><div class="kpi-value" style="color:#f0883e">' + str(len(pending_review)) + '</div><div class="kpi-label">Pending Review</div><div class="kpi-detail">Awaiting human review</div></div>'}
 </div>
 
 <!-- Two-column: Dimension breakdown + Verdict grid -->
@@ -771,50 +787,61 @@ graph LR
         C --> D[rfe.submit]
     end
 
-    D -->|"Auto job\\ntrigger"| GATE
+    D -->|"Auto job\\ntrigger"| E0
 
     subgraph P2["Phase 2: Strategy Refinement"]
-        GATE{{{{Label gate\\nstrat-creator-3.5 +\\nrfe-creator-autofix-rubric-pass\\nor tech-reviewed}}}}
-        GATE -->|"Fail"| SKIP["Skipped RFEs\\nstrat-skipped.md"]
-        GATE -->|"Pass"| E1
 
-        subgraph SC["strategy.create"]
-            E1["Fetch RFE\\nfrom Jira"] --> E2["Check existing\\nSTRATs via Cloners"]
-            E2 --> E3["Save originals\\n& fetch comments"]
-            E3 --> E4["Create strategy\\nstubs"]
+        subgraph SC["strategy-create"]
+            E0["strategy-create"] --> GATE{{{{Pipeline label gate\\nstrat-creator-3.5 +\\nrfe-creator-autofix-rubric-pass\\nor tech-reviewed}}}}
+            GATE -->|"Fail"| SKIP["Skipped RFEs\\nstrat-skipped.md"]
+            GATE -->|"Pass"| E1["Fetch RFE\\nfrom Jira"]
+            E1 --> E2["Check existing\\nSTRATs via Cloners"]
+            E2 --> E3["Clone RFE to\\nRHAISTRAT in Jira"]
+            E3 --> E4["Save originals\\n& fetch comments"]
+            E4 --> E5["Create strategy\\nstubs"]
+            E5 --> E6["Add label\\nstrat-creator-auto-created"]
         end
 
-        E4 -->|"+strat-creator-auto-created"| F0
+        E6 --> SF
 
-        subgraph SR["strategy.refine"]
-            F0["Fetch arch\\ncontext"] --> F1["HOW context\\n&#8226; removed-context\\n&#8226; Staff Eng Input"]
+        subgraph SR["strategy-refine"]
+            SF["strategy-refine"] --> FG{{{{"Pipeline label gate\\nSkip if rubric-pass\\nor needs-attention"}}}}
+            FG -->|"Fail"| FSKIP["Skipped STRATs"]
+            FG -->|"Pass"| F0["Fetch arch\\ncontext"]
+            F0 --> F1["HOW context\\n&#8226; removed-context (RFE)\\n&#8226; Staff Eng Input\\n&#8226; Arch overlays"]
             F1 --> F2["Technical approach\\n& components"]
             F2 --> F3["Dependencies,\\nNFRs & effort"]
+            F3 --> F5["Push strategy\\nto Jira"]
+            F5 --> F4["Add label\\nstrat-creator-auto-refined"]
         end
 
-        F3 -->|"+strat-creator-auto-refined"| G{{{{refined}}}}
+        F4 --> SRV
 
-        subgraph SV["strategy.review"]
-            R1[feasibility]
-            R2[testability]
-            R3[scope]
-            R4[architecture]
-            R1 & R2 & R3 & R4 --> SC1["assess-strat\\nscorer agents\\nF/T/S/A 0-2"]
+        subgraph SV["strategy-review"]
+            SRV["strategy-review"] --> RG{{{{"Pipeline label gate\\nSkip if rubric-pass\\nor needs-attention"}}}}
+            RG -->|"Fail"| RSKIP["Skipped STRATs"]
+            RG -->|"Pass"| R1[feasibility]
+            RG -->|"Pass"| R2[testability]
+            RG -->|"Pass"| R3[scope]
+            RG -->|"Pass"| R4[architecture]
+            RG -->|"Pass"| R5["future:\\nUX, migration,\\ndeps, ..."]
+            R1 & R2 & R3 & R4 & R5 --> SC1["assess-strat\\nscorer agents\\nF/T/S/A 0-2"]
             SC1 --> SCRIPTS["parse_results.py &#8594; apply_scores.py\\n(deterministic verdicts)"]
             SCRIPTS --> CON["Write review\\nscores + prose"]
             CON --> JIRA["Attach review to Jira\\n& post summary\\nas comment"]
+            JIRA --> Q{{{{&#8805;6/8\\nno zeros?}}}}
+            Q -->|"APPROVE"| LA["Add label\\nstrat-creator-rubric-pass"]
+            Q -->|"REVISE / SPLIT / REJECT"| LR["Add label\\nstrat-creator-needs-attention"]
         end
 
-        G --> R1 & R2 & R3 & R4
-
-        JIRA --> Q{{{{&#8805;6/8\\nno zeros?}}}}
-        Q -->|"APPROVE\\n+strat-creator-rubric-pass"| PA["Jira &#8594;\\nPending Approval"]
-        Q -->|"REVISE / SPLIT / REJECT\\n+strat-creator-needs-attention"| HR["Human review\\nstakeholder feedback\\non Jira"]
-        HR -->|"Path A: Update\\narchitecture context"| F0
-        HR -->|"Path B: Edit\\nStaff Engineer Input"| F0
+        LA --> PA{{"AI Strategy HOW\\nReady\\n(optional &#128100; review)"}}
+        LR --> HR["&#128100; Human Review\\nStaff Eng or Architect"]
+        HR -->|"Path A: Update\\narchitecture context"| RL["Remove label\\nneeds-attention"]
+        HR -->|"Path B: Edit\\nStaff Engineer Input"| RL
+        RL -->|"Re-trigger pipeline\\nvia CI or strategy-submit"| SF
     end
 
-    PA -->|"PM adds\\nstrat-prioritized"| FR
+    PA --> FR
 
     subgraph P3["Phase 3: Feature Dev"]
         FR[feature.ready] --> J[Feature Ready]
@@ -823,32 +850,48 @@ graph LR
         L --> M[PR Review]
     end
 
+    PA -.->|"Optional: human\\ndecides to improve STRAT"| HR
+
     style A fill:#2d6a2d,color:#fff
     style B fill:#2d6a2d,color:#fff
     style C fill:#2d6a2d,color:#fff
     style D fill:#2d6a2d,color:#fff
     style GATE fill:#1f3a5f,color:#58a6ff,stroke:#58a6ff
     style SKIP fill:#3d1f00,color:#d29922,stroke:#d29922
+    style E0 fill:#2d6a2d,color:#fff
+    style E6 fill:#6e40c9,color:#fff
     style E1 fill:#c77d1a,color:#fff
     style E2 fill:#c77d1a,color:#fff
     style E3 fill:#c77d1a,color:#fff
     style E4 fill:#c77d1a,color:#fff
+    style E5 fill:#c77d1a,color:#fff
+    style SF fill:#2d6a2d,color:#fff
+    style FSKIP fill:#3d1f00,color:#d29922,stroke:#d29922
+    style FG fill:#1f3a5f,color:#58a6ff,stroke:#58a6ff
     style F0 fill:#c77d1a,color:#fff
     style F1 fill:#c77d1a,color:#fff
     style F2 fill:#c77d1a,color:#fff
     style F3 fill:#c77d1a,color:#fff
+    style F5 fill:#c77d1a,color:#fff
+    style F4 fill:#6e40c9,color:#fff
     style SC1 fill:#c77d1a,color:#fff
-    style SCRIPTS fill:#6e40c9,color:#fff
+    style SCRIPTS fill:#1f6feb,color:#fff
     style R1 fill:#c77d1a,color:#fff
     style R2 fill:#c77d1a,color:#fff
     style R3 fill:#c77d1a,color:#fff
     style R4 fill:#c77d1a,color:#fff
+    style R5 fill:#555,color:#8b949e,stroke:#6e7681,stroke-dasharray:5
     style CON fill:#c77d1a,color:#fff
-    style JIRA fill:#1f6feb,color:#fff,stroke:#58a6ff
-    style G fill:#1f3a5f,color:#58a6ff,stroke:#58a6ff
+    style JIRA fill:#c77d1a,color:#fff
+    style SRV fill:#2d6a2d,color:#fff
+    style RG fill:#1f3a5f,color:#58a6ff,stroke:#58a6ff
+    style RSKIP fill:#3d1f00,color:#d29922,stroke:#d29922
     style Q fill:#1f3a5f,color:#58a6ff,stroke:#58a6ff
-    style PA fill:#2d6a2d,color:#fff
+    style LA fill:#6e40c9,color:#fff
+    style LR fill:#6e40c9,color:#fff
+    style PA fill:#2d6a2d,color:#fff,stroke:#3fb950,stroke-width:3px
     style HR fill:#3d1f00,color:#f0883e,stroke:#f0883e
+    style RL fill:#6e40c9,color:#fff
     style FR fill:#555,color:#fff
     style J fill:#555,color:#fff
     style K fill:#555,color:#fff
@@ -945,8 +988,7 @@ graph LR
         <thead><tr>
             <th>RFE Key</th>
             <th>Title</th>
-            <th>Current Labels</th>
-            <th>Missing</th>
+            <th>Reason</th>
         </tr></thead>
         <tbody>
 """
@@ -954,13 +996,39 @@ graph LR
             html += f"""        <tr>
             <td>{escape_html(s["rfe_key"])}</td>
             <td>{escape_html(s["title"])}</td>
-            <td>{escape_html(s["labels"])}</td>
-            <td style="color:#f85149">{escape_html(s["missing"])}</td>
+            <td style="color:#f85149">{escape_html(s["reason"])}</td>
         </tr>
 """
         html += """        </tbody>
     </table>
 </div><!-- end page-skipped -->
+
+"""
+
+    # Pending Review section
+    if pending_review:
+        html += f"""<div class="nav-page" id="page-pending">
+    <div class="hero-sub" style="color:#f0883e; margin-bottom: 16px;">
+        {len(pending_review)} STRATs awaiting human review
+    </div>
+    <table>
+        <thead><tr>
+            <th>STRAT Key</th>
+            <th>Source RFE</th>
+            <th>Title</th>
+        </tr></thead>
+        <tbody>
+"""
+        for p in pending_review:
+            html += f"""        <tr>
+            <td><a href="https://redhat.atlassian.net/browse/{escape_html(p["strat_key"])}" style="color:#58a6ff">{escape_html(p["strat_key"])}</a></td>
+            <td>{escape_html(p["rfe_key"])}</td>
+            <td>{escape_html(p["title"])}</td>
+        </tr>
+"""
+        html += """        </tbody>
+    </table>
+</div><!-- end page-pending -->
 
 """
 
@@ -1112,14 +1180,14 @@ def main():
             print(f"Warning: failed to read config: {e}", file=sys.stderr)
 
     # Load artifacts
-    tasks, reviews, review_comments, skipped = load_artifacts(args.artifacts)
+    tasks, reviews, review_comments, skipped, pending_review = load_artifacts(args.artifacts)
 
     if not tasks:
         print("Error: no strategy artifacts found in", args.artifacts, file=sys.stderr)
         sys.exit(1)
 
-    print(f"Found {len(tasks)} strategies, {len(reviews)} reviews, {len(review_comments)} review comments, {len(skipped)} skipped")
-    generate_html(tasks, reviews, review_comments, skipped, config, output_path)
+    print(f"Found {len(tasks)} strategies, {len(reviews)} reviews, {len(review_comments)} review comments, {len(skipped)} skipped, {len(pending_review)} pending review")
+    generate_html(tasks, reviews, review_comments, skipped, pending_review, config, output_path)
 
 if __name__ == "__main__":
     main()
