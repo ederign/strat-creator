@@ -783,7 +783,6 @@ tr.clickable {{ cursor: pointer; }}
 .verdict-approve {{ color: #3fb950; font-weight: 600; }}
 .verdict-revise {{ color: #d29922; font-weight: 600; }}
 .verdict-reject {{ color: #f85149; font-weight: 600; }}
-.verdict-split {{ color: #f78166; font-weight: 600; }}
 .verdict-unknown {{ color: #8b949e; }}
 
 /* Badges */
@@ -1161,7 +1160,7 @@ function recomputeExec(runs) {{
     const skippedSeen = {{}};
     for (let i = runs.length - 1; i >= 0; i--) {{
         for (const s of (runs[i].skipped || [])) {{
-            if (s.rfe_key && !skippedSeen[s.rfe_key]) skippedSeen[s.rfe_key] = s;
+            if (s.rfe_key && !skippedSeen[s.rfe_key] && s.missing && s.missing.includes('rfe-creator-autofix-rubric-pass')) skippedSeen[s.rfe_key] = s;
         }}
     }}
     const skipped = Object.values(skippedSeen).sort((a, b) => (a.rfe_key || '').localeCompare(b.rfe_key || ''));
@@ -1239,7 +1238,7 @@ function renderExecutiveSummary() {{
         <div class="kpi"><div class="kpi-value" style="color:${{heroColor}}">${{rate}}%</div><div class="kpi-label">Approval Rate</div><div class="kpi-detail">${{e.approved}} approved</div></div>
         <div class="kpi"><div class="kpi-value" style="color:${{healthColor(avgScorePct)}}">${{avgScoreHtml}}</div><div class="kpi-label">Avg Score</div><div class="kpi-detail">Threshold: 6/8</div></div>
         <div class="kpi"><div class="kpi-value" style="color:#f85149">${{e.needs_attention}}</div><div class="kpi-label">Needs Attention</div><div class="kpi-detail">${{e.needs_attention === 0 ? 'All clear' : 'Staff engineer review'}}</div></div>
-        <div class="kpi"><div class="kpi-value" style="color:${{skippedCount > 0 ? '#d29922' : '#3fb950'}}">${{skippedCount}}</div><div class="kpi-label">Skipped</div><div class="kpi-detail">${{skippedCount > 0 ? 'Missing required labels' : 'All RFEs processed'}}</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:${{skippedCount > 0 ? '#d29922' : '#3fb950'}}">${{skippedCount}}</div><div class="kpi-label">Skipped RFEs</div><div class="kpi-detail">${{skippedCount > 0 ? 'Waiting on entry gate' : 'All RFEs processed'}}</div></div>
     </div>`;
 
     // Verdict + Dimensions + Funnel — single 3-column row
@@ -1253,7 +1252,6 @@ function renderExecutiveSummary() {{
         <div style="font-size:12px;line-height:1.8">
             <div><span style="display:inline-block;width:10px;height:10px;background:#3fb950;border-radius:2px;margin-right:4px"></span>Approve: <strong>${{e.approved}}</strong></div>
             <div><span style="display:inline-block;width:10px;height:10px;background:#d29922;border-radius:2px;margin-right:4px"></span>Revise: <strong>${{e.revise}}</strong></div>
-            <div><span style="display:inline-block;width:10px;height:10px;background:#f78166;border-radius:2px;margin-right:4px"></span>Split: <strong>${{e.split}}</strong></div>
             <div><span style="display:inline-block;width:10px;height:10px;background:#f85149;border-radius:2px;margin-right:4px"></span>Reject: <strong>${{e.reject}}</strong></div>
         </div>
         </div>
@@ -1372,7 +1370,7 @@ function renderExecutiveSummary() {{
     if (e.skipped && e.skipped.length > 0) {{
         html += `<div style="margin-top:24px;padding:16px;background:#1c1917;border:1px solid #d29922;border-radius:8px;">
             <h3 style="color:#d29922;margin:0 0 12px;">Skipped RFEs (${{e.skipped.length}})</h3>
-            <p style="color:#8b949e;margin-bottom:12px;">Missing required labels (strat-creator-3.5 + rfe-creator-autofix-rubric-pass or tech-reviewed)</p>
+            <p style="color:#8b949e;margin-bottom:12px;">RFEs in scope (strat-creator-3.5) but waiting on entry gate (rfe-creator-autofix-rubric-pass or tech-reviewed)</p>
             <table><thead><tr>
                 <th>RFE Key</th><th>Title</th><th>Current Labels</th><th style="color:#f85149">Missing</th>
             </tr></thead><tbody>`;
@@ -1388,10 +1386,10 @@ function renderExecutiveSummary() {{
     new Chart(document.getElementById('exec-donut'), {{
         type: 'doughnut',
         data: {{
-            labels: ['Approve', 'Revise', 'Split', 'Reject'],
+            labels: ['Approve', 'Revise', 'Reject'],
             datasets: [{{
-                data: [e.approved, e.revise, e.split, e.reject],
-                backgroundColor: ['#3fb950', '#d29922', '#f78166', '#f85149'],
+                data: [e.approved, e.revise, e.reject],
+                backgroundColor: ['#3fb950', '#d29922', '#f85149'],
                 borderWidth: 0,
                 hoverOffset: 4,
             }}]
@@ -1506,7 +1504,6 @@ function verdictClass(v) {{
     if (['approve','approved'].includes(v)) return 'verdict-approve';
     if (['revise','needs revision','needs_revision'].includes(v)) return 'verdict-revise';
     if (['reject','rejected','infeasible'].includes(v)) return 'verdict-reject';
-    if (v === 'split') return 'verdict-split';
     return 'verdict-unknown';
 }}
 
@@ -1514,14 +1511,12 @@ function verdictLabel(v) {{
     if (['approve','approved'].includes(v)) return 'Approve';
     if (['revise','needs revision','needs_revision'].includes(v)) return 'Revise';
     if (['reject','rejected','infeasible'].includes(v)) return 'Reject';
-    if (v === 'split') return 'Split';
     return v || '—';
 }}
 
 function cellStyle(v) {{
     if (['approve','approved'].includes(v)) return 'background:#23302a;border-color:#3fb950';
     if (['revise','needs revision','needs_revision'].includes(v)) return 'background:#2d2400;border-color:#d29922';
-    if (v === 'split') return 'background:#2d1a0d;border-color:#f78166';
     if (['reject','rejected','infeasible'].includes(v)) return 'background:#2d1418;border-color:#f85149';
     return 'background:#161b22;border-color:#30363d';
 }}
@@ -1566,7 +1561,7 @@ function renderRunDetail(idx) {{
         ? `${{r.avg_total_score}}<span style="font-size:14px;color:#6e7681">/8</span>`
         : '—';
     const avgScorePct = r.avg_total_score !== null ? Math.round(r.avg_total_score / 8 * 100) : 0;
-    const runSkipped = r.skipped ? r.skipped.length : 0;
+    const runSkippedGateCount = (r.skipped || []).filter(s => s.missing && s.missing.includes('rfe-creator-autofix-rubric-pass')).length;
     html += `<div class="kpi-grid" style="grid-template-columns: repeat(7, 1fr)">
         <div class="kpi"><div class="kpi-value" style="color:#f0f6fc">${{r.reviewed}}</div><div class="kpi-label">Reviewed</div></div>
         <div class="kpi"><div class="kpi-value" style="color:${{healthColor(r.approval_rate)}}">${{r.approval_rate}}%</div><div class="kpi-label">Approval Rate</div></div>
@@ -1574,7 +1569,7 @@ function renderRunDetail(idx) {{
         <div class="kpi"><div class="kpi-value" style="color:#f85149">${{r.needs_attention || 0}}</div><div class="kpi-label">Needs Attention</div></div>
         <div class="kpi"><div class="kpi-value" style="color:${{healthColor(100-r.revision_rate)}}">${{r.revision_rate}}%</div><div class="kpi-label">Revision Rate</div></div>
         <div class="kpi"><div class="kpi-value" style="color:${{healthColor(r.weakest_rate)}}">${{r.weakest_rate}}%</div><div class="kpi-label">Weakest: ${{r.weakest_dim.charAt(0).toUpperCase()+r.weakest_dim.slice(1)}}</div></div>
-        <div class="kpi"><div class="kpi-value" style="color:${{runSkipped > 0 ? '#d29922' : '#3fb950'}}">${{runSkipped}}</div><div class="kpi-label">Skipped</div><div class="kpi-detail">${{runSkipped > 0 ? 'Missing required labels' : 'All RFEs processed'}}</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:${{runSkippedGateCount > 0 ? '#d29922' : '#3fb950'}}">${{runSkippedGateCount}}</div><div class="kpi-label">Skipped RFEs</div><div class="kpi-detail">${{runSkippedGateCount > 0 ? 'Waiting on entry gate' : 'All RFEs processed'}}</div></div>
     </div>`;
 
     // Two-col: dimension bars + verdict grid
@@ -1697,15 +1692,16 @@ function renderRunDetail(idx) {{
     }});
     html += '</tbody></table>';
 
-    // Skipped RFEs section
-    if (r.skipped && r.skipped.length > 0) {{
+    // Skipped RFEs section — only show gate-blocked entries
+    const runSkippedGate = (r.skipped || []).filter(s => s.missing && s.missing.includes('rfe-creator-autofix-rubric-pass'));
+    if (runSkippedGate.length > 0) {{
         html += `<div style="margin-top:24px;padding:16px;background:#1c1917;border:1px solid #d29922;border-radius:8px;">
-            <h3 style="color:#d29922;margin:0 0 12px;">Skipped RFEs (${{r.skipped.length}})</h3>
-            <p style="color:#8b949e;margin-bottom:12px;">Missing required labels (strat-creator-3.5 + rfe-creator-autofix-rubric-pass or tech-reviewed)</p>
+            <h3 style="color:#d29922;margin:0 0 12px;">Skipped RFEs (${{runSkippedGate.length}})</h3>
+            <p style="color:#8b949e;margin-bottom:12px;">RFEs in scope but waiting on entry gate (rfe-creator-autofix-rubric-pass or tech-reviewed)</p>
             <table><thead><tr>
                 <th>RFE Key</th><th>Title</th><th>Current Labels</th><th style="color:#f85149">Missing</th>
             </tr></thead><tbody>`;
-        r.skipped.forEach(s => {{
+        runSkippedGate.forEach(s => {{
             html += `<tr><td>${{s.rfe_key}}</td><td>${{s.title}}</td><td>${{s.labels}}</td><td style="color:#f85149">${{s.missing}}</td></tr>`;
         }});
         html += '</tbody></table></div>';
@@ -1803,11 +1799,6 @@ function initCharts() {{
                 label: 'Revise',
                 data: RUNS.map(r => r.revise),
                 backgroundColor: '#d29922',
-                borderRadius: 4,
-            }}, {{
-                label: 'Split',
-                data: RUNS.map(r => r.split || 0),
-                backgroundColor: '#f78166',
                 borderRadius: 4,
             }}, {{
                 label: 'Reject',
