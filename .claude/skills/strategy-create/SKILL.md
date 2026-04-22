@@ -292,7 +292,7 @@ If Jira cloning was done, write `artifacts/strat-tickets.md`:
 | RHAIRFE-NNNN | RHAISTRAT-NNNN | ... | Major | https://redhat.atlassian.net/browse/RHAISTRAT-NNNN |
 ```
 
-## Step 7: Next Steps
+## Step 8: Next Steps
 
 Tell the user:
 - Strategy stubs created in `artifacts/strat-tasks/`
