@@ -1,0 +1,32 @@
+# Road to production — Batch 4 (MaaS, Gen AI Studio, Model Catalog)
+test_rfes:
+  - id: RHAIRFE-737
+    title: "Add MaaS quotas/info to AI Asset Endpoints Page"
+    size: M
+  - id: RHAIRFE-940
+    title: "[TP] Batch Inference API - MaaS"
+    size: M
+  - id: RHAIRFE-1061
+    title: "View Source Files in Gen AI Studio Playground Chat Sources and in-line RAG Solution"
+    size: M
+  - id: RHAIRFE-1451
+    title: "Existing Vector Store Addition/Registration in gen AI studio"
+    size: M
+  - id: RHAIRFE-1454
+    title: "Multi-Language Support in Gen AI Studio Playground View Code Modal"
+    size: M
+  - id: RHAIRFE-1455
+    title: "Multi-Vector Store Selection in Gen AI Studio Playground"
+    size: M
+  - id: RHAIRFE-1528
+    title: "MLFlow Prompt Template Integration in gen AI studio"
+    size: M
+  - id: RHAIRFE-1639
+    title: "Model Type and Capability Metadata Schema with API Filtering"
+    size: M
+  - id: RHAIRFE-1640
+    title: "AI Hub Model Catalog and Registry Type and Capability Display"
+    size: M
+  - id: RHAIRFE-1641
+    title: "Gen AI Studio Playground Context-Aware Model Selector Filtering with Incompatibility Warning"
+    size: M

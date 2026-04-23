@@ -1,0 +1,32 @@
+# Road to production — Batch 5 (Gen AI Studio, Observability, EvalHub)
+test_rfes:
+  - id: RHAIRFE-1642
+    title: "Gen AI Studio Playground Model Selector Inline Capability Tags"
+    size: M
+  - id: RHAIRFE-1651
+    title: "Surface Guardrails and Guardrail Templates in Gen AI Studio AI Assets"
+    size: M
+  - id: RHAIRFE-1652
+    title: "Consolidate Prompts into Gen AI Studio AI Assets"
+    size: M
+  - id: RHAIRFE-727
+    title: "Deployment of gen AI playground configurations to executable code"
+    size: M
+  - id: RHAIRFE-728
+    title: "User-Level Secrets Management in Gen AI Studio"
+    size: M
+  - id: RHAIRFE-1912
+    title: "Observability Reference Dashboards for llm-d - RHOAI"
+    size: M
+  - id: RHAIRFE-1824
+    title: "EvalHub UI Support for Kueue Queue Selection and Job Scheduling Visibility"
+    size: M
+  - id: RHAIRFE-1940
+    title: "EvalHub UI: Configurable Quality Thresholds for Benchmarks and Evaluation Collections"
+    size: M
+  - id: RHAIRFE-1971
+    title: "EvalHub UI: Evaluation Run Configuration Validation and Primary Metric Selection"
+    size: M
+  - id: RHAIRFE-1972
+    title: "EvalHub UI: Side-by-Side Evaluation Run Comparison for AI Artifacts"
+    size: M

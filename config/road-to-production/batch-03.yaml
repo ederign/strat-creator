@@ -1,0 +1,32 @@
+# Road to production — Batch 3 (MaaS)
+test_rfes:
+  - id: RHAIRFE-1486
+    title: "[GA] MaaS Body-Based Policy Enforcement — OpenAI-Compatible /v1/chat/completions Without Custom Headers"
+    size: M
+  - id: RHAIRFE-1487
+    title: "[TP] MaaS Multi-Tenancy — Per-Tenant Gateway and Identity Isolation"
+    size: M
+  - id: RHAIRFE-1608
+    title: "[GA] MaaS HA and Disaster Recovery"
+    size: M
+  - id: RHAIRFE-1622
+    title: "[TP] MaaS Consumer Portal — Self-Service Endpoint Access, API Key Management, and Usage Visibility"
+    size: M
+  - id: RHAIRFE-1898
+    title: "[TP] Complexity-Aware Model Selection for Inference Gateway"
+    size: M
+  - id: RHAIRFE-1899
+    title: "[TP] MaaS Self-Service Subscription Page for Non-Admin Users"
+    size: M
+  - id: RHAIRFE-1901
+    title: "[TP] Prompt-Level PII Detection and Redaction for MaaS"
+    size: M
+  - id: RHAIRFE-1923
+    title: "MaaS Model Endpoint Detail Page — Per-Model Subscription Context and Token Limits"
+    size: M
+  - id: RHAIRFE-1983
+    title: "MaaS Settings IA Redesign — Unified Policy and Subscription Management"
+    size: M
+  - id: RHAIRFE-1984
+    title: "MaaS Navigation IA Redesign — Coherent Cross-Persona Information Architecture"
+    size: M

@@ -1,0 +1,32 @@
+# Road to production — Batch 7 (RBAC, Inference, Guardrails, RAG, Kueue)
+test_rfes:
+  - id: RHAIRFE-342
+    title: "RHOAI Read Only Admin Role"
+    size: M
+  - id: RHAIRFE-1131
+    title: "MaaS Platform Admin UI"
+    size: M
+  - id: RHAIRFE-1391
+    title: "Decouple Guardrail Enforcement from Inference Path via Direct NeMo Guardrails Integration"
+    size: M
+  - id: RHAIRFE-1056
+    title: "Red Hat AI Inference UI MVP"
+    size: M
+  - id: RHAIRFE-1529
+    title: "Display vLLM and llm-d versions for LLMInferenceServiceConfigs (build-time plumbing)"
+    size: M
+  - id: RHAIRFE-834
+    title: "Hardware Profiles with Accelerator Type Awareness"
+    size: M
+  - id: RHAIRFE-629
+    title: "Integrate Kueue Workload Scheduling Information in Workbenches Overview"
+    size: M
+  - id: RHAIRFE-184
+    title: "Enable vector database selection from available Llama Stack providers based on options/characteristics"
+    size: M
+  - id: RHAIRFE-1449
+    title: "Deploy RAG Pattern"
+    size: M
+  - id: RHAIRFE-1452
+    title: "Multi-Lingual Support for AutoRAG"
+    size: M

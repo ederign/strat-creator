@@ -1,0 +1,32 @@
+# Road to production — Batch 6 (EvalHub, MCP, Kueue)
+test_rfes:
+  - id: RHAIRFE-2036
+    title: "EvalHub UI: Real-Time Evaluation Job Progress and State Visibility"
+    size: M
+  - id: RHAIRFE-2037
+    title: "EvalHub UI: Actionable Failure Diagnostics for Evaluation Jobs"
+    size: M
+  - id: RHAIRFE-2038
+    title: "EvalHub UI: Opt-In In-App Notifications for Evaluation Job Completion and Failure"
+    size: M
+  - id: RHAIRFE-1456
+    title: "[TP] Productize MCP Lifecycle Operator for RHOAI Installation"
+    size: M
+  - id: RHAIRFE-1457
+    title: "[TP] Productize MCP Gateway Operator for RHOAI"
+    size: M
+  - id: RHAIRFE-1643
+    title: "MCP Server Registration and Management UI in RHOAI"
+    size: M
+  - id: RHAIRFE-1644
+    title: "Virtual MCP Server Creation and Management in RHOAI"
+    size: M
+  - id: RHAIRFE-1645
+    title: "Promote MCP Endpoints to Gen AI Studio from RHOAI Console"
+    size: M
+  - id: RHAIRFE-1646
+    title: "Surface MCP Endpoints in AI Asset Endpoints View"
+    size: M
+  - id: RHAIRFE-1787
+    title: "Kueue Quota Hierarchy Visualization and Management in OpenShift AI Dashboard"
+    size: M
