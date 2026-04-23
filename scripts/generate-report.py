@@ -1186,11 +1186,16 @@ def main():
     # Load artifacts
     tasks, reviews, review_comments, skipped, pending_review = load_artifacts(args.artifacts)
 
-    if not tasks:
+    if not tasks and not skipped:
         print("Error: no strategy artifacts found in", args.artifacts, file=sys.stderr)
         sys.exit(1)
 
     print(f"Found {len(tasks)} strategies, {len(reviews)} reviews, {len(review_comments)} review comments, {len(skipped)} skipped, {len(pending_review)} pending review")
+
+    if not tasks:
+        print("All RFEs were skipped, no report to generate.")
+        sys.exit(0)
+
     generate_html(tasks, reviews, review_comments, skipped, pending_review, config, output_path)
 
 if __name__ == "__main__":

@@ -396,8 +396,8 @@ def main():
         print(f"Extracting single run from {args.run_dir}...", file=sys.stderr)
         run_data = extract_run(args.run_dir)
         if run_data is None:
-            print("No artifacts found.", file=sys.stderr)
-            sys.exit(1)
+            print("No artifacts found (all RFEs may have been skipped).", file=sys.stderr)
+            sys.exit(0)
         run_data["run_id"] = os.path.basename(args.run_dir.rstrip("/"))
         run_data["timestamp"] = generated_at
         if args.no_body:
