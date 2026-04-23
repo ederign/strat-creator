@@ -47,6 +47,16 @@ Overlays applied:
 - 0001: KFP SDK updated to 2.16 in RHOAI 3.4
 ```
 
+## Platform Architecture Context
+
+When reviewing RHOAI strategy documents, use this context to inform your assessment of the existing criteria — do not treat these as separate checklist items. These checks apply when a strategy introduces new components, images, or external dependencies. If a strategy only modifies existing components without introducing new container images or external dependencies, the existing disconnected and multi-arch posture is inherited and does not need to be re-stated. Upgrade impact must always be assessed — even changes to existing components can introduce CRD schema changes, API migrations, or breaking behavior.
+
+**Disconnected / air-gapped deployments**: RHOAI is expected to be fully functional on disconnected (air-gapped) clusters with no internet egress. This applies at two layers. *Image layer*: all container images must be declared in the operator CSV as `relatedImages` with SHA256 digest pinning so OLM can mirror them — when a strategy introduces new components, verify their images are accounted for in the image shipping model. *Runtime layer*: the product must be fully functional without internet egress in its default configuration — when a strategy introduces components that depend on external resources to start or operate in their default configuration, verify the strategy describes how disconnected clusters are supported. Components may call external endpoints at runtime when explicitly configured by the user — that is not a disconnected violation.
+
+**Upgrade impact on existing installations**: RHOAI upgrades in-place on clusters with active workloads. When a strategy introduces CRD schema changes, API migrations, endpoint changes, component removals, or default behavior changes, verify that the upgrade path is accounted for: backwards-compatible changes need no intervention; breaking changes need migration steps automatable via `odh-cli` helpers (`odh-cli` is a CLI for pre-upgrade validation and migration — see https://github.com/opendatahub-io/odh-cli) and documented for manual execution. Components that change authentication mechanisms, ingress patterns, or storage schemas must define how existing sessions, routes, or data are preserved or migrated. Proposals that silently break existing resources on upgrade conflict with the platform's upgrade model.
+
+**Multi-architecture support**: RHOAI ships on four CPU architectures: amd64, arm64, ppc64le, and s390x. All container images must provide multi-arch manifests. When a strategy introduces new container images or components, verify the strategy accounts for multi-arch builds — Go-based components typically build cleanly across all four architectures, but components with compiled native dependencies (e.g., PyTorch, OpenBLAS, LLVM) often require architecture-specific build scripts or source compilation for ppc64le and s390x. If a component has known partial architecture support (fewer than four architectures), the strategy should state which architectures are supported and why.
+
 ## What to Assess
 
 For each strategy:
