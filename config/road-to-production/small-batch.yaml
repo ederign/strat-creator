@@ -3,3 +3,9 @@ test_rfes:
   - id: RHAIRFE-1277
     title: "Granular Role Creation UI"
     size: S
+  - id: RHAIRFE-1501
+    title: "Connection Security — Separate Static Configuration from Credentials"
+    size: M
+  - id: RHAIRFE-442
+    title: "RFE - OpenShift AI - Test data connection button - Datascience UI"
+    size: S
