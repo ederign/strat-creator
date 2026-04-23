@@ -54,15 +54,16 @@ Scale output depth to match the strategy size. All sizes produce all sections �
 | <name>     | <internal/external> | <exists/needed/unknown> | <what's blocked> |
 
 ### Non-Functional Requirements
-<!-- Each NFR needs a numeric threshold where applicable. -->
+<!-- Every NFR must cite its source: (RFE), (architecture context: <doc>), or (Staff Engineer Input). -->
+<!-- Do NOT invent numeric thresholds. If no source specifies a metric, flag it in Open Questions. -->
+<!-- Architectural facts (replica counts, TLS versions, HPA ranges) ARE valid — they are grounded in the platform. -->
 <!-- Do NOT write: "good performance", "secure access", "high availability" — not testable. -->
-<!-- If the RFE doesn't specify a metric, flag in Open Questions instead of inventing targets. -->
-- **Performance**: <latency targets, throughput, concurrent users>
-- **Security**: <AuthN/AuthZ, RBAC scope, FIPS compliance>
+- **Performance**: <cite source for each metric; flag missing targets in Open Questions>
+- **Security**: <AuthN/AuthZ, RBAC scope, FIPS compliance — cite architecture context docs>
 - **Backwards Compatibility**: <migration path, deprecation timeline>
 <!-- L/XL also cover: -->
-- **Scalability**: <load targets, resource limits>
-- **Availability**: <uptime target, failure modes, recovery time>
+- **Scalability**: <cite source; if no load target exists in RFE or context, flag in Open Questions>
+- **Availability**: <cite source for replica counts, failure modes from architecture context>
 
 ### Out-of-Scope
 <!-- ALL sizes. What is explicitly NOT part of this strategy. -->

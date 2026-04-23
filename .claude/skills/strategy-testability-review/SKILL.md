@@ -26,6 +26,7 @@ For each strategy:
 5. **Are non-functional requirements testable?** Performance benchmarks, scalability limits, security requirements — can we write tests for these?
 6. **Are acceptance criteria structured?** Given/When/Then format with "measured by" clauses is a positive signal — it forces testable specificity. Bullet-list criteria without verification methods are a gap. Flag criteria that use vague language: "works correctly", "users can easily...", or capability lists without verification.
 7. **Are NFRs quantified with numeric thresholds?** Each non-functional requirement should have a measurable target (latency in ms, throughput in requests/sec, error rate percentage). Generic NFRs like "good performance", "secure access", or "high availability" are not testable. Missing NFRs entirely for L/XL strategies is a testability gap.
+8. **Are NFR metrics grounded in a cited source?** Every numeric threshold in the NFR section must cite where it came from — the RFE, a specific architecture context doc, or Staff Engineer Input. If an NFR states a number (e.g., "< 500ms response time", "1000 RPS", "500 concurrent users") without citing a source, flag it as an ungrounded metric. Architectural facts like replica counts, TLS versions, and HPA ranges from the platform docs are valid. Invented performance or scalability targets with no source are not — they should be open questions, not stated as requirements.
 
 If this is a re-review:
 - What concerns from the prior review were addressed?
