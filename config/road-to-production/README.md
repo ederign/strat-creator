@@ -6,8 +6,8 @@
 | [batch-02](batch-02.yaml) | 5 | External endpoints, Chat metrics, Persistence, YAML Editor | ran 2026-04-22 |
 | [small-batch](small-batch.yaml) | 1 | Granular Role Creation UI (single-RFE test) | ran 2026-04-22 |
 | [batch-03](batch-03.yaml) | 10 | MaaS (policy, multi-tenancy, HA, consumer portal, PII) | ran 2026-04-23 |
-| [batch-04](batch-04.yaml) | 10 | MaaS quotas, Gen AI Studio (RAG, vector stores, prompts), Model Catalog | pending |
-| [batch-05](batch-05.yaml) | 10 | Gen AI Studio (guardrails, prompts, secrets), Observability, EvalHub | pending |
+| [batch-04](batch-04.yaml) | 10 | MaaS quotas, Gen AI Studio (RAG, vector stores, prompts), Model Catalog | ran 2026-04-23 |
+| [batch-05](batch-05.yaml) | 10 | Gen AI Studio (guardrails, prompts, secrets), Observability, EvalHub | ran 2026-04-23 |
 | [batch-06](batch-06.yaml) | 10 | EvalHub (diagnostics, notifications), MCP operators, Kueue | pending |
 | [batch-07](batch-07.yaml) | 10 | RBAC, Inference UI, Guardrails, Hardware Profiles, RAG, Kueue | pending |
 | [batch-08](batch-08.yaml) | 1 | AutoRAG (MLFlow integration) | pending |
