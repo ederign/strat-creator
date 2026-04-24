@@ -148,6 +148,37 @@ def build_jql_from_config(config_path):
     return jql
 
 
+def find_processed_rfe_ids(server, user, token, skip_labels, strat_project="RHAISTRAT"):
+    """Find RHAIRFE IDs whose RHAISTRAT clones have skip labels.
+
+    Queries RHAISTRAT for issues with any of the skip labels, then
+    extracts the source RHAIRFE keys from their Cloners links.
+    Returns a set of RHAIRFE keys that should be excluded from batches.
+    """
+    if not skip_labels:
+        return set()
+    label_clause = " OR ".join(f'labels = "{l}"' for l in skip_labels)
+    jql = f"project = {strat_project} AND ({label_clause})"
+    issues = search_issues(server, user, token, jql,
+                           fields=["issuelinks"])
+    processed = set()
+    for issue in issues:
+        links = issue.get("fields", {}).get("issuelinks", [])
+        for link in links:
+            if link.get("type", {}).get("name") != "Cloners":
+                continue
+            outward = link.get("outwardIssue", {})
+            inward = link.get("inwardIssue", {})
+            rfe_key = None
+            if outward and outward.get("key", "").startswith("RHAIRFE"):
+                rfe_key = outward["key"]
+            elif inward and inward.get("key", "").startswith("RHAIRFE"):
+                rfe_key = inward["key"]
+            if rfe_key:
+                processed.add(rfe_key)
+    return processed
+
+
 def get_issue(server, user, token, key, fields=None):
     """GET /rest/api/3/issue/{key}"""
     path = f"/issue/{key}"

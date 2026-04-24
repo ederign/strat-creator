@@ -13,3 +13,8 @@ jql:
   order_by: key ASC
 
 batch_size: 10
+
+# Labels on RHAISTRAT that indicate the RFE was already processed
+skip_labels:
+  - strat-creator-rubric-pass
+  - strat-creator-needs-attention

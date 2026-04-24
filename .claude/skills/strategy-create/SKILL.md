@@ -162,7 +162,7 @@ Look for a link with type **"Cloners"** pointing to a RHAISTRAT issue. Only Clon
 
 The STRAT was already cloned from the RFE in Jira. Import its content instead of creating a new stub. Skip Step 3 (Jira clone) for this RFE.
 
-**Multiple Cloners links**: An RFE may have more than one RHAISTRAT linked. Filter out any with status **Closed**, **Resolved**, **In Progress**, or **Review** — these are already being worked on or completed and must not be touched. Import only RHAISTRAT issues in early states (e.g., New, Open). If all linked STRATs are filtered out, treat this RFE as Path B (create new).
+**Multiple Cloners links**: An RFE may have more than one RHAISTRAT linked. Filter out any with status **Closed**, **Resolved**, **In Progress**, or **Review** — these are already being worked on or completed and must not be touched. After filtering, if **more than one** RHAISTRAT remains in early states (e.g., New, Open), **skip this RFE** — multiple open STRATs means ambiguity that requires human resolution. Append to `artifacts/strat-skipped.md` with reason: `multiple open STRATs: RHAISTRAT-NNNN, RHAISTRAT-MMMM`. Print `[SKIP] RHAIRFE-NNNN — multiple open STRATs found, requires human decision`. If exactly one remains, import it. If all are filtered out, treat this RFE as Path B (create new).
 
 **Pipeline label gate**: For each remaining STRAT candidate, fetch its labels:
 

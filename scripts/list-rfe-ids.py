@@ -75,6 +75,9 @@ def main():
     baseline_group.add_argument("--no-baseline", action="store_true",
                                 help="Exclude baseline RFEs (config mode)")
 
+    parser.add_argument("--include-processed", action="store_true",
+                        help="Include RFEs whose STRATs already have "
+                             "skip labels (default: exclude them)")
     parser.add_argument("--batch-size", type=int, default=None,
                         help="Limit output to N RFE IDs")
     parser.add_argument("--batch-offset", type=int, default=0,
@@ -114,6 +117,30 @@ def main():
         elif args.no_baseline:
             baseline = False
         ids = ids_from_config(config_path, baseline)
+
+    # Exclude already-processed RFEs (JQL modes only, unless --include-processed)
+    in_jql_mode = args.jql is not None or args.jql_default is not None
+    if not args.include_processed and in_jql_mode:
+        from jira_utils import find_processed_rfe_ids, require_env
+        settings = None
+        if args.jql_default is not None:
+            settings = args.jql_default if args.jql_default else str(SETTINGS_PATH)
+        if settings:
+            with open(settings) as f:
+                skip_cfg = yaml.safe_load(f)
+            skip_labels = skip_cfg.get("skip_labels", [])
+        else:
+            skip_labels = ["strat-creator-rubric-pass",
+                           "strat-creator-needs-attention"]
+        if skip_labels:
+            server, user, token = require_env()
+            processed = find_processed_rfe_ids(server, user, token, skip_labels)
+            before = len(ids)
+            ids = [i for i in ids if i not in processed]
+            excluded = before - len(ids)
+            if excluded:
+                print(f"Excluded {excluded} already-processed RFE(s), "
+                      f"{len(ids)} remaining", file=sys.stderr)
 
     # Apply batching
     ids = ids[args.batch_offset:]
