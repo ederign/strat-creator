@@ -148,20 +148,9 @@ def build_jql_from_config(config_path):
     return jql
 
 
-def find_processed_rfe_ids(server, user, token, skip_labels, strat_project="RHAISTRAT"):
-    """Find RHAIRFE IDs whose RHAISTRAT clones have skip labels.
-
-    Queries RHAISTRAT for issues with any of the skip labels, then
-    extracts the source RHAIRFE keys from their Cloners links.
-    Returns a set of RHAIRFE keys that should be excluded from batches.
-    """
-    if not skip_labels:
-        return set()
-    label_clause = " OR ".join(f'labels = "{l}"' for l in skip_labels)
-    jql = f"project = {strat_project} AND ({label_clause})"
-    issues = search_issues(server, user, token, jql,
-                           fields=["issuelinks"])
-    processed = set()
+def _extract_rfe_keys_from_issues(issues):
+    """Extract RHAIRFE keys from Cloners links on a list of RHAISTRAT issues."""
+    rfe_keys = set()
     for issue in issues:
         links = issue.get("fields", {}).get("issuelinks", [])
         for link in links:
@@ -175,7 +164,35 @@ def find_processed_rfe_ids(server, user, token, skip_labels, strat_project="RHAI
             elif inward and inward.get("key", "").startswith("RHAIRFE"):
                 rfe_key = inward["key"]
             if rfe_key:
-                processed.add(rfe_key)
+                rfe_keys.add(rfe_key)
+    return rfe_keys
+
+
+def find_processed_rfe_ids(server, user, token, skip_labels,
+                           excluded_strat_statuses=None,
+                           strat_project="RHAISTRAT"):
+    """Find RHAIRFE IDs that should be excluded from batching.
+
+    Excludes RFEs whose RHAISTRAT clones either:
+    - Have any of the skip labels (already processed by pipeline)
+    - Are in an active/completed status (being worked on or done)
+    """
+    processed = set()
+
+    if skip_labels:
+        label_clause = " OR ".join(f'labels = "{l}"' for l in skip_labels)
+        jql = f"project = {strat_project} AND ({label_clause})"
+        issues = search_issues(server, user, token, jql,
+                               fields=["issuelinks"])
+        processed |= _extract_rfe_keys_from_issues(issues)
+
+    if excluded_strat_statuses:
+        status_clause = ", ".join(f'"{s}"' for s in excluded_strat_statuses)
+        jql = f"project = {strat_project} AND status IN ({status_clause})"
+        issues = search_issues(server, user, token, jql,
+                               fields=["issuelinks"])
+        processed |= _extract_rfe_keys_from_issues(issues)
+
     return processed
 
 

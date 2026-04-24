@@ -122,19 +122,25 @@ def main():
     in_jql_mode = args.jql is not None or args.jql_default is not None
     if not args.include_processed and in_jql_mode:
         from jira_utils import find_processed_rfe_ids, require_env
-        settings = None
         if args.jql_default is not None:
             settings = args.jql_default if args.jql_default else str(SETTINGS_PATH)
+        else:
+            settings = str(SETTINGS_PATH) if SETTINGS_PATH.exists() else None
         if settings:
             with open(settings) as f:
                 skip_cfg = yaml.safe_load(f)
             skip_labels = skip_cfg.get("skip_labels", [])
+            excluded_strat_statuses = skip_cfg.get(
+                "excluded_strat_statuses", [])
         else:
             skip_labels = ["strat-creator-rubric-pass",
                            "strat-creator-needs-attention"]
-        if skip_labels:
+            excluded_strat_statuses = []
+        if skip_labels or excluded_strat_statuses:
             server, user, token = require_env()
-            processed = find_processed_rfe_ids(server, user, token, skip_labels)
+            processed = find_processed_rfe_ids(
+                server, user, token, skip_labels,
+                excluded_strat_statuses=excluded_strat_statuses)
             before = len(ids)
             ids = [i for i in ids if i not in processed]
             excluded = before - len(ids)
