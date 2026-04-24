@@ -9,3 +9,9 @@ test_rfes:
   - id: RHAIRFE-442
     title: "RFE - OpenShift AI - Test data connection button - Datascience UI"
     size: S
+  - id: RHAIRFE-2075
+    title: "MaaS Endpoint Registration and Consumption in MLflow Experiments"
+    size: ""
+  - id: RHAIRFE-2076
+    title: "MaaS Endpoint Consumption in KFP/Data Science Pipelines"
+    size: ""
