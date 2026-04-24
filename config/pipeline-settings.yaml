@@ -1,0 +1,15 @@
+# Pipeline-level settings for JQL-based RFE discovery
+jql:
+  project: RHAIRFE
+  required_labels:
+    - strat-creator-3.5
+  quality_labels:    # at least one required
+    - rfe-creator-autofix-rubric-pass
+    - tech-reviewed
+  excluded_statuses:
+    - Closed
+    - Resolved
+    - Draft
+  order_by: key ASC
+
+batch_size: 10

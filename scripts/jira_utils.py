@@ -92,6 +92,62 @@ def require_env():
 
 # ─── Jira Operations ─────────────────────────────────────────────────────────
 
+def search_issues(server, user, token, jql, fields=None, max_results=50):
+    """Search Jira issues using JQL via /rest/api/3/search/jql.
+
+    Uses nextPageToken pagination (the startAt-based /search endpoint
+    was removed by Atlassian in 2026).
+    """
+    if fields is None:
+        fields = ["key"]
+    all_issues = []
+    next_page_token = None
+    while True:
+        body = {
+            "jql": jql,
+            "maxResults": min(max_results, 100),
+            "fields": fields,
+        }
+        if next_page_token:
+            body["nextPageToken"] = next_page_token
+        data = api_call_with_retry(server, "/search/jql", user, token,
+                                   body=body)
+        issues = data.get("issues", [])
+        all_issues.extend(issues)
+        next_page_token = data.get("nextPageToken")
+        if not next_page_token:
+            break
+    return all_issues
+
+
+def build_jql_from_config(config_path):
+    """Build a JQL query string from pipeline-settings.yaml."""
+    import yaml
+    with open(config_path) as f:
+        cfg = yaml.safe_load(f)
+    jql_cfg = cfg.get("jql", {})
+    project = jql_cfg.get("project", "RHAIRFE")
+    required = jql_cfg.get("required_labels", [])
+    quality = jql_cfg.get("quality_labels", [])
+    excluded = jql_cfg.get("excluded_statuses", [])
+    order = jql_cfg.get("order_by", "key ASC")
+
+    clauses = [f'project = {project}']
+    for label in required:
+        clauses.append(f'labels = "{label}"')
+    if quality:
+        quality_clause = " OR ".join(f'labels = "{l}"' for l in quality)
+        clauses.append(f'({quality_clause})')
+    if excluded:
+        status_clause = ", ".join(f'"{s}"' for s in excluded)
+        clauses.append(f'status NOT IN ({status_clause})')
+
+    jql = " AND ".join(clauses)
+    if order:
+        jql += f" ORDER BY {order}"
+    return jql
+
+
 def get_issue(server, user, token, key, fields=None):
     """GET /rest/api/3/issue/{key}"""
     path = f"/issue/{key}"
