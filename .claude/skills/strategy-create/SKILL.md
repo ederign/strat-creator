@@ -59,9 +59,13 @@ The script outputs JSON to stdout with the description already converted to mark
 
 The user can select specific ones or "all."
 
-## Step 2a: Label Gate
+## Step 2a: Status and Label Gate
 
-For each selected RFE, fetch its labels from Jira (the `labels` field is already included in the Step 1 fetch). Check that the RFE has **both**:
+For each selected RFE, fetch its status and labels from Jira (the `status` and `labels` fields are already included in the Step 1 fetch).
+
+**Status check**: If the RFE status is **Closed** or **Resolved**, skip it — the RFE is no longer active. Append to `artifacts/strat-skipped.md` with reason: `RFE status: <status>`. Print `[SKIPPED] RHAIRFE-NNNN — RFE is <status>`.
+
+**Label check**: Check that the RFE has **both**:
 
 1. `strat-creator-3.5`
 2. At least one of: `rfe-creator-autofix-rubric-pass` or `tech-reviewed`
@@ -166,9 +170,9 @@ The script returns a JSON array of RHAISTRAT clones with their status and labels
 
 The STRAT was already cloned from the RFE in Jira. Import its content instead of creating a new stub. Skip Step 3 (Jira clone) for this RFE.
 
-From the script output, filter out any with status **Closed**, **Resolved**, **In Progress**, or **Review** — these are already being worked on or completed and must not be touched.
+From the script output, filter out any with status **Closed**, **Resolved**, **In Progress**, **Review**, **Release Pending**, or **Refinement** — these are already being worked on or completed and must not be touched. If all STRATs are filtered out by status, **skip this RFE** — do NOT fall through to Path B (creating a new clone would duplicate active or completed work). Append to `artifacts/strat-skipped.md` with reason: `existing STRAT(s) in active/completed state: RHAISTRAT-NNNN (status)`. Print `[SKIP] RHAIRFE-NNNN — RHAISTRAT-NNNN already in <status>`.
 
-**Multiple open STRATs**: After filtering, if **more than one** RHAISTRAT remains in early states (e.g., New, Open), **skip this RFE** — multiple open STRATs means ambiguity that requires human resolution. Append to `artifacts/strat-skipped.md` with reason: `multiple open STRATs: RHAISTRAT-NNNN, RHAISTRAT-MMMM`. Print `[SKIP] RHAIRFE-NNNN — multiple open STRATs found, requires human decision`. If exactly one remains, import it. If all are filtered out, treat this RFE as Path B (create new).
+**Multiple open STRATs**: After filtering, if **more than one** RHAISTRAT remains in early states (e.g., New, Open), **skip this RFE** — multiple open STRATs means ambiguity that requires human resolution. Append to `artifacts/strat-skipped.md` with reason: `multiple open STRATs: RHAISTRAT-NNNN, RHAISTRAT-MMMM`. Print `[SKIP] RHAIRFE-NNNN — multiple open STRATs found, requires human decision`. If exactly one remains, import it.
 
 **Pipeline label gate**: From the script output, check each remaining STRAT candidate's labels. If the STRAT has either `strat-creator-rubric-pass` or `strat-creator-needs-attention`, **skip this RFE** — the STRAT has already been processed by the pipeline:
 - Do NOT import the STRAT
