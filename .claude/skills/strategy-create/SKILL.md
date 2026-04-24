@@ -150,27 +150,27 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/frontmatter.py schema strat-task
 
 ### Step 5a: Check for Existing STRAT
 
-For each RFE, check if a RHAISTRAT already exists by looking at Jira issue links. Try `mcp__atlassian__getJiraIssue` first; if unavailable, use the REST API:
+For each RFE, use the deterministic lookup script to find existing RHAISTRAT clones:
 
 ```bash
-python3 ${CLAUDE_SKILL_DIR}/scripts/fetch_issue.py RHAIRFE-NNNN --fields issuelinks --markdown
+python3 ${CLAUDE_SKILL_DIR}/scripts/find_strat_for_rfe.py RHAIRFE-NNNN --json
 ```
 
-Look for a link with type **"Cloners"** pointing to a RHAISTRAT issue. Only Cloners links mean the STRAT was cloned from the RFE (other link types like Related, Depend, Incorporates are just references — ignore them).
+**IMPORTANT**: Do NOT manually parse issuelinks to find STRATs. Always use this script — it guarantees only real Cloners links are returned and prevents misattribution.
+
+The script returns a JSON array of RHAISTRAT clones with their status and labels, or `[]` if none exist. Exit code 0 means clones found, 1 means none.
+
+**If the script returns `[]` (no clones)**: Go to Path B (create new STRAT).
 
 ### Path A: Cloners link found (existing STRAT)
 
 The STRAT was already cloned from the RFE in Jira. Import its content instead of creating a new stub. Skip Step 3 (Jira clone) for this RFE.
 
-**Multiple Cloners links**: An RFE may have more than one RHAISTRAT linked. Filter out any with status **Closed**, **Resolved**, **In Progress**, or **Review** — these are already being worked on or completed and must not be touched. After filtering, if **more than one** RHAISTRAT remains in early states (e.g., New, Open), **skip this RFE** — multiple open STRATs means ambiguity that requires human resolution. Append to `artifacts/strat-skipped.md` with reason: `multiple open STRATs: RHAISTRAT-NNNN, RHAISTRAT-MMMM`. Print `[SKIP] RHAIRFE-NNNN — multiple open STRATs found, requires human decision`. If exactly one remains, import it. If all are filtered out, treat this RFE as Path B (create new).
+From the script output, filter out any with status **Closed**, **Resolved**, **In Progress**, or **Review** — these are already being worked on or completed and must not be touched.
 
-**Pipeline label gate**: For each remaining STRAT candidate, fetch its labels:
+**Multiple open STRATs**: After filtering, if **more than one** RHAISTRAT remains in early states (e.g., New, Open), **skip this RFE** — multiple open STRATs means ambiguity that requires human resolution. Append to `artifacts/strat-skipped.md` with reason: `multiple open STRATs: RHAISTRAT-NNNN, RHAISTRAT-MMMM`. Print `[SKIP] RHAIRFE-NNNN — multiple open STRATs found, requires human decision`. If exactly one remains, import it. If all are filtered out, treat this RFE as Path B (create new).
 
-```bash
-python3 ${CLAUDE_SKILL_DIR}/scripts/fetch_issue.py RHAISTRAT-NNNN --fields labels --markdown
-```
-
-If the STRAT has either `strat-creator-rubric-pass` or `strat-creator-needs-attention` in its labels, **skip this RFE** — the STRAT has already been processed by the pipeline:
+**Pipeline label gate**: From the script output, check each remaining STRAT candidate's labels. If the STRAT has either `strat-creator-rubric-pass` or `strat-creator-needs-attention`, **skip this RFE** — the STRAT has already been processed by the pipeline:
 - Do NOT import the STRAT
 - Append to `artifacts/strat-skipped.md` with reason and run info (same format as Step 2a): `RHAISTRAT-NNNN already processed (label: <label>)`
 - Print `[SKIP] RHAIRFE-NNNN — RHAISTRAT-NNNN already has <label>`
