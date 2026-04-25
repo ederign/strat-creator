@@ -15,6 +15,23 @@ If `--dry-run` is in `$ARGUMENTS`, skip ALL external writes:
 - DO still read from Jira and local artifacts (reads are safe)
 - DO still create/update local artifacts in `artifacts/strat-tasks/`
 
+## Local Mode
+
+Check if strategy files exist in `local/strat-tasks/`. If they do, this is a local human review session pulled via `/strategy-pull`.
+
+In local mode:
+- Read strategy files from `local/strat-tasks/` instead of `artifacts/strat-tasks/`
+- Read review files from `local/strat-reviews/` instead of `artifacts/strat-reviews/`
+- Read originals from `local/strat-originals/` instead of `artifacts/strat-originals/`
+- Write refined strategies to `local/strat-tasks/`
+- **Skip ALL Jira writes** (labels, description push, comments) — the push/signoff skills handle Jira at the end
+- **Skip the Pipeline Label Gate** — the strategy was already processed by CI; local mode is the human's turn to iterate
+- DO still fetch architecture context (needed for quality refinement)
+
+Local mode is also active if any strategy file's frontmatter contains `workflow: local`.
+
+If both `local/strat-tasks/` and `artifacts/strat-tasks/` have files, prefer `local/strat-tasks/`.
+
 ## Local Architecture Context
 
 If `--architecture-context <path>` is in `$ARGUMENTS`, link the local path before reading:

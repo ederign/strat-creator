@@ -15,6 +15,22 @@ If `--dry-run` is in `$ARGUMENTS`, skip ALL external writes:
 - DO still read from Jira and local artifacts (reads are safe)
 - DO still create local review files in `artifacts/strat-reviews/`
 
+## Local Mode
+
+Check if strategy files exist in `local/strat-tasks/`. If they do, this is a local human review session pulled via `/strategy-pull`.
+
+In local mode:
+- Read strategy files from `local/strat-tasks/` instead of `artifacts/strat-tasks/`
+- Read review files from `local/strat-reviews/` instead of `artifacts/strat-reviews/`
+- Write review files to `local/strat-reviews/`
+- **Skip ALL Jira writes** — no labels, no comments, no attachments posted to Jira
+- **Skip the Pipeline Label Gate** (Step 1a) — the strategy was already processed by CI
+- DO still run full scoring and prose reviews locally
+
+Local mode is also active if any strategy file's frontmatter contains `workflow: local`.
+
+If both `local/strat-tasks/` and `artifacts/strat-tasks/` have files, prefer `local/strat-tasks/`.
+
 ## Step 1: Verify Artifacts Exist
 
 Read files in `artifacts/strat-tasks/`. If no strategy artifacts exist or they haven't been refined yet (no "Strategy" section), tell the user to run `/strategy-refine` first and stop.

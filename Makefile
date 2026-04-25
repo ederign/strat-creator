@@ -14,7 +14,7 @@ test-unit:          ## Run unit tests only
 test-integration:   ## Run integration tests (jira-emulator)
 	uv run pytest tests/test_clone_issue.py tests/test_push_strategy_integration.py \
 	       tests/test_fetch_issue.py tests/test_find_strat_for_rfe.py \
-	       tests/test_search_and_filter.py -v --tb=short
+	       tests/test_search_and_filter.py tests/test_pull_strategy.py -v --tb=short
 
 test-e2e:           ## Run E2E pipeline replay tests
 	uv run pytest tests/test_pipeline_e2e.py -v --tb=short

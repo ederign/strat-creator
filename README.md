@@ -9,8 +9,40 @@ Given an approved RFE (from the `rfe-creator` pipeline), this pipeline:
 1. **Creates** a strategy stub from the RFE data (`strategy-create`)
 2. **Refines** the stub into a structured strategy using architecture context (`strategy-refine`)
 3. **Reviews** the strategy across 4 dimensions — feasibility, testability, scope, architecture (`strategy-review`)
+4. **Human sign-off** — a staff engineer or architect reviews the approved strategy and marks it feature-ready (`strategy-signoff`)
 
-Each step runs in its own Claude session. Artifacts on disk are the handoff between steps.
+Steps 1–3 run in CI. Step 4 is a human workflow using a separate `local/` workspace.
+
+## Workflows
+
+### CI Pipeline (automated)
+
+The CI pipeline runs `strategy-create` → `strategy-refine` → `strategy-review` in sequence. Each step runs in its own Claude session with artifacts on disk as the handoff. Output lands in `artifacts/`.
+
+Strategies that score **6+ total (no zeros)** get `strat-creator-rubric-pass`. Everything else gets `strat-creator-needs-attention` and waits for a human.
+
+### Human Review (local)
+
+After CI finishes, humans use a separate `local/` workspace to review and iterate without interfering with CI:
+
+```
+/strategy-pull RHAISTRAT-1520     # Pull post-CI strategy into local/
+/strategy-refine                  # Iterate locally (reads from local/, skips Jira writes)
+/strategy-review                  # Re-score locally
+/strategy-push RHAISTRAT-1520    # Resubmit needs-attention strategies to CI
+/strategy-signoff RHAISTRAT-1520  # Sign off rubric-pass strategies as feature-ready
+```
+
+**Two paths depending on CI verdict:**
+
+| CI Verdict | Label | Human Workflow |
+|------------|-------|----------------|
+| Approved | `strat-creator-rubric-pass` | pull → review locally → `/strategy-signoff` |
+| Needs attention | `strat-creator-needs-attention` | pull → fix inputs → refine/review locally → `/strategy-push` → wait for CI → `/strategy-signoff` |
+
+The `strategy-refine` and `strategy-review` skills auto-detect local mode when files are in `local/` — they skip Jira writes and the pipeline label gate.
+
+See [Human Review Guide](docs/human-review-guide.md) for the full walkthrough.
 
 ## RFE Discovery and Filtering
 
@@ -81,6 +113,9 @@ python3 scripts/list-rfe-ids.py --config config/road-to-production/batch-07.yaml
 | `strategy-testability-review` | Skill | Measurable criteria and edge cases |
 | `strategy-scope-review` | Skill | Right-sizing and scope boundaries |
 | `strategy-architecture-review` | Skill | Platform fit and dependency correctness |
+| `strategy-pull` | Skill | Pull a post-CI strategy from Jira into `local/` for human review |
+| `strategy-push` | Skill | Resubmit a needs-attention strategy to CI after local fixes |
+| `strategy-signoff` | Skill | Sign off a rubric-pass strategy as feature-ready |
 | `assess-strat` | Skill | Score a single strategy or directory against the quality rubric |
 | `export-rubric` | Skill | Export scoring rubric to `artifacts/strat-rubric.md` |
 | `strat-scorer` | Agent | Restricted agent (Read/Write/Glob/Grep only) for scoring strategies |
@@ -99,6 +134,7 @@ strat-creator/
 │   ├── jira_utils.py           # Jira API, JQL search, pre-filtering
 │   ├── list-rfe-ids.py         # RFE discovery (JQL, config, batching)
 │   ├── find_strat_for_rfe.py   # Deterministic STRAT lookup via Cloners links
+│   ├── pull_strategy.py        # Pull RHAISTRAT from Jira into local/
 │   ├── fetch-architecture-context.sh
 │   ├── bootstrap-assess-strat.sh   # Clone assess-strat plugin into .context/
 │   ├── generate-report.py      # Per-run HTML report
@@ -116,6 +152,10 @@ strat-creator/
 ├── .context/               # Fetched at runtime (gitignored)
 │   ├── architecture-context/   # RHOAI platform architecture docs
 │   └── assess-strat/          # Scoring rubric plugin
+├── local/                  # Human review workspace (gitignored, mirrors artifacts/ structure)
+│   ├── strat-tasks/            # Pulled strategy files (workflow: local)
+│   ├── strat-reviews/          # Pulled/generated review files
+│   └── strat-originals/        # RFE context for pulled strategies
 └── artifacts/              # Pipeline output (gitignored)
     ├── strat-tasks/            # Strategy documents with YAML frontmatter
     ├── strat-reviews/          # Review files + review comments

@@ -1,0 +1,64 @@
+---
+name: strategy-signoff
+description: Sign off on a CI-approved strategy — pushes content and adds strat-creator-human-sign-off label. For rubric-pass strategies only.
+user-invocable: true
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep
+---
+
+You are signing off on a strategy that has passed CI review, marking it as feature-ready after human confirmation.
+
+## Input
+
+`$ARGUMENTS` must contain a RHAISTRAT key (e.g., `RHAISTRAT-1520`). If no key is provided, ask the user for one.
+
+## Step 1: Validate Pre-Conditions
+
+Read the strategy file from `local/strat-tasks/RHAISTRAT-NNNN.md`. Verify it exists.
+
+Then fetch the current labels from Jira:
+
+```bash
+python3 ${CLAUDE_SKILL_DIR}/scripts/fetch_issue.py RHAISTRAT-NNNN --fields labels --markdown
+```
+
+**Guard checks:**
+
+- If the issue has `strat-creator-needs-attention` (not `rubric-pass`): tell the user this strategy needs CI approval first. Suggest using `/strategy-push` to resubmit, then waiting for CI to approve before signing off. **Stop here.**
+- If the issue does NOT have `strat-creator-rubric-pass`: tell the user this strategy hasn't been CI-approved yet and cannot be signed off. **Stop here.**
+- If the local file does not exist: tell the user to run `/strategy-pull RHAISTRAT-NNNN` first. **Stop here.**
+
+## Step 2: Confirm with User
+
+Before proceeding, show the user a summary:
+
+1. Read the local strategy file and display the title and key sections
+2. If a local review exists in `local/strat-reviews/`, show the score summary
+
+Ask the user to confirm: "Ready to sign off on RHAISTRAT-NNNN? This will push the strategy content to Jira and add the `strat-creator-human-sign-off` label."
+
+## Step 3: Push Strategy Content
+
+Push the updated strategy section to Jira:
+
+```bash
+python3 ${CLAUDE_SKILL_DIR}/scripts/push_strategy.py RHAISTRAT-NNNN local/strat-tasks/RHAISTRAT-NNNN.md
+```
+
+## Step 4: Add human-sign-off Label
+
+```bash
+python3 -c "
+import sys; sys.path.insert(0, '${CLAUDE_SKILL_DIR}/scripts')
+from jira_utils import add_labels, require_env
+s, u, t = require_env()
+add_labels(s, u, t, 'RHAISTRAT-NNNN', ['strat-creator-human-sign-off'])
+"
+```
+
+Print `[LABEL] strat-creator-human-sign-off added to RHAISTRAT-NNNN`.
+
+## Step 5: Confirm Completion
+
+Tell the user: "RHAISTRAT-NNNN signed off and marked feature-ready."
+
+$ARGUMENTS

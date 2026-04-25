@@ -169,6 +169,12 @@ SCHEMAS = {
             "required": True,
             "enum": ["Draft", "Ready", "Refined", "Reviewed"],
         },
+        "workflow": {
+            "type": "string",
+            "required": False,
+            "enum": ["local", "ci"],
+            "default": None,
+        },
     },
     "strat-review": {
         "strat_id": {
@@ -236,6 +242,7 @@ LABEL_CATEGORIES = {
     "strat-creator-rubric-pass": "gate",
     "strat-creator-needs-attention": "escalation",
     "strat-creator-ignore": "exclusion",
+    "strat-creator-human-sign-off": "gate",
 }
 
 

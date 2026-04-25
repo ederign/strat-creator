@@ -211,6 +211,9 @@ artifacts/**
 !artifacts/**/
 !artifacts/**/.gitkeep
 
+# Human review workspace — pulled from Jira, never commit
+local/
+
 # Local Claude settings (machine-specific paths)
 .claude/settings.local.json
 

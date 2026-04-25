@@ -219,6 +219,42 @@ class TestStratTaskSchema:
         errors = validate(data, "strat-task")
         assert any("does not match" in e for e in errors)
 
+    @pytest.mark.parametrize("workflow", ["local", "ci"])
+    def test_workflow_valid_enum(self, workflow):
+        data = {
+            "strat_id": "STRAT-001",
+            "title": "Test",
+            "source_rfe": "RHAIRFE-100",
+            "priority": "Major",
+            "status": "Draft",
+            "workflow": workflow,
+        }
+        assert validate(data, "strat-task") == []
+
+    def test_workflow_invalid_enum(self):
+        data = {
+            "strat_id": "STRAT-001",
+            "title": "Test",
+            "source_rfe": "RHAIRFE-100",
+            "priority": "Major",
+            "status": "Draft",
+            "workflow": "invalid",
+        }
+        errors = validate(data, "strat-task")
+        assert any("not in" in e for e in errors)
+
+    def test_workflow_defaults_to_none(self):
+        data = {
+            "strat_id": "STRAT-001",
+            "title": "Test",
+            "source_rfe": "RHAIRFE-100",
+            "priority": "Major",
+            "status": "Draft",
+        }
+        apply_defaults(data, "strat-task")
+        assert data.get("workflow") is None
+        assert validate(data, "strat-task") == []
+
 
 # ─── strat-review schema validation ──────────────────────────────────────────
 
@@ -544,6 +580,7 @@ class TestLabelCategory:
 
     def test_gate_label(self):
         assert label_category("strat-creator-rubric-pass") == "gate"
+        assert label_category("strat-creator-human-sign-off") == "gate"
 
     def test_escalation_label(self):
         assert label_category("strat-creator-needs-attention") == "escalation"

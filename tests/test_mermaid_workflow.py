@@ -239,8 +239,8 @@ class TestPhase3:
     def test_feature_ready(self, mermaid):
         assert "feature.ready" in mermaid
 
-    def test_optional_human_review(self, mermaid):
-        assert "Optional: human" in mermaid
+    def test_human_signoff_step(self, mermaid):
+        assert "strategy-signoff" in mermaid or "human-sign-off" in mermaid
 
 
 # ─── Cross-phase edges ───────────────────────────────────────────────────────
@@ -257,7 +257,7 @@ class TestCrossPhaseEdges:
         assert "F4 --> SRV" in mermaid
 
     def test_approve_to_phase3(self, mermaid):
-        assert "PA --> FR" in mermaid
+        assert "SO --> FR" in mermaid
 
 
 # ─── Structural validation ───────────────────────────────────────────────────

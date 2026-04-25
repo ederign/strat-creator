@@ -7,16 +7,21 @@ Skills for creating, refining, and reviewing strategy documents from approved RF
 All skills read from and write to the `artifacts/` directory.
 
 ```
-artifacts/
-  strat-tasks/              # Strategy files with YAML frontmatter
+artifacts/                      # CI pipeline output (gitignored)
+  strat-tasks/                    # Strategy files with YAML frontmatter
     STRAT-001.md
     RHAISTRAT-400.md
-  strat-reviews/            # Per-strategy review files with YAML frontmatter
+  strat-reviews/                  # Per-strategy review files with YAML frontmatter
     STRAT-001-review.md
     RHAISTRAT-400-review.md
-  strat-originals/          # Original RFE snapshots at time of strategy creation
+  strat-originals/                # Original RFE snapshots at time of strategy creation
     RHAIRFE-1595.md
-  strat-tickets.md          # RHAISTRAT ticket mapping after cloning
+  strat-tickets.md                # RHAISTRAT ticket mapping after cloning
+
+local/                          # Human review workspace (gitignored, mirrors artifacts/ structure)
+  strat-tasks/                    # Pulled strategy files (workflow: local)
+  strat-reviews/                  # Pulled/generated review files
+  strat-originals/                # RFE context for pulled strategies
 ```
 
 ### Frontmatter
@@ -84,6 +89,10 @@ Not yet implemented for strat-creator. Strategy submission to Jira will be added
 ### RHAIRFE Project (source — read only)
 - **Project**: `RHAIRFE`
 - **Issue Type**: `Feature Request`
+
+## Testing
+
+After every code change, run the test suite in a background subagent before reporting the change as complete. Use `make test-unit` for changes to scripts or library code. Use `make test` to run all tests when integration/E2E tests are also relevant. Never skip this step — a change is not done until tests pass.
 
 ## Architecture Context
 

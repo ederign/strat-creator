@@ -836,14 +836,21 @@ graph LR
             Q -->|"REVISE / REJECT"| LR["Add label\\nstrat-creator-needs-attention"]
         end
 
-        LA --> PA{{"AI Strategy HOW\\nReady\\n(optional &#128100; review)"}}
+        LA --> PA{{"AI Strategy HOW\\nReady\\n(&#128100; review required)"}}
         LR --> HR["&#128100; Human Review\\nStaff Eng or Architect"]
+
         HR -->|"Path A: Update\\narchitecture context"| RL["Remove label\\nneeds-attention"]
         HR -->|"Path B: Edit\\nStaff Engineer Input"| RL
         RL -->|"Re-trigger pipeline\\nvia CI or strategy-submit"| SF
+
+        HR -->|"Path C: /strategy-pull\\nthen local refine/review"| LP["&#128100; Local\\nRefine/Review Loop"]
+        LP -->|"/strategy-push"| RL
+
+        PA -->|"/strategy-pull"| LP2["&#128100; Local\\nReview Loop"]
+        LP2 -->|"/strategy-signoff"| SO["Add label\\nstrat-creator-human-sign-off"]
     end
 
-    PA --> FR
+    SO --> FR
 
     subgraph P3["Phase 3: Feature Dev"]
         FR[feature.ready] --> J[Feature Ready]
@@ -851,8 +858,6 @@ graph LR
         K --> L[AI-Assisted Dev]
         L --> M[PR Review]
     end
-
-    PA -.->|"Optional: human\\ndecides to improve STRAT"| HR
 
     style A fill:#2d6a2d,color:#fff
     style B fill:#2d6a2d,color:#fff
