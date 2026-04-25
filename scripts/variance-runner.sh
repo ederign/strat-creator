@@ -24,7 +24,7 @@ else
   cp -r artifacts/strat-tasks "$RESULTS_DIR/original-artifacts-backup/" 2>/dev/null || true
   cp -r artifacts/strat-reviews "$RESULTS_DIR/original-artifacts-backup/" 2>/dev/null || true
   cp -r artifacts/strat-originals "$RESULTS_DIR/original-artifacts-backup/" 2>/dev/null || true
-  cp artifacts/strat-skipped.md "$RESULTS_DIR/original-artifacts-backup/" 2>/dev/null || true
+  cp -r artifacts/strat-skipped "$RESULTS_DIR/original-artifacts-backup/" 2>/dev/null || true
   echo "Backed up existing artifacts"
 fi
 
@@ -32,12 +32,11 @@ fi
 restore_artifacts() {
   echo ""
   echo "=== Restoring original artifacts ==="
-  rm -rf artifacts/strat-tasks artifacts/strat-reviews artifacts/strat-originals
-  rm -f artifacts/strat-skipped.md
+  rm -rf artifacts/strat-tasks artifacts/strat-reviews artifacts/strat-originals artifacts/strat-skipped
   cp -r "$RESULTS_DIR/original-artifacts-backup/strat-tasks" artifacts/ 2>/dev/null || true
   cp -r "$RESULTS_DIR/original-artifacts-backup/strat-reviews" artifacts/ 2>/dev/null || true
   cp -r "$RESULTS_DIR/original-artifacts-backup/strat-originals" artifacts/ 2>/dev/null || true
-  cp "$RESULTS_DIR/original-artifacts-backup/strat-skipped.md" artifacts/ 2>/dev/null || true
+  cp -r "$RESULTS_DIR/original-artifacts-backup/strat-skipped" artifacts/ 2>/dev/null || true
   echo "Restore complete"
 }
 trap restore_artifacts EXIT
@@ -58,9 +57,8 @@ for i in $(seq 1 "$NUM_RUNS"); do
   START=$(date +%s)
 
   # Clean artifacts for this run
-  rm -rf artifacts/strat-tasks artifacts/strat-reviews artifacts/strat-originals
-  rm -f artifacts/strat-skipped.md
-  mkdir -p artifacts/strat-tasks artifacts/strat-reviews artifacts/strat-originals
+  rm -rf artifacts/strat-tasks artifacts/strat-reviews artifacts/strat-originals artifacts/strat-skipped
+  mkdir -p artifacts/strat-tasks artifacts/strat-reviews artifacts/strat-originals artifacts/strat-skipped
   rm -rf /tmp/strat-assess
 
   # Skip bootstrap for runs 2+ (context already fetched in run 1)

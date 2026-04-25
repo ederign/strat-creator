@@ -28,7 +28,7 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-from artifact_utils import read_frontmatter, compute_strat_labels, label_category
+from artifact_utils import read_frontmatter, compute_strat_labels, label_category, load_skipped
 
 
 def extract_size(body):
@@ -91,21 +91,12 @@ def load_run_artifacts(run_dir):
             except Exception as e:
                 print(f"  Warning: {path}: {e}", file=sys.stderr)
 
-    skipped = []
-    skipped_path = os.path.join(run_dir, "strat-skipped.md")
-    if os.path.exists(skipped_path):
-        with open(skipped_path, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("|") and not line.startswith("| RFE") and not line.startswith("|--"):
-                    cols = [c.strip() for c in line.split("|")[1:-1]]
-                    if len(cols) >= 4:
-                        skipped.append({
-                            "rfe_key": cols[0],
-                            "title": cols[1],
-                            "labels": cols[2],
-                            "missing": cols[3],
-                        })
+    skipped_dir = os.path.join(run_dir, "strat-skipped")
+    skipped = [
+        {"rfe_key": e["rfe_key"], "title": e["title"],
+         "labels": e["reason"], "missing": e["run"]}
+        for e in load_skipped(skipped_dir)
+    ]
 
     return tasks, reviews, review_comments, skipped
 

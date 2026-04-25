@@ -124,12 +124,10 @@ revise_count=$(echo "$SCORE_DATA" | grep -ci "revise" || true)
 reject_count=$(echo "$SCORE_DATA" | grep -ci "reject" || true)
 
 # Check for skipped RFEs
-skipped_file="$DATA_REPO/strat-skipped.md"
+skipped_dir="$DATA_REPO/strat-skipped"
 skipped_count=0
-if [ -f "$skipped_file" ]; then
-  skipped_count=$(grep -c "^|" "$skipped_file" | tail -1 || echo 0)
-  skipped_count=$((skipped_count - 2))  # subtract header rows
-  [ "$skipped_count" -lt 0 ] && skipped_count=0
+if [ -d "$skipped_dir" ]; then
+  skipped_count=$(find "$skipped_dir" -name '*.md' | wc -l)
 fi
 
 # Generate report

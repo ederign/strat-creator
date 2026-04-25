@@ -70,20 +70,19 @@ For each selected RFE, fetch its status and labels from Jira (the `status` and `
 1. `strat-creator-3.5`
 2. At least one of: `rfe-creator-autofix-rubric-pass` or `tech-reviewed`
 
-If an RFE fails the label gate, **skip it** — do not create a strategy stub. Instead, append it to `artifacts/strat-skipped.md`.
+If an RFE fails the label gate, **skip it** — do not create a strategy stub. Instead, write a per-RFE skip file to `artifacts/strat-skipped/`.
 
 Determine the **run identifier**: use the config filename from `$ARGUMENTS` (e.g., `road-to-production`) + current UTC timestamp in ISO format. Example: `road-to-production @ 2026-04-21T14:30Z`. If no config filename is available, use `manual`.
 
-If `artifacts/strat-skipped.md` does not exist, create it with the header. If it already exists, **append new rows** — do not overwrite. This preserves skip history across runs.
+Create `artifacts/strat-skipped/` if it doesn't exist. Write one file per skipped RFE with YAML frontmatter:
 
 ```markdown
-# Skipped RFEs
-
-RFEs that were not processed due to missing required labels or already-processed STRATs.
-
-| RFE Key | Title | Reason | Run |
-|---------|-------|--------|-----|
-| RHAIRFE-NNNN | ... | missing labels: rfe-creator-autofix-rubric-pass or tech-reviewed | road-to-production @ 2026-04-21T14:30Z |
+---
+rfe_key: RHAIRFE-NNNN
+title: "..."
+reason: "missing labels: rfe-creator-autofix-rubric-pass or tech-reviewed"
+run: "road-to-production @ 2026-04-21T14:30Z"
+---
 ```
 
 Print `[SKIPPED] RHAIRFE-NNNN — missing required labels: <list>` for each skipped RFE.
@@ -176,7 +175,7 @@ From the script output, filter out any with status **Closed**, **Resolved**, **I
 
 **Pipeline label gate**: From the script output, check each remaining STRAT candidate's labels. If the STRAT has either `strat-creator-rubric-pass` or `strat-creator-needs-attention`, **skip this RFE** — the STRAT has already been processed by the pipeline:
 - Do NOT import the STRAT
-- Append to `artifacts/strat-skipped.md` with reason and run info (same format as Step 2a): `RHAISTRAT-NNNN already processed (label: <label>)`
+- Write a skip file to `artifacts/strat-skipped/RHAIRFE-NNNN.md` with reason and run info (same format as Step 2a): reason `RHAISTRAT-NNNN already processed (label: <label>)`
 - Print `[SKIP] RHAIRFE-NNNN — RHAISTRAT-NNNN already has <label>`
 - Continue to the next RFE
 
@@ -235,7 +234,7 @@ No existing STRAT found. Clone the RFE into RHAISTRAT (Step 3), then create the 
 **If not in dry-run mode**, clone first using Step 3, then use the returned RHAISTRAT key as the filename:
 
 ```bash
-STRAT_KEY=$(python3 scripts/clone_issue.py RHAIRFE-NNNN --target-project RHAISTRAT --issue-type Feature)
+STRAT_KEY=$(python3 ${CLAUDE_SKILL_DIR}/scripts/clone_issue.py RHAIRFE-NNNN --target-project RHAISTRAT --issue-type Feature)
 echo "[CLONE] $STRAT_KEY cloned from RHAIRFE-NNNN"
 ```
 
@@ -285,7 +284,7 @@ If not in dry-run mode and a RHAISTRAT was created or imported (i.e., `jira_key`
 
 ```bash
 python3 -c "
-import sys; sys.path.insert(0, 'scripts')
+import sys; sys.path.insert(0, '${CLAUDE_SKILL_DIR}/scripts')
 from jira_utils import add_labels, require_env
 s, u, t = require_env()
 add_labels(s, u, t, 'RHAISTRAT-NNNN', ['strat-creator-auto-created'])
@@ -294,19 +293,17 @@ add_labels(s, u, t, 'RHAISTRAT-NNNN', ['strat-creator-auto-created'])
 
 Print `[LABEL] strat-creator-auto-created added to RHAISTRAT-NNNN`.
 
-## Step 7: Write Artifacts
+## Step 7: Link RFE to STRAT
 
-If Jira cloning was done, write `artifacts/strat-tickets.md`:
+For each RFE that was cloned or imported (Path A or B), create a symlink in `artifacts/strat-tasks/` so the strategy can be looked up by either key:
 
-```markdown
-# RHAISTRAT Tickets
-
-| RFE Source | STRAT Key | Title | Priority | URL |
-|------------|-----------|-------|----------|-----|
-| RHAIRFE-NNNN | RHAISTRAT-NNNN | ... | Major | https://redhat.atlassian.net/browse/RHAISTRAT-NNNN |
+```bash
+cd artifacts/strat-tasks && ln -sf RHAISTRAT-NNNN.md RHAIRFE-NNNN.md
 ```
 
-## Step 7: Next Steps
+This is atomic and race-free — each RFE gets its own symlink, no shared file to contend.
+
+## Step 8: Next Steps
 
 Tell the user:
 - Strategy stubs created in `artifacts/strat-tasks/`

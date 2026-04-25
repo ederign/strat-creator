@@ -236,7 +236,7 @@ If NOT in dry-run mode and `jira_key` is not null, attach the full review file t
 
 ```bash
 python3 -c "
-import sys; sys.path.insert(0, 'scripts')
+import sys; sys.path.insert(0, '${CLAUDE_SKILL_DIR}/scripts')
 from jira_utils import add_attachment, require_env
 s, u, t = require_env()
 add_attachment(s, u, t, sys.argv[1], sys.argv[2])
@@ -253,7 +253,7 @@ If NOT in dry-run mode and `jira_key` is not null, add the appropriate label bas
 
 ```bash
 python3 -c "
-import sys; sys.path.insert(0, 'scripts')
+import sys; sys.path.insert(0, '${CLAUDE_SKILL_DIR}/scripts')
 from jira_utils import add_labels, require_env
 s, u, t = require_env()
 add_labels(s, u, t, sys.argv[1], sys.argv[2:])

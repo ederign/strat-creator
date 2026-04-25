@@ -200,14 +200,14 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/frontmatter.py set artifacts/strat-tasks/<fi
 If NOT in dry-run mode and the strategy has a real `jira_key` (not null), push the Strategy section to the RHAISTRAT issue in Jira. This updates only the Strategy section — the existing description (Business Need) is preserved.
 
 ```bash
-python3 scripts/push_strategy.py RHAISTRAT-NNNN artifacts/strat-tasks/RHAISTRAT-NNNN.md
+python3 ${CLAUDE_SKILL_DIR}/scripts/push_strategy.py RHAISTRAT-NNNN artifacts/strat-tasks/RHAISTRAT-NNNN.md
 ```
 
 Then add the provenance label:
 
 ```bash
 python3 -c "
-import sys; sys.path.insert(0, 'scripts')
+import sys; sys.path.insert(0, '${CLAUDE_SKILL_DIR}/scripts')
 from jira_utils import add_labels, require_env
 s, u, t = require_env()
 add_labels(s, u, t, 'RHAISTRAT-NNNN', ['strat-creator-auto-refined'])

@@ -889,6 +889,40 @@ def rebuild_index(artifacts_dir):
     return content
 
 
+# ─── Skipped RFE Loading ──────────────────────────────────────────────────────
+
+
+def load_skipped(skipped_dir):
+    """Load skipped RFE entries from per-RFE files in a strat-skipped/ directory.
+
+    Each file has YAML frontmatter with rfe_key, title, reason, run fields.
+
+    Returns:
+        list of dicts with keys: rfe_key, title, reason, run
+    """
+    if not os.path.isdir(skipped_dir):
+        return []
+
+    results = []
+    for filename in sorted(os.listdir(skipped_dir)):
+        if not filename.endswith(".md"):
+            continue
+        path = os.path.join(skipped_dir, filename)
+        try:
+            data, _ = read_frontmatter(path)
+            if data.get("rfe_key"):
+                results.append({
+                    "rfe_key": data.get("rfe_key", ""),
+                    "title": data.get("title", ""),
+                    "reason": data.get("reason", ""),
+                    "run": data.get("run", ""),
+                })
+        except Exception as e:
+            print(f"Warning: skipping {filename}: {e}", file=sys.stderr)
+
+    return results
+
+
 # ─── Legacy Compatibility ──────────────────────────────────────────────────────
 
 def parse_child_artifact(path):

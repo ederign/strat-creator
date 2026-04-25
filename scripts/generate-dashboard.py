@@ -23,7 +23,7 @@ from pathlib import Path
 
 # Add scripts/ to path for artifact_utils
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-from artifact_utils import read_frontmatter, compute_strat_labels, label_category
+from artifact_utils import read_frontmatter, compute_strat_labels, label_category, load_skipped
 
 
 # ─── Helper functions (shared with generate-report.py) ────────────────────────
@@ -254,21 +254,12 @@ def load_run_artifacts(run_dir):
                 print(f"  Warning: {path}: {e}", file=sys.stderr)
 
     # Load skipped RFEs
-    skipped = []
-    skipped_path = os.path.join(run_dir, "strat-skipped.md")
-    if os.path.exists(skipped_path):
-        with open(skipped_path, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("|") and not line.startswith("| RFE") and not line.startswith("|--"):
-                    cols = [c.strip() for c in line.split("|")[1:-1]]
-                    if len(cols) >= 4:
-                        skipped.append({
-                            "rfe_key": cols[0],
-                            "title": cols[1],
-                            "labels": cols[2],
-                            "missing": cols[3],
-                        })
+    skipped_dir = os.path.join(run_dir, "strat-skipped")
+    skipped = [
+        {"rfe_key": e["rfe_key"], "title": e["title"],
+         "labels": e["reason"], "missing": e["run"]}
+        for e in load_skipped(skipped_dir)
+    ]
 
     return tasks, reviews, review_comments, skipped
 
@@ -399,23 +390,18 @@ def extract_run_stats(run_dir, config):
 
 
 def load_skipped_file(path):
-    """Parse a strat-skipped.md file into a list of dicts."""
-    skipped = []
-    if not os.path.exists(path):
-        return skipped
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line.startswith("|") and not line.startswith("| RFE") and not line.startswith("|--"):
-                cols = [c.strip() for c in line.split("|")[1:-1]]
-                if len(cols) >= 4:
-                    skipped.append({
-                        "rfe_key": cols[0],
-                        "title": cols[1],
-                        "labels": cols[2],
-                        "missing": cols[3],
-                    })
-    return skipped
+    """Load skipped RFE entries from a strat-skipped/ directory.
+
+    Accepts either a directory path (new per-file format) or a file path
+    (legacy single-file format, returns empty list).
+    """
+    if os.path.isdir(path):
+        return [
+            {"rfe_key": e["rfe_key"], "title": e["title"],
+             "labels": e["reason"], "missing": e["run"]}
+            for e in load_skipped(path)
+        ]
+    return []
 
 
 def load_run_from_json(run_dir, config):
@@ -955,7 +941,7 @@ graph LR
 
         subgraph SC["strategy-create"]
             E0["strategy-create"] --> GATE{{{{Pipeline label gate\\nstrat-creator-3.5 +\\nrfe-creator-autofix-rubric-pass\\nor tech-reviewed}}}}
-            GATE -->|"Fail"| SKIP["Skipped RFEs\\nstrat-skipped.md"]
+            GATE -->|"Fail"| SKIP["Skipped RFEs\\nstrat-skipped/"]
             GATE -->|"Pass"| E1["Fetch RFE\\nfrom Jira"]
             E1 --> E2["Check existing\\nSTRATs via Cloners"]
             E2 --> EG{{{{"Pipeline label gate\\nSkip if rubric-pass\\nor needs-attention"}}}}

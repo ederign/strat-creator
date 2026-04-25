@@ -19,7 +19,7 @@ from pathlib import Path
 
 # Add scripts/ to path for frontmatter imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-from artifact_utils import read_frontmatter, compute_strat_labels, label_category
+from artifact_utils import read_frontmatter, compute_strat_labels, label_category, load_skipped
 
 def load_yaml_config(path):
     """Read test-rfes.yaml and return dict keyed by RFE ID."""
@@ -95,28 +95,16 @@ def load_artifacts(artifacts_dir):
     # Load skipped RFEs
     skipped = []
     pending_review = []
-    skipped_path = os.path.join(artifacts_dir, "strat-skipped.md")
-    if os.path.exists(skipped_path):
-        with open(skipped_path, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("|") and not line.startswith("| RFE") and not line.startswith("|--"):
-                    cols = [c.strip() for c in line.split("|")[1:-1]]
-                    if len(cols) >= 4:
-                        reason = cols[2]
-                        entry = {
-                            "rfe_key": cols[0],
-                            "title": cols[1],
-                            "reason": reason,
-                            "run": cols[3],
-                        }
-                        if "already processed" in reason:
-                            if "needs-attention" in reason:
-                                strat_match = re.match(r'(\S+)\s+already processed', reason)
-                                entry["strat_key"] = strat_match.group(1) if strat_match else ""
-                                pending_review.append(entry)
-                        else:
-                            skipped.append(entry)
+    skipped_dir = os.path.join(artifacts_dir, "strat-skipped")
+    for entry in load_skipped(skipped_dir):
+        reason = entry.get("reason", "")
+        if "already processed" in reason:
+            if "needs-attention" in reason:
+                strat_match = re.match(r'(\S+)\s+already processed', reason)
+                entry["strat_key"] = strat_match.group(1) if strat_match else ""
+                pending_review.append(entry)
+        else:
+            skipped.append(entry)
 
     return tasks, reviews, review_comments, skipped, pending_review
 
@@ -793,7 +781,7 @@ graph LR
 
         subgraph SC["strategy-create"]
             E0["strategy-create"] --> GATE{{{{Pipeline label gate\\nstrat-creator-3.5 +\\nrfe-creator-autofix-rubric-pass\\nor tech-reviewed}}}}
-            GATE -->|"Fail"| SKIP["Skipped RFEs\\nstrat-skipped.md"]
+            GATE -->|"Fail"| SKIP["Skipped RFEs\\nstrat-skipped/"]
             GATE -->|"Pass"| E1["Fetch RFE\\nfrom Jira"]
             E1 --> E2["Check existing\\nSTRATs via Cloners"]
             E2 --> EG{{{{"Pipeline label gate\\nSkip if rubric-pass\\nor needs-attention"}}}}
