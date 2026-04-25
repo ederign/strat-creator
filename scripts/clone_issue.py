@@ -52,7 +52,8 @@ def main():
     priority_obj = fields.get("priority")
     priority = priority_obj.get("name", "Major") if isinstance(
         priority_obj, dict) else "Major"
-    labels = fields.get("labels", [])
+    labels = [l for l in fields.get("labels", [])
+              if l != "strat-creator-processing"]
 
     new_key = create_issue(
         server, user, token,
