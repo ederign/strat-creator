@@ -131,6 +131,36 @@ strat-creator/
 - [JSON API](https://strat-dashboard-0f1209.gitlab.io/summary.json) — Aggregated pipeline data for external consumers
   - Per-run data: `https://strat-dashboard-0f1209.gitlab.io/runs/<timestamp>.json` (e.g. `runs/20260419-093253.json`)
 
+## Development
+
+### Setup
+
+```bash
+uv sync
+```
+
+### Running Tests
+
+```bash
+# All tests
+make test
+
+# By category
+make test-unit          # Unit tests (schemas, frontmatter, scores, JQL, state)
+make test-integration   # Integration tests (jira-emulator)
+make test-e2e           # E2E pipeline replay (two scenarios)
+make test-mermaid       # Mermaid workflow diagram validation
+
+# Or directly via pytest
+uv run pytest tests/ -v --tb=short
+```
+
+Integration and E2E tests use [jira-emulator](https://github.com/jctanner/jira-emulator) — a real HTTP server started in-process — so no external Jira instance is needed.
+
+### CI
+
+Tests run automatically on PRs and pushes to `main` via GitHub Actions (Python 3.11 + 3.12 matrix). See `.github/workflows/tests.yml`.
+
 ## Related Projects
 
 - **rfe-creator** — Phase 1: RFE assessment pipeline (upstream). Has `strat.*` skill stubs that these skills were forked from.
