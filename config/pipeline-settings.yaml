@@ -18,6 +18,7 @@ batch_size: 10
 skip_labels:
   - strat-creator-rubric-pass
   - strat-creator-needs-attention
+  - strat-creator-processing
 
 # RHAISTRAT statuses that indicate active or completed work — exclude
 # their source RFEs from batching to avoid wasting batch slots
