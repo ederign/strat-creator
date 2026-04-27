@@ -108,9 +108,8 @@ def lock(server, user, token, keys):
         locked.append(key)
         print(f"LOCKED {key}", file=sys.stderr)
 
-    if batch_mode:
-        # Print locked keys to stdout for capture by CI script
-        print(" ".join(locked))
+    # Print locked keys to stdout for capture by CI script
+    print(" ".join(locked))
 
     if not locked:
         print("No keys locked", file=sys.stderr)
