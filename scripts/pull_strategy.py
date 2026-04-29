@@ -26,6 +26,7 @@ from jira_utils import (
     get_issue,
     get_comments,
     adf_to_markdown,
+    download_attachment,
 )
 
 POST_CI_LABELS = {"strat-creator-rubric-pass", "strat-creator-needs-attention"}
@@ -74,7 +75,7 @@ def pull_strategy(server, user, token, strat_key, local_dir="local"):
     # Fetch the STRAT issue
     issue = get_issue(server, user, token, strat_key,
                       fields=["summary", "description", "labels",
-                              "priority", "issuelinks"])
+                              "priority", "issuelinks", "attachment"])
     fields = issue.get("fields", {})
 
     # Validate post-CI labels
@@ -165,17 +166,31 @@ def pull_strategy(server, user, token, strat_key, local_dir="local"):
             result["files"].append(comments_path)
             print(f"  RFE comments: {comments_path}")
 
-    # Fetch STRAT comments and extract review
+    # Fetch review summary from comments
+    reviews_dir = os.path.join(local_dir, "strat-reviews")
     strat_comments = get_comments(server, user, token, strat_key)
     review_md = extract_review_comment(strat_comments)
     if review_md:
-        reviews_dir = os.path.join(local_dir, "strat-reviews")
         os.makedirs(reviews_dir, exist_ok=True)
-        review_path = os.path.join(reviews_dir, f"{strat_key}-review.md")
-        with open(review_path, "w", encoding="utf-8") as f:
+        summary_path = os.path.join(reviews_dir, f"{strat_key}-review-summary.md")
+        with open(summary_path, "w", encoding="utf-8") as f:
             f.write(review_md + "\n")
-        result["files"].append(review_path)
-        print(f"  Review: {review_path}")
+        result["files"].append(summary_path)
+        print(f"  Review summary: {summary_path}")
+
+    # Fetch full review from attachment
+    attachments = fields.get("attachment", [])
+    review_attachment = None
+    for att in attachments:
+        if att.get("filename") == f"{strat_key}-review.md":
+            review_attachment = att
+    if review_attachment:
+        os.makedirs(reviews_dir, exist_ok=True)
+        full_path = os.path.join(reviews_dir, f"{strat_key}-review.md")
+        download_attachment(server, user, token,
+                            review_attachment["content"], full_path)
+        result["files"].append(full_path)
+        print(f"  Full review: {full_path}")
 
     has_rubric_pass = "strat-creator-rubric-pass" in labels
     result["has_rubric_pass"] = has_rubric_pass

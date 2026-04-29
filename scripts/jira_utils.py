@@ -342,6 +342,19 @@ def add_attachment(server, user, token, issue_key, filepath, filename=None,
     raise last_error
 
 
+def download_attachment(server, user, token, content_url, dest_path):
+    """Download a Jira attachment by its content URL."""
+    credentials = base64.b64encode(f"{user}:{token}".encode()).decode()
+    headers = {
+        "Authorization": f"Basic {credentials}",
+        "Accept": "*/*",
+    }
+    req = urllib.request.Request(content_url, headers=headers)
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        with open(dest_path, "wb") as f:
+            f.write(resp.read())
+
+
 def get_transitions(server, user, token, issue_key):
     """GET available transitions for an issue."""
     path = f"/issue/{issue_key}/transitions"

@@ -11,9 +11,19 @@ You are a platform architect reviewing refined strategy features. Your job is to
 
 ## Inputs
 
-Read the strategy artifacts in `artifacts/strat-tasks/`. Cross-reference against the source RFEs in `artifacts/rfe-tasks/`.
+Check if strategy files exist in `local/strat-tasks/`. If they do, use local mode:
+- Read strategies from `local/strat-tasks/`
+- Read RFE originals from `local/strat-originals/`
+- Read prior reviews from `local/strat-reviews/`
 
-If `artifacts/strat-reviews/` exists and contains review files for the strategies being reviewed, read them — this is a re-review.
+Otherwise use CI mode:
+- Read strategies from `artifacts/strat-tasks/`
+- Read RFE originals from `artifacts/rfe-tasks/`
+- Read prior reviews from `artifacts/strat-reviews/`
+
+If `$ARGUMENTS` contains a strategy key (e.g., `RHAISTRAT-133`), review only that strategy. Otherwise review all strategies in the directory.
+
+Cross-reference against the source RFEs. If this is a re-review (prior review files exist), read them.
 
 ## Architecture Context
 

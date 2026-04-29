@@ -44,7 +44,42 @@ Push the updated strategy section to Jira:
 python3 ${CLAUDE_SKILL_DIR}/scripts/push_strategy.py RHAISTRAT-NNNN local/strat-tasks/RHAISTRAT-NNNN.md
 ```
 
-## Step 4: Add human-sign-off Label
+## Step 4: Post Review Summary Comment
+
+If a review summary exists at `local/strat-reviews/RHAISTRAT-NNNN-review-summary.md`, post it as a comment to the Jira issue:
+
+```bash
+python3 -c "
+import sys; sys.path.insert(0, '${CLAUDE_SKILL_DIR}/scripts')
+from jira_utils import add_comment, markdown_to_adf, require_env
+s, u, t = require_env()
+comment_md = open(sys.argv[1]).read()
+add_comment(s, u, t, sys.argv[2], markdown_to_adf(comment_md))
+" local/strat-reviews/RHAISTRAT-NNNN-review-summary.md RHAISTRAT-NNNN
+```
+
+Print `[COMMENT] Review summary posted to RHAISTRAT-NNNN`.
+
+If the summary file does not exist, skip and print `[SKIP] No review summary found — skipping comment`.
+
+## Step 5: Attach Review File
+
+If a full review file exists at `local/strat-reviews/RHAISTRAT-NNNN-review.md`, attach it to the Jira issue:
+
+```bash
+python3 -c "
+import sys; sys.path.insert(0, '${CLAUDE_SKILL_DIR}/scripts')
+from jira_utils import add_attachment, require_env
+s, u, t = require_env()
+add_attachment(s, u, t, sys.argv[1], sys.argv[2])
+" RHAISTRAT-NNNN local/strat-reviews/RHAISTRAT-NNNN-review.md
+```
+
+Print `[ATTACHMENT] Review file attached to RHAISTRAT-NNNN`.
+
+If the review file does not exist, skip and print `[SKIP] No review file found — skipping attachment`.
+
+## Step 6: Add human-sign-off Label
 
 ```bash
 python3 -c "
@@ -57,7 +92,7 @@ add_labels(s, u, t, 'RHAISTRAT-NNNN', ['strat-creator-human-sign-off'])
 
 Print `[LABEL] strat-creator-human-sign-off added to RHAISTRAT-NNNN`.
 
-## Step 5: Confirm Completion
+## Step 7: Confirm Completion
 
 Tell the user: "RHAISTRAT-NNNN signed off and marked feature-ready."
 

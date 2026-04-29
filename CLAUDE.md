@@ -106,7 +106,7 @@ bash scripts/fetch-architecture-context.sh
 bash scripts/fetch-architecture-context.sh /path/to/local/architecture-context
 ```
 
-When a local path is provided, the script symlinks `.context/architecture-context/` to it instead of cloning from remote. This lets staff engineers test overlay changes locally before pushing upstream.
+When a local path is provided, the script copies the local architecture context into `.context/architecture-context/` instead of cloning from remote. This lets staff engineers test overlay changes locally before pushing upstream.
 
 ### Architecture Context Overlays
 

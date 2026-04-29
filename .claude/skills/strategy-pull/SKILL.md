@@ -24,7 +24,15 @@ This will:
 2. Fetch the strategy description from Jira
 3. Write `local/strat-tasks/RHAISTRAT-NNNN.md` with `workflow: local` frontmatter
 4. Fetch the linked RFE original and comments into `local/strat-originals/`
-5. Fetch the review comment into `local/strat-reviews/`
+5. Fetch the review summary comment and full review attachment into `local/strat-reviews/`
+
+The pull creates three folders under `local/`:
+
+- **`strat-tasks/`** — The strategy document itself (e.g., `RHAISTRAT-133.md`). This is what you review and edit.
+- **`strat-originals/`** — The source RFE snapshot and its comments at pull time. Read-only context for understanding the business need.
+- **`strat-reviews/`** — CI review output. Contains two files per strategy:
+  - `RHAISTRAT-NNNN-review-summary.md` — The scoring table and verdict (pass/fail, scores per criterion).
+  - `RHAISTRAT-NNNN-review.md` — The full prose review from independent reviewers (detailed analysis per dimension).
 
 If the script exits with code 1 (missing labels or not found), explain that only post-CI strategies can be pulled. If code 2 (missing credentials), tell the user to set `JIRA_SERVER`, `JIRA_USER`, and `JIRA_TOKEN`.
 

@@ -134,11 +134,13 @@ REJECT:   total < 3   OR   2+ zeros       → needs_attention=true
 
 Use the **Skill tool** to invoke each of these reviewer skills in parallel. Call all four via the Skill tool simultaneously — each runs in its own isolated context and no reviewer sees another's output.
 
+Pass the strategy key(s) being reviewed as arguments so each reviewer targets only the relevant strategies. If reviewing multiple strategies, pass all keys space-separated.
+
 ```
-Skill(skill="strategy-feasibility-review")
-Skill(skill="strategy-testability-review")
-Skill(skill="strategy-scope-review")
-Skill(skill="strategy-architecture-review")
+Skill(skill="strategy-feasibility-review", args="RHAISTRAT-NNNN")
+Skill(skill="strategy-testability-review", args="RHAISTRAT-NNNN")
+Skill(skill="strategy-scope-review", args="RHAISTRAT-NNNN")
+Skill(skill="strategy-architecture-review", args="RHAISTRAT-NNNN")
 ```
 
 Do NOT use the Agent tool for reviews. Use the Skill tool — the reviewer skills are defined in `.claude/skills/` and contain specific review instructions.
@@ -148,10 +150,7 @@ Do NOT use the Agent tool for reviews. Use the Skill tool — the reviewer skill
 - **`strategy-scope-review`**: Is each strategy right-sized? Does the effort match the scope?
 - **`strategy-architecture-review`** (if architecture context available): Are dependencies correctly identified? Are integration patterns correct?
 
-Each reviewer receives:
-- The strategy artifacts (`artifacts/strat-tasks/`)
-- The source RFEs (`artifacts/rfes.md`, `artifacts/rfe-tasks/`)
-- Prior review files from `artifacts/strat-reviews/` (if this is a re-review)
+Each reviewer auto-detects local mode (`local/strat-tasks/` vs `artifacts/strat-tasks/`) and reads the appropriate directories for strategies, RFE originals, and prior reviews.
 
 ## Step 7: Write Prose to Review Files
 

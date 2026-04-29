@@ -4,7 +4,7 @@
 #
 # Usage:
 #   bash scripts/fetch-architecture-context.sh                  # fetch from remote (default)
-#   bash scripts/fetch-architecture-context.sh /path/to/local   # use local checkout via symlink
+#   bash scripts/fetch-architecture-context.sh /path/to/local   # use local checkout (copies into .context/)
 
 if [ -n "${RFE_SKIP_BOOTSTRAP:-}" ]; then
   echo "RFE_SKIP_BOOTSTRAP set - skipping dependency bootstrapping step"
@@ -20,9 +20,9 @@ if [ -n "$1" ]; then
     exit 1
   fi
   rm -rf "$CONTEXT_DIR"
-  mkdir -p "$(dirname "$CONTEXT_DIR")"
-  ln -sf "$(cd "$LOCAL_PATH" && pwd)" "$CONTEXT_DIR"
-  echo "Architecture context linked to local path: $LOCAL_PATH"
+  mkdir -p "$CONTEXT_DIR"
+  cp -R "$LOCAL_PATH"/* "$CONTEXT_DIR"/
+  echo "Architecture context copied from local path: $LOCAL_PATH"
   exit 0
 fi
 

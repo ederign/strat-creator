@@ -56,6 +56,18 @@ def extract_strategy_section(local_content):
     return match.group(1).strip()
 
 
+def extract_staff_input_section(local_content):
+    """Extract the Staff Engineer Input section from a local strategy file."""
+    match = re.search(
+        r'(## Staff Engineer Input.*?)(?=\n## (?!#)|$)',
+        local_content,
+        re.DOTALL,
+    )
+    if not match:
+        return None
+    return match.group(1).strip()
+
+
 def update_description(server, user, token, issue_key, description_adf):
     """PUT only the description field (no summary change)."""
     body = {"fields": {"description": description_adf}}
@@ -87,6 +99,8 @@ def main():
               file=sys.stderr)
         sys.exit(1)
 
+    staff_input_section = extract_staff_input_section(local_content)
+
     issue = get_issue(server, user, token, args.issue_key,
                       fields=["description"])
     existing_desc = issue.get("fields", {}).get("description")
@@ -111,12 +125,22 @@ def main():
     else:
         updated_md = existing_md + "\n\n" + strategy_section
 
-    if STAFF_INPUT_HEADING not in updated_md:
+    if staff_input_section:
+        if STAFF_INPUT_HEADING in updated_md:
+            updated_md = re.sub(
+                r'## Staff Engineer Input.*?(?=\n## (?!#)|$)',
+                staff_input_section + "\n",
+                updated_md,
+                flags=re.DOTALL,
+            )
+        else:
+            updated_md = updated_md.rstrip() + "\n\n" + staff_input_section
+    elif STAFF_INPUT_HEADING not in updated_md:
         updated_md = updated_md.rstrip() + "\n\n" + STAFF_INPUT_TEMPLATE
 
     updated_adf = markdown_to_adf(updated_md)
     update_description(server, user, token, args.issue_key, updated_adf)
-    print(f"OK: Strategy section pushed to {args.issue_key}")
+    print(f"OK: Strategy and Staff Engineer Input pushed to {args.issue_key}")
 
 
 if __name__ == "__main__":
