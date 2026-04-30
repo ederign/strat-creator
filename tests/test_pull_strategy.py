@@ -187,7 +187,7 @@ class TestPullReviewComment:
         result = _run(jira, "RHAISTRAT-2030", local_dir)
         assert result.returncode == 0, f"stderr: {result.stderr}"
 
-        review_path = local_dir / "strat-reviews" / "RHAISTRAT-2030-review.md"
+        review_path = local_dir / "strat-reviews" / "RHAISTRAT-2030-review-summary.md"
         assert review_path.exists()
         content = review_path.read_text()
         assert "[Strat Creator]" in content
