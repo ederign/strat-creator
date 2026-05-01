@@ -109,6 +109,20 @@ claude "/strategy-review RHAISTRAT-NNNN --architecture-context /path/to/local/ar
 
 Check the updated strategy in `local/strat-tasks/` and scores in `local/strat-reviews/`. Repeat from step 2 if needed.
 
+### 5a. Generate a prototype (optional)
+
+For strategies involving a user interface, you can generate a clickable prototype to visualize the proposed experience. `/strategy-pull` will suggest this when it detects UI-related content.
+
+```bash
+# Standalone HTML prototype (no codebase needed — uses Decision Kit + PatternFly)
+claude "/strategy-prototype RHAISTRAT-NNNN"
+
+# Prototype grounded in a real product codebase
+claude "/strategy-prototype RHAISTRAT-NNNN --workspace=https://github.com/org/product-repo"
+```
+
+Prototypes are saved to `local/prototypes/RHAISTRAT-NNNN/`. Even non-UI strategies can benefit from standalone prototypes — Decision Kit generates visual aids like workflow diagrams and architecture sketches.
+
 ### 6. Push or sign off
 
 | CI Verdict | Command | What Happens |
