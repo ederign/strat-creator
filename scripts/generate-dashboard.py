@@ -663,7 +663,7 @@ def _delta_html(current, prev, field, is_pct=True):
     return f'<span style="color:{color}">{sign}{delta}{suffix} vs prev</span>'
 
 
-def generate_dashboard(runs, exec_summary, output_path):
+def generate_dashboard(runs, exec_summary, output_path, jira_counts=None):
     """Generate the full dashboard HTML."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
     current = runs[-1] if runs else None
@@ -671,7 +671,7 @@ def generate_dashboard(runs, exec_summary, output_path):
 
     # Prepare JSON data (strip strategy HTML bodies for overview; keep for detail)
     runs_json = json.dumps(runs, indent=None)
-    exec_json = json.dumps(exec_summary, indent=None)
+    jira_counts_json = json.dumps(jira_counts) if jira_counts else "null"
 
     # Delta arrows
     if current and current.get("delta_approval") is not None:
@@ -1091,6 +1091,7 @@ graph LR
 
 <script>
 const ALL_RUNS = {runs_json};
+const JIRA_COUNTS = {jira_counts_json};
 let RUNS = ALL_RUNS.filter(r => !r.dry_run);
 let EXEC = recomputeExec(RUNS);
 
@@ -1297,6 +1298,7 @@ function toggleAttentionDetail(idx) {{
 // ─── Executive summary ──────────────────────────────────────────────────────
 function renderExecutiveSummary() {{
     const e = EXEC;
+    const jc = JIRA_COUNTS;
     const el = document.getElementById('exec-content');
     const dims = ['feasibility','testability','scope','architecture'];
     const rate = e.approval_rate;
@@ -1306,19 +1308,34 @@ function renderExecutiveSummary() {{
         : '—';
     const avgScorePct = e.avg_total_score !== null ? Math.round(e.avg_total_score / 8 * 100) : 0;
 
+    const createdCount = jc ? jc['strat-creator-auto-created'] : e.total;
+    const createdDetail = jc
+        ? `${{e.total}} refined & reviewed`
+        : `Across ${{e.total_runs}} runs`;
+    const createdSrc = jc ? 'Jira' : '';
+    const rubricPass = jc ? jc['strat-creator-rubric-pass'] : e.approved;
+    const rubricSrc = jc ? 'Jira' : '';
+    const attnCount = jc ? jc['strat-creator-needs-attention'] : e.needs_attention;
+    const attnSrc = jc ? 'Jira' : '';
+    const heroSub = jc
+        ? `${{jc['strat-creator-auto-created']}} strategies in Jira | ${{e.total}} refined & reviewed across ${{e.total_runs}} pipeline runs`
+        : `${{e.total}} unique strategies across ${{e.total_runs}} pipeline runs | Deduped by most recent run per strategy`;
+
+    const srcBadge = (src) => src ? `<span style="font-size:10px;color:#8b949e;background:#21262d;padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle">${{src}}</span>` : '';
+
     let html = `<div class="hero">
         <div class="hero-statement" style="color:${{heroColor}}">${{e.approved}} of ${{e.reviewed}} unique strategies approved (${{rate}}%)</div>
-        <div class="hero-sub">${{e.total}} unique strategies across ${{e.total_runs}} pipeline runs | Deduped by most recent run per strategy</div>
+        <div class="hero-sub">${{heroSub}}</div>
     </div>`;
 
     // KPI cards
     const skippedCount = e.skipped ? e.skipped.length : 0;
     html += `<div class="kpi-grid" style="grid-template-columns: repeat(6, 1fr)">
         <div class="kpi"><div class="kpi-value" style="color:#f0f6fc">${{e.total_rfes}}</div><div class="kpi-label">Total RFEs</div><div class="kpi-detail">${{e.total}} strategies + ${{skippedCount}} skipped<br><span style="color:#6e7681;font-size:0.85em">(One RFE may contain 1+ strategies)</span></div></div>
-        <div class="kpi"><div class="kpi-value" style="color:#58a6ff">${{e.total}}</div><div class="kpi-label">Strategies Created</div><div class="kpi-detail">Across ${{e.total_runs}} runs</div></div>
-        <div class="kpi"><div class="kpi-value" style="color:${{heroColor}}">${{rate}}%</div><div class="kpi-label">Approval Rate</div><div class="kpi-detail">${{e.approved}} approved</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:#58a6ff">${{createdCount}}</div><div class="kpi-label">Strategies Created${{srcBadge(createdSrc)}}</div><div class="kpi-detail">${{createdDetail}}</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:#3fb950">${{rubricPass}}</div><div class="kpi-label">Rubric Pass${{srcBadge(rubricSrc)}}</div><div class="kpi-detail">${{rubricSrc ? 'CI-approved in Jira' : e.approved + ' approved'}}</div></div>
         <div class="kpi"><div class="kpi-value" style="color:${{healthColor(avgScorePct)}}">${{avgScoreHtml}}</div><div class="kpi-label">Avg Score</div><div class="kpi-detail">Threshold: 6/8</div></div>
-        <div class="kpi"><div class="kpi-value" style="color:#f85149">${{e.needs_attention}}</div><div class="kpi-label">Needs Attention</div><div class="kpi-detail">${{e.needs_attention === 0 ? 'All clear' : 'Staff engineer review'}}</div></div>
+        <div class="kpi"><div class="kpi-value" style="color:${{attnCount > 0 ? '#f85149' : '#3fb950'}}">${{attnCount}}</div><div class="kpi-label">Needs Attention${{srcBadge(attnSrc)}}</div><div class="kpi-detail">${{attnCount === 0 ? 'All clear' : 'Staff engineer review'}}</div></div>
         <div class="kpi"><div class="kpi-value" style="color:${{skippedCount > 0 ? '#d29922' : '#3fb950'}}">${{skippedCount}}</div><div class="kpi-label">Skipped RFEs</div><div class="kpi-detail">${{skippedCount > 0 ? 'Waiting on entry gate' : 'All RFEs processed'}}</div></div>
     </div>`;
 
@@ -2107,6 +2124,29 @@ initCharts();
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
+def _query_jira_kpis():
+    """Query Jira for pipeline label counts. Returns dict or None."""
+    try:
+        from jira_utils import require_env, query_label_counts
+        server, user, token = require_env()
+        if not all([server, user, token]):
+            print("Warning: JIRA env vars not set, skipping Jira KPIs",
+                  file=sys.stderr)
+            return None
+        labels = [
+            "strat-creator-auto-created",
+            "strat-creator-auto-refined",
+            "strat-creator-needs-attention",
+            "strat-creator-rubric-pass",
+        ]
+        counts = query_label_counts(server, user, token, labels)
+        print(f"Jira KPIs: {counts}")
+        return counts
+    except Exception as e:
+        print(f"Warning: Jira KPI query failed: {e}", file=sys.stderr)
+        return None
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate multi-run strategy dashboard")
     parser.add_argument("--data-dir", required=True,
@@ -2117,6 +2157,8 @@ def main():
                         help="Output HTML file path")
     parser.add_argument("--max-runs", type=int, default=30,
                         help="Maximum number of runs to include (default: 30)")
+    parser.add_argument("--jira-kpis", action="store_true",
+                        help="Query Jira for live label counts in executive summary")
     args = parser.parse_args()
 
     # Load config (optional — provides size/baseline metadata)
@@ -2126,6 +2168,9 @@ def main():
             config = load_yaml_config(args.config)
         except Exception as e:
             print(f"Warning: failed to read config: {e}", file=sys.stderr)
+
+    # Query Jira for live KPIs (optional)
+    jira_counts = _query_jira_kpis() if args.jira_kpis else None
 
     # Scan all runs
     print(f"Scanning {args.data_dir} for runs...")
@@ -2140,7 +2185,7 @@ def main():
     exec_summary = compute_executive_summary(runs)
     print(f"Executive summary: {exec_summary['total']} unique strategies "
           f"({exec_summary['approved']} approved, {exec_summary['needs_attention']} need attention)")
-    generate_dashboard(runs, exec_summary, args.output)
+    generate_dashboard(runs, exec_summary, args.output, jira_counts)
 
 
 if __name__ == "__main__":

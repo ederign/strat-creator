@@ -120,6 +120,16 @@ def search_issues(server, user, token, jql, fields=None, max_results=50):
     return all_issues
 
 
+def query_label_counts(server, user, token, labels):
+    """Count Jira issues per label. Returns {label: count} dict."""
+    counts = {}
+    for label in labels:
+        jql = f'labels = "{label}"'
+        issues = search_issues(server, user, token, jql, fields=["key"])
+        counts[label] = len(issues)
+    return counts
+
+
 def build_jql_from_config(config_path):
     """Build a JQL query string from pipeline-settings.yaml."""
     import yaml
