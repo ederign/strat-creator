@@ -238,7 +238,7 @@ def extract_run(run_dir):
     }
 
 
-def scan_runs(data_dir, max_runs=30):
+def scan_runs(data_dir, max_runs=None):
     """Discover all timestamped run directories and extract data."""
     runs = []
     current_target = None
@@ -279,7 +279,7 @@ def scan_runs(data_dir, max_runs=30):
         runs.append(run_data)
 
     runs.sort(key=lambda r: r["run_id"])
-    if len(runs) > max_runs:
+    if max_runs and len(runs) > max_runs:
         runs = runs[-max_runs:]
 
     return runs
@@ -375,7 +375,7 @@ def main():
     group.add_argument("--run-dir", help="Path to a single run directory (flat artifacts)")
     parser.add_argument("--output-dir", help="Directory to write runs.json and summary.json")
     parser.add_argument("--output", help="Single file output")
-    parser.add_argument("--max-runs", type=int, default=30, help="Maximum runs to include")
+    parser.add_argument("--max-runs", type=int, default=None, help="Maximum runs to include (default: all)")
     parser.add_argument("--no-body", action="store_true",
                         help="Exclude strategy/review body text (metadata only)")
     parser.add_argument("--dry-run", action="store_true",

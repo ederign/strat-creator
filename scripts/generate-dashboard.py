@@ -492,7 +492,7 @@ def load_run_from_json(run_dir, config):
     }
 
 
-def scan_all_runs(data_dir, config, max_runs=30):
+def scan_all_runs(data_dir, config, max_runs=None):
     """Discover all timestamped run directories and extract stats."""
     runs = []
     current_target = None
@@ -525,9 +525,9 @@ def scan_all_runs(data_dir, config, max_runs=30):
         stats["is_current"] = (entry == current_target)
         runs.append(stats)
 
-    # Sort chronologically (oldest first) and cap
+    # Sort chronologically (oldest first) and cap if requested
     runs.sort(key=lambda r: r["run_id"])
-    if len(runs) > max_runs:
+    if max_runs and len(runs) > max_runs:
         runs = runs[-max_runs:]
 
     return runs
@@ -2155,8 +2155,8 @@ def main():
                         help="Optional config file for size/baseline metadata")
     parser.add_argument("--output", "-o", default="/tmp/dashboard/index.html",
                         help="Output HTML file path")
-    parser.add_argument("--max-runs", type=int, default=30,
-                        help="Maximum number of runs to include (default: 30)")
+    parser.add_argument("--max-runs", type=int, default=None,
+                        help="Maximum number of runs to include (default: all)")
     parser.add_argument("--jira-kpis", action="store_true",
                         help="Query Jira for live label counts in executive summary")
     args = parser.parse_args()
