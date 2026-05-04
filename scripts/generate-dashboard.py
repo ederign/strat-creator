@@ -523,6 +523,7 @@ def scan_all_runs(data_dir, config, max_runs=None):
         stats["timestamp"] = ts.isoformat()
         stats["label"] = ts.strftime("%b %d, %Y %H:%M")
         stats["is_current"] = (entry == current_target)
+        stats.setdefault("dry_run", True)
         runs.append(stats)
 
     # Sort chronologically (oldest first) and cap if requested
