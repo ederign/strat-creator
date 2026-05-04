@@ -29,6 +29,14 @@ Cross-reference against the source RFEs to verify the strategy actually delivers
 
 Check for architecture context in `.context/architecture-context/architecture/`. If a `rhoai-*` directory exists, read `PLATFORM.md` and relevant component docs to ground your assessment.
 
+## Platform Feasibility Context
+
+When reviewing RHOAI strategy documents, use this context to inform your assessment of the existing criteria — do not treat these as separate checklist items. These checks apply when a strategy introduces new components, images, or external dependencies. If a strategy only modifies existing components without introducing new container images or external dependencies, the existing disconnected posture is inherited and does not need to be re-stated. Upgrade impact must always be assessed — even changes to existing components can introduce CRD schema changes, API migrations, or breaking behavior.
+
+**Disconnected / air-gapped deployments**: RHOAI is expected to be fully functional on disconnected (air-gapped) clusters with no internet egress. When a strategy introduces components that depend on external resources in their default configuration (runtime downloads, external APIs, remote registries), supporting disconnected deployment requires redesign work — pre-embedding assets, adding PVC-based loading, or removing external dependencies. If the strategy doesn't account for this and the effort estimate doesn't include it, the estimate is non-credible. Components may call external endpoints at runtime when explicitly configured by the user — that is not a disconnected violation.
+
+**Upgrade impact on existing installations**: RHOAI upgrades in-place on clusters with active workloads. When a strategy introduces CRD schema changes, API migrations, component removals, or breaking changes, the upgrade path requires migration work — backwards-compatible schema evolution, `odh-cli` helper scripts (`odh-cli` is a CLI for pre-upgrade validation and migration — see https://github.com/opendatahub-io/odh-cli), data migration logic, and upgrade testing. If the strategy proposes breaking changes but the effort estimate doesn't include migration work, it is underestimated.
+
 ## What to Assess
 
 For each strategy:

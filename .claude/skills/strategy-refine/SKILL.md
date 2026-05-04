@@ -6,6 +6,31 @@ user-invocable: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 
+## Argument Validation
+
+Before doing anything else, check `$ARGUMENTS` for invalid input.
+
+**Valid flags:** `--dry-run`, `--architecture-context <path>`
+**Valid positional args:** strategy keys matching `STRAT-\d+` or `RHAISTRAT-\d+` (optional — filters which strategies to process)
+
+1. **Unknown flags.** If any token in `$ARGUMENTS` starts with `--` and is not exactly `--dry-run` or `--architecture-context`, print the following and **stop — do not proceed with any further steps:**
+   ```
+   Error: Unknown flag `<flag>`.
+
+   Valid flags: --dry-run, --architecture-context <path>
+   Valid positional args: strategy keys (e.g., STRAT-745, RHAISTRAT-1469)
+
+   Examples:
+     /strategy-refine --dry-run
+     /strategy-refine STRAT-745 --dry-run
+     /strategy-refine --dry-run --architecture-context /path/to/local/checkout
+   ```
+
+2. **Positional argument validation.** Each non-flag token that is not the path value immediately following `--architecture-context` must match a strategy key pattern: `STRAT-\d+` or `RHAISTRAT-\d+`. If a positional token matches neither, print the following and **stop:**
+   ```
+   Error: Unrecognized argument `<token>`. Expected a strategy key (e.g., STRAT-745 or RHAISTRAT-1469).
+   ```
+
 You are a senior engineer performing feature refinement. Your job is to take approved RFEs (the WHAT/WHY) and produce a strategy (the HOW) for each one — grounded in the platform's actual architecture.
 
 ## Dry Run Mode
@@ -45,6 +70,12 @@ Otherwise, if `.context/architecture-context/` does not exist, fetch from remote
 ```bash
 bash ${CLAUDE_SKILL_DIR}/scripts/fetch-architecture-context.sh
 ```
+
+## Strategy Filtering
+
+If `$ARGUMENTS` contains strategy keys (e.g., `STRAT-745`, `RHAISTRAT-1469`), process **only** those strategies. Look for matching files in `artifacts/strat-tasks/` (e.g., `STRAT-745.md`, `RHAISTRAT-1469.md`). If a requested key has no matching file, report it and continue with the others.
+
+If no strategy keys are provided, process all strategies in `artifacts/strat-tasks/`.
 
 ## Inputs
 
@@ -163,6 +194,14 @@ Overlays applied:
 ```
 
 If no overlays directory exists or no overlays match, proceed without them.
+
+## Platform Context
+
+When generating strategies, use this context to inform your output — do not create separate sections for these concerns. Address them within the existing template sections (Technical Approach, Acceptance Criteria, Effort Estimate, Risks) when the strategy touches the relevant area.
+
+**Disconnected / air-gapped deployments**: RHOAI is expected to be fully functional on disconnected (air-gapped) clusters with no internet egress. When the strategy introduces components that depend on external resources in their default configuration, describe how disconnected clusters are supported in the Technical Approach and include a disconnected verification criterion in Acceptance Criteria. If disconnected support requires additional engineering, reflect it in the Effort Estimate. Components may call external endpoints at runtime when explicitly configured by the user — that is not a disconnected violation.
+
+**Upgrade impact on existing installations**: RHOAI upgrades in-place on clusters with active workloads. When the strategy introduces CRD schema changes, API migrations, component removals, or breaking changes, describe the upgrade path in the Technical Approach and include an upgrade-path criterion in Acceptance Criteria specifying what happens to existing workloads during the transition. Include migration work in the Effort Estimate and upgrade disruption in Risks. Do not claim "seamless upgrade" without defining expectations.
 
 ## What to Produce
 

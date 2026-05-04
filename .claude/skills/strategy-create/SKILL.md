@@ -5,6 +5,35 @@ user-invocable: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion, mcp__atlassian__searchJiraIssuesUsingJql, mcp__atlassian__getJiraIssue
 ---
 
+## Argument Validation
+
+Before doing anything else, check `$ARGUMENTS` for invalid input.
+
+**Valid flags:** `--dry-run`, `--force`
+**Valid positional args:** RHAIRFE IDs (e.g., `RHAIRFE-1397`), config file paths (contain `/` or end with `.yaml`/`.yml`)
+
+1. **Unknown flags.** If any token in `$ARGUMENTS` starts with `--` and is not exactly `--dry-run` or `--force`, print the following and **stop — do not proceed with any further steps:**
+   ```
+   Error: Unknown flag `<flag>`.
+
+   Valid flags: --dry-run, --force
+   Valid positional args: RHAIRFE IDs (e.g., RHAIRFE-1397), config file paths
+
+   Examples:
+     /strategy-create --dry-run
+     /strategy-create RHAIRFE-1397 --dry-run
+     /strategy-create config/road-to-production/batch-01.yaml --dry-run --force
+   ```
+
+2. **Positional argument validation.** Each non-flag token must match one of:
+   - An RFE ID: pattern `RHAIRFE-\d+` (e.g., `RHAIRFE-1397`)
+   - A file path: contains `/` or ends with `.yaml` or `.yml`
+
+   If a positional token matches neither, print the following and **stop:**
+   ```
+   Error: Unrecognized argument `<token>`. Expected an RHAIRFE ID (e.g., RHAIRFE-1397) or a config file path.
+   ```
+
 You are a strategy creation assistant. Your job is to create strategies from approved RFEs by cloning them into the RHAISTRAT project, then setting up local artifacts for refinement.
 
 ## Dry Run Mode
@@ -17,6 +46,14 @@ If `--dry-run` is in `$ARGUMENTS`, skip ALL external writes:
 - For **Path B** (no existing STRAT): Set `jira_key=null` on stubs since no Jira issues were created. Use the RFE number as the strat ID (e.g., RHAIRFE-1146 → `STRAT-1146`, filename `STRAT-1146.md`)
 - For **Path A** (existing STRAT found via Cloners link): Use the real `RHAISTRAT-NNNN` key as filename and `jira_key` — the ticket already exists, we're importing it
 - Print `[DRY RUN] Skipping Jira clone for <RFE key>` for each Path B RFE
+
+## Force Mode
+
+If `--force` is in `$ARGUMENTS` **and** `--dry-run` is also present, skip all label gates:
+- **Step 2a** (RFE label gate): Do not require `strat-creator-3.5` or `rfe-creator-autofix-rubric-pass`/`tech-reviewed`. Process the RFE regardless of its labels.
+- **Step 5a** (pipeline label gate on existing STRATs): Do not skip STRATs that already have `strat-creator-rubric-pass` or `strat-creator-needs-attention`. Import them anyway.
+- Print `[FORCE] Skipping label gates (dry-run mode)` once at the start of processing.
+- `--force` without `--dry-run` is **ignored** — label gates are safety checks for real Jira writes and must not be bypassed.
 
 ## Step 1: Find RFE Source Data
 
@@ -64,6 +101,8 @@ The user can select specific ones or "all."
 For each selected RFE, fetch its status and labels from Jira (the `status` and `labels` fields are already included in the Step 1 fetch).
 
 **Status check**: If the RFE status is **Closed** or **Resolved**, skip it — the RFE is no longer active. Append to `artifacts/strat-skipped.md` with reason: `RFE status: <status>`. Print `[SKIPPED] RHAIRFE-NNNN — RFE is <status>`.
+
+**If `--force` and `--dry-run` are both present**: skip the label check below — process all selected RFEs regardless of labels.
 
 **Label check**: Check that the RFE has **both**:
 
@@ -173,6 +212,8 @@ The STRAT was already cloned from the RFE in Jira. Import its content instead of
 From the script output, filter out any with status **Closed**, **Resolved**, **In Progress**, **Review**, **Release Pending**, or **Refinement** — these are already being worked on or completed and must not be touched. If all STRATs are filtered out by status, **skip this RFE** — do NOT fall through to Path B (creating a new clone would duplicate active or completed work). Append to `artifacts/strat-skipped.md` with reason: `existing STRAT(s) in active/completed state: RHAISTRAT-NNNN (status)`. Print `[SKIP] RHAIRFE-NNNN — RHAISTRAT-NNNN already in <status>`.
 
 **Multiple open STRATs**: After filtering, if **more than one** RHAISTRAT remains in early states (e.g., New, Open), **skip this RFE** — multiple open STRATs means ambiguity that requires human resolution. Append to `artifacts/strat-skipped.md` with reason: `multiple open STRATs: RHAISTRAT-NNNN, RHAISTRAT-MMMM`. Print `[SKIP] RHAIRFE-NNNN — multiple open STRATs found, requires human decision`. If exactly one remains, import it.
+
+**Pipeline label gate** (skipped when `--force` and `--dry-run` are both present):
 
 **Pipeline label gate**: From the script output, check each remaining STRAT candidate's labels. If the STRAT has either `strat-creator-rubric-pass` or `strat-creator-needs-attention`, **skip this RFE** — the STRAT has already been processed by the pipeline:
 - Do NOT import the STRAT
