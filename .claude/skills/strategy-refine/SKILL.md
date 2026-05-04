@@ -203,8 +203,6 @@ When generating strategies, use this context to inform your output — do not cr
 
 **Upgrade impact on existing installations**: RHOAI upgrades in-place on clusters with active workloads. When the strategy introduces CRD schema changes, API migrations, component removals, or breaking changes, describe the upgrade path in the Technical Approach and include an upgrade-path criterion in Acceptance Criteria specifying what happens to existing workloads during the transition. Include migration work in the Effort Estimate and upgrade disruption in Risks. Do not claim "seamless upgrade" without defining expectations.
 
-**Multi-architecture support**: RHOAI ships on four CPU architectures: amd64, arm64, ppc64le, and s390x. When the strategy introduces new container images, state which architectures are targeted in the Technical Approach and account for multi-arch build complexity in the Effort Estimate. Components with compiled native dependencies (e.g., PyTorch, OpenBLAS, LLVM) require architecture-specific build scripts for ppc64le and s390x — this is significant additional effort. If partial architecture support is intended, state which architectures and why.
-
 ## What to Produce
 
 For each strategy, use the unified template in `${CLAUDE_SKILL_DIR}/strat-template.md`. All sizes produce all sections — scale depth, not section count. Fill in:
