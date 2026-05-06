@@ -44,7 +44,8 @@ def main():
         sys.exit(2)
 
     source = get_issue(server, user, token, args.source_key,
-                       fields=["summary", "description", "priority", "labels"])
+                       fields=["summary", "description", "priority", "labels",
+                               "components", "fixVersions", "versions"])
     fields = source.get("fields", {})
 
     summary = fields.get("summary", "")
@@ -54,6 +55,12 @@ def main():
         priority_obj, dict) else "Major"
     labels = [l for l in fields.get("labels", [])
               if l != "strat-creator-processing"]
+    components = [c["name"] for c in fields.get("components", [])
+                  if isinstance(c, dict) and "name" in c]
+    fix_versions = [v["name"] for v in fields.get("fixVersions", [])
+                    if isinstance(v, dict) and "name" in v]
+    affects_versions = [v["name"] for v in fields.get("versions", [])
+                        if isinstance(v, dict) and "name" in v]
 
     new_key = create_issue(
         server, user, token,
@@ -63,6 +70,9 @@ def main():
         description_adf=description_adf,
         priority=priority,
         labels=labels,
+        components=components,
+        fix_versions=fix_versions,
+        affects_versions=affects_versions,
     )
 
     # Cloners link: new issue "is cloned by" source (STRAT is the clone of the RFE)

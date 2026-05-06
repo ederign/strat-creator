@@ -76,6 +76,29 @@ class TestCloneIssue:
         assert "strat-creator-3.5" in clone_labels
         assert "tech-reviewed" in clone_labels
 
+    def test_components_fix_versions_affects_versions_are_copied(self, jira):
+        jira.create("RHAIRFE-1002", "Pipeline orchestration",
+                     "Orchestrate ML pipelines.",
+                     components=["Dashboard", "Model Registry"],
+                     fix_versions=["2.12", "2.13"],
+                     affects_versions=["2.10"])
+
+        result = _run(jira, ["RHAIRFE-1002", "--target-project", "RHAISTRAT"])
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+
+        new_key = result.stdout.strip()
+        clone = jira.get(new_key)
+        clone_fields = clone["fields"]
+
+        comp_names = sorted(c["name"] for c in clone_fields.get("components", []))
+        assert comp_names == ["Dashboard", "Model Registry"]
+
+        fix_names = sorted(v["name"] for v in clone_fields.get("fixVersions", []))
+        assert fix_names == ["2.12", "2.13"]
+
+        aff_names = [v["name"] for v in clone_fields.get("versions", [])]
+        assert aff_names == ["2.10"]
+
     def test_missing_env_vars_exits_with_code_2(self, jira):
         env = {k: v for k, v in os.environ.items()
                if k not in ("JIRA_SERVER", "JIRA_USER", "JIRA_TOKEN")}
