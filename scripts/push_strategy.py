@@ -15,9 +15,12 @@ Environment variables:
 """
 
 import argparse
+import json
 import os
 import re
 import sys
+import tempfile
+import urllib.error
 
 from jira_utils import (
     require_env,
@@ -26,6 +29,8 @@ from jira_utils import (
     markdown_to_adf,
     api_call_with_retry,
     strip_metadata,
+    add_attachment,
+    delete_attachment,
 )
 
 
@@ -42,6 +47,18 @@ STAFF_INPUT_TEMPLATE = """## Staff Engineer Input
 <!-- This input takes priority over architecture context and removed-context when they conflict. -->
 
 <!-- After review: address findings below, then remove the needs_attention label from Jira. -->"""
+
+ADF_SIZE_THRESHOLD = 28_000
+STRATEGY_ATTACHMENT_TEMPLATE = "{issue_key}-strategy.md"
+ATTACHMENT_NOTICE = (
+    "> **Note:** The full strategy exceeds Jira's description size limit "
+    "and is stored as an attachment: `{filename}`. "
+    "The TL;DR is shown below for quick reference."
+)
+ATTACHMENT_NOTICE_NO_TLDR = (
+    "> **Note:** The full strategy exceeds Jira's description size limit "
+    "and is stored as an attachment: `{filename}`."
+)
 
 
 def extract_strategy_section(local_content):
@@ -68,11 +85,97 @@ def extract_staff_input_section(local_content):
     return match.group(1).strip()
 
 
+def extract_tldr_section(strategy_section):
+    """Extract the ### TL;DR subsection from a strategy section."""
+    match = re.search(
+        r'(### TL;DR.*?)(?=\n### (?!#)|$)',
+        strategy_section,
+        re.DOTALL,
+    )
+    if not match:
+        return None
+    return match.group(1).strip()
+
+
+def _build_description_stub(existing_md, strategy_section, staff_input_section,
+                            attachment_filename):
+    """Build a reduced description with TL;DR stub instead of full strategy."""
+    if STRATEGY_HEADING in existing_md:
+        before_strategy = existing_md[:existing_md.index(STRATEGY_HEADING)]
+    else:
+        before_strategy = existing_md
+
+    # Remove any trailing Staff Engineer Input from before_strategy
+    # (it will be re-added at the end)
+    if STAFF_INPUT_HEADING in before_strategy:
+        before_strategy = before_strategy[:before_strategy.index(STAFF_INPUT_HEADING)]
+
+    tldr = extract_tldr_section(strategy_section)
+    if tldr:
+        notice = ATTACHMENT_NOTICE.format(filename=attachment_filename)
+        stub_strategy = (
+            f"{STRATEGY_HEADING}\n\n"
+            f"{notice}\n\n"
+            f"{tldr}\n"
+        )
+    else:
+        notice = ATTACHMENT_NOTICE_NO_TLDR.format(filename=attachment_filename)
+        stub_strategy = (
+            f"{STRATEGY_HEADING}\n\n"
+            f"{notice}\n"
+        )
+
+    parts = [before_strategy.rstrip()]
+    parts.append(stub_strategy)
+
+    if staff_input_section:
+        parts.append(staff_input_section)
+    elif STAFF_INPUT_HEADING not in before_strategy:
+        parts.append(STAFF_INPUT_TEMPLATE)
+
+    return "\n\n".join(parts)
+
+
 def update_description(server, user, token, issue_key, description_adf):
     """PUT only the description field (no summary change)."""
     body = {"fields": {"description": description_adf}}
     path = f"/issue/{issue_key}"
     api_call_with_retry(server, path, user, token, body=body, method="PUT")
+
+
+def _find_strategy_attachment(attachments, issue_key):
+    """Find an existing strategy attachment by naming convention."""
+    filename = STRATEGY_ATTACHMENT_TEMPLATE.format(issue_key=issue_key)
+    for att in attachments:
+        if att.get("filename") == filename:
+            return att
+    return None
+
+
+def _push_via_attachment(server, user, token, issue_key, existing_md,
+                         strategy_section, staff_input_section, attachments):
+    """Push strategy as attachment + stub description."""
+    att_filename = STRATEGY_ATTACHMENT_TEMPLATE.format(issue_key=issue_key)
+
+    stub_md = _build_description_stub(
+        existing_md, strategy_section, staff_input_section, att_filename)
+    stub_adf = markdown_to_adf(stub_md)
+    update_description(server, user, token, issue_key, stub_adf)
+
+    with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False, encoding="utf-8") as tmp:
+        tmp.write(strategy_section + "\n")
+        tmp_path = tmp.name
+    try:
+        old_att = _find_strategy_attachment(attachments, issue_key)
+        if old_att:
+            delete_attachment(server, user, token, old_att["id"])
+        add_attachment(server, user, token, issue_key,
+                       tmp_path, filename=att_filename)
+    finally:
+        os.unlink(tmp_path)
+
+    print(f"OK: Strategy pushed to {issue_key} as attachment {att_filename}")
 
 
 def main():
@@ -102,9 +205,10 @@ def main():
     staff_input_section = extract_staff_input_section(local_content)
 
     issue = get_issue(server, user, token, args.issue_key,
-                      fields=["description"])
+                      fields=["description", "attachment"])
     existing_desc = issue.get("fields", {}).get("description")
     existing_md = adf_to_markdown(existing_desc).strip() if existing_desc else ""
+    attachments = issue.get("fields", {}).get("attachment", [])
 
     if existing_md:
         backup_dir = os.path.join(os.path.dirname(args.local_file), "..", "strat-originals")
@@ -139,8 +243,42 @@ def main():
         updated_md = updated_md.rstrip() + "\n\n" + STAFF_INPUT_TEMPLATE
 
     updated_adf = markdown_to_adf(updated_md)
-    update_description(server, user, token, args.issue_key, updated_adf)
-    print(f"OK: Strategy and Staff Engineer Input pushed to {args.issue_key}")
+    adf_size = len(json.dumps(updated_adf))
+
+    if adf_size > ADF_SIZE_THRESHOLD:
+        print(f"  Strategy too large for description ({adf_size} chars ADF, "
+              f"threshold {ADF_SIZE_THRESHOLD}). Using attachment.",
+              file=sys.stderr)
+        _push_via_attachment(server, user, token, args.issue_key,
+                             existing_md, strategy_section,
+                             staff_input_section, attachments)
+        return
+
+    # Content fits — try pushing to description
+    try:
+        update_description(server, user, token, args.issue_key, updated_adf)
+    except urllib.error.HTTPError as e:
+        if e.code == 400:
+            error_body = e.read().decode("utf-8", errors="replace")
+            if "CONTENT_LIMIT_EXCEEDED" in error_body:
+                print(f"  Jira rejected description (CONTENT_LIMIT_EXCEEDED, "
+                      f"{adf_size} chars ADF). Retrying with attachment.",
+                      file=sys.stderr)
+                _push_via_attachment(server, user, token, args.issue_key,
+                                     existing_md, strategy_section,
+                                     staff_input_section, attachments)
+                return
+        raise
+
+    # Clean up orphan attachment if strategy now fits in description
+    old_att = _find_strategy_attachment(attachments, args.issue_key)
+    if old_att:
+        delete_attachment(server, user, token, old_att["id"])
+        print(f"  Removed previous strategy attachment "
+              f"(content now fits in description)", file=sys.stderr)
+
+    print(f"OK: Strategy and Staff Engineer Input pushed to {args.issue_key}"
+          f" ({adf_size} chars ADF)")
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ import base64
 import json
 import os
 import socket
+import tempfile
 import threading
 import time
 import urllib.request
@@ -42,9 +43,12 @@ def jira_emu():
     """Start a jira-emulator server for the test session."""
     port = _find_free_port()
 
+    att_dir = tempfile.mkdtemp(prefix="jira-emu-attachments-")
     os.environ["DATABASE_URL"] = "sqlite+aiosqlite://"
     os.environ["AUTH_MODE"] = "none"
     os.environ["SEED_DATA"] = "true"
+    os.environ["ATTACHMENT_DIR"] = att_dir
+    os.environ["BASE_URL"] = f"http://127.0.0.1:{port}"
 
     from jira_emulator.config import get_settings
     get_settings.cache_clear()
