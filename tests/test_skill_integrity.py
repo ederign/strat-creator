@@ -179,19 +179,3 @@ class TestScriptQuality:
             pytest.skip(f"{script} not found (covered by TestReferencedScripts)")
         assert os.access(script_path, os.X_OK), (
             f"{script} is not executable. Run: chmod +x scripts/{script}")
-
-
-# ─── SSL Context ─────────────────────────────────────────────────────────────
-
-
-class TestSSLContext:
-
-    def test_jira_utils_disables_ssl_verification(self):
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "jira_utils", os.path.join(SCRIPTS_DIR, "jira_utils.py"))
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        import ssl
-        assert mod._ssl_ctx.verify_mode == ssl.CERT_NONE
-        assert mod._ssl_ctx.check_hostname is False

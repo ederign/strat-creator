@@ -94,8 +94,7 @@ def _download_attachment(url, dest_path, user, token):
         "Authorization": f"Basic {credentials}",
     }
     req = urllib.request.Request(url, headers=headers)
-    from jira_utils import _ssl_ctx
-    with urllib.request.urlopen(req, timeout=60, context=_ssl_ctx) as resp:
+    with urllib.request.urlopen(req, timeout=60) as resp:
         with open(dest_path, "wb") as f:
             f.write(resp.read())
 
