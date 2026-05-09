@@ -29,7 +29,6 @@ skip_labels:
 excluded_strat_statuses:
   - In Progress
   - Review
-  - Refinement
   - Release Pending
   - Closed
   - Resolved
