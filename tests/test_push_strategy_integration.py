@@ -217,6 +217,79 @@ class TestPushReplacement:
         assert count == 1
 
 
+STAFF_INPUT_HEADING_LEGACY = "## Staff Engineer Input"
+
+
+class TestPushLegacyHeading:
+
+    def test_replaces_legacy_staff_input_without_duplication(self, jira, art_dir):
+        existing_desc = (
+            "## Business Need\n\nContext.\n\n"
+            f"{STRATEGY_HEADING}\n\nOld strat.\n\n"
+            f"{STAFF_INPUT_HEADING_LEGACY}\n\nLegacy engineer notes.\n"
+        )
+        jira.create("RHAISTRAT-1050", "Legacy heading replace", existing_desc)
+
+        local_file = art_dir / "artifacts" / "strat-tasks" / "RHAISTRAT-1050.md"
+        local_file.write_text(
+            f"{STRATEGY_HEADING}\n\n"
+            "New strat.\n\n"
+            f"{STAFF_INPUT_HEADING}\n\nUpdated SME notes.\n"
+        )
+
+        result = _run(jira, "RHAISTRAT-1050", local_file)
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+
+        md = _get_description_markdown(jira, "RHAISTRAT-1050")
+        assert "Updated SME notes" in md
+        assert "Legacy engineer notes" not in md
+        count_new = md.count("Staff Engineer / SME Input")
+        count_legacy = md.count("Staff Engineer Input")
+        assert count_new + count_legacy == 1
+
+    def test_preserves_legacy_staff_input_when_no_local_input(self, jira, art_dir):
+        existing_desc = (
+            "## Business Need\n\nContext.\n\n"
+            f"{STRATEGY_HEADING}\n\nOld strat.\n\n"
+            f"{STAFF_INPUT_HEADING_LEGACY}\n\nExisting legacy notes.\n"
+        )
+        jira.create("RHAISTRAT-1051", "Legacy heading preserve", existing_desc)
+
+        local_file = art_dir / "artifacts" / "strat-tasks" / "RHAISTRAT-1051.md"
+        local_file.write_text(
+            f"{STRATEGY_HEADING}\n\n"
+            "New strat.\n"
+        )
+
+        result = _run(jira, "RHAISTRAT-1051", local_file)
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+
+        md = _get_description_markdown(jira, "RHAISTRAT-1051")
+        assert "New strat" in md
+        assert "Existing legacy notes" not in md or STAFF_INPUT_HEADING in md
+
+    def test_legacy_heading_no_duplicate_with_template(self, jira, art_dir):
+        existing_desc = (
+            "## Business Need\n\nContext.\n\n"
+            f"{STAFF_INPUT_HEADING_LEGACY}\n\nLegacy notes.\n"
+        )
+        jira.create("RHAISTRAT-1052", "Legacy no dup template", existing_desc)
+
+        local_file = art_dir / "artifacts" / "strat-tasks" / "RHAISTRAT-1052.md"
+        local_file.write_text(
+            f"{STRATEGY_HEADING}\n\n"
+            "Strategy content.\n"
+        )
+
+        result = _run(jira, "RHAISTRAT-1052", local_file)
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+
+        md = _get_description_markdown(jira, "RHAISTRAT-1052")
+        count_new = md.count("Staff Engineer / SME Input")
+        count_legacy = md.count("Staff Engineer Input")
+        assert count_new + count_legacy == 1
+
+
 class TestPushErrors:
 
     def test_missing_strategy_section_exits_1(self, jira, art_dir):

@@ -216,7 +216,7 @@ class TestHumanReviewLoop:
         assert "Update" in mermaid
         assert "architecture context" in mermaid
 
-    def test_path_b_staff_engineer_input(self, mermaid):
+    def test_path_b_staff_engineer_sme_input(self, mermaid):
         assert "Staff Engineer / SME Input" in mermaid
 
     def test_remove_label(self, mermaid):
