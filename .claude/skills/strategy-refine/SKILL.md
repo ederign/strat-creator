@@ -81,7 +81,7 @@ In revision mode:
 - **Preserve what's working.** If reviewers approved aspects of the strategy, don't rewrite those sections.
 - **Note what changed.** Document what changed and why in the review file's `## Revision History` section (`artifacts/strat-reviews/{id}-review.md`), not in the strategy artifact itself. Keep strategy files clean with only frontmatter and business/strategy content.
 - **Flag disagreements.** If you believe a reviewer's concern is invalid, keep the current approach and explain why in the revision notes rather than silently ignoring it.
-- **Re-check HOW Context Sources.** A staff engineer may have populated the Staff Engineer Input section between the initial refinement and this revision. Treat any new Staff Engineer Input as the highest priority input for the revision.
+- **Re-check HOW Context Sources.** A staff engineer may have populated the Staff Engineer / SME Input section between the initial refinement and this revision. Treat any new Staff Engineer / SME Input as the highest priority input for the revision.
 
 If no review files exist, this is initial refinement — generate the strategy from the stub.
 
@@ -98,7 +98,7 @@ If architecture context is not available, note this and produce the best refinem
 Before generating the strategy, check for three high-priority inputs that contain implementation guidance. These take priority over general architecture context when they exist, because they represent either domain expert knowledge, cross-strategy corrections, or prior technical analysis of this specific RFE.
 
 **Priority chain** (highest to lowest):
-1. Staff Engineer Input (per-strategy, human-authored)
+1. Staff Engineer / SME Input (per-strategy, human-authored)
 2. Architecture Context Overlays (cross-strategy, human-authored corrections)
 3. Removed RFE Context (per-RFE implementation details)
 4. Architecture Context (generated platform docs)
@@ -129,16 +129,16 @@ Use this content as a primary input when writing the Technical Approach. It shou
 
 If Jira is unavailable, fall back to reading the cached file at `artifacts/strat-originals/{source_rfe}-comments.md`. If neither Jira nor a cached file is available, proceed without it.
 
-### Source 2: Staff Engineer Input
+### Source 2: Staff Engineer / SME Input
 
-Read the strategy file being refined. Check the `## Staff Engineer Input` section for content beyond the default template placeholder (HTML comments only).
+Read the strategy file being refined. Check the `## Staff Engineer / SME Input` section for content beyond the default template placeholder (HTML comments only).
 
 If a staff engineer has added guidance, corrections, or domain expertise to this section, treat it as the highest-priority input. Staff engineer input overrides both architecture context and removed RFE context when they conflict, because it represents direct human expert judgment on this specific strategy.
 
-When Staff Engineer Input has content:
+When Staff Engineer / SME Input has content:
 - Address each point in the Technical Approach
 - If the input contradicts your analysis, follow the staff engineer's direction and note the reasoning
-- Do not remove or modify the Staff Engineer Input content — it is a human-authored section
+- Do not remove or modify the Staff Engineer / SME Input content — it is a human-authored section
 
 If the section contains only HTML comments, it has no actionable input — skip it.
 
@@ -153,7 +153,7 @@ Filter for relevant overlays:
 
 For each matched overlay, read its `## Fact` and `## Impact on Strategies` sections. Inject these into your refinement context alongside the architecture docs and other sources.
 
-**Priority**: Overlays are human-authored corrections that are more recent than the generated architecture context. When an overlay contradicts the architecture docs, follow the overlay. Staff Engineer Input still takes precedence over overlays when they conflict.
+**Priority**: Overlays are human-authored corrections that are more recent than the generated architecture context. When an overlay contradicts the architecture docs, follow the overlay. Staff Engineer / SME Input still takes precedence over overlays when they conflict.
 
 When overlays are applied, print which ones were used:
 
@@ -168,12 +168,12 @@ If no overlays directory exists or no overlays match, proceed without them.
 
 For each strategy, use the unified template in `${CLAUDE_SKILL_DIR}/strat-template.md`. All sizes produce all sections — scale depth, not section count. Fill in:
 
-1. **Technical Approach** — How do we deliver this business need? What components are involved? What's the high-level design? Reference specific personas and scenarios from the RFE to ground technical decisions in user outcomes. If the RFE lacks personas or scenarios, flag this in Open Questions. If removed implementation context or Staff Engineer Input is available (see HOW Context Sources above), use it as primary input for this section.
+1. **Technical Approach** — How do we deliver this business need? What components are involved? What's the high-level design? Reference specific personas and scenarios from the RFE to ground technical decisions in user outcomes. If the RFE lacks personas or scenarios, flag this in Open Questions. If removed implementation context or Staff Engineer / SME Input is available (see HOW Context Sources above), use it as primary input for this section.
 2. **Affected Components** — Which platform components are touched? Reference actual component names from the architecture context.
 3. **Impacted Teams** — Which teams own the affected components and need to be involved?
 4. **High Level Requirements** — Extract functional requirements from the RFE. Add priority markers: [P0] must have (blocks ship), [P1] should have (important, not blocking), [P2] nice to have (defer if effort exceeds estimate). If the RFE already has user stories, preserve them with priority markers added.
 5. **Dependencies** — What must exist or change before this can be built? External dependencies, upstream/downstream components, API contracts.
-6. **Non-Functional Requirements** — Performance, scalability, security, availability, backwards compatibility requirements derived from the RFE and architecture context. Each NFR must cite its source: the RFE, a specific architecture context doc, or a Staff Engineer Input directive. Do NOT invent numeric thresholds — if a metric (latency target, throughput limit, concurrent user count, RPS capacity) does not appear in any source, do NOT propose a "reasonable" value. Instead, flag it as an open question in the Open Questions section with a note like "No performance target specified in RFE or architecture context — needs PM/Engineering input." Architectural facts from the context (replica counts, TLS versions, storage mechanisms, HPA ranges) ARE valid NFRs because they are grounded in the platform's actual deployment. Do NOT write generic statements like "good performance", "secure access", or "high availability" — these are not testable.
+6. **Non-Functional Requirements** — Performance, scalability, security, availability, backwards compatibility requirements derived from the RFE and architecture context. Each NFR must cite its source: the RFE, a specific architecture context doc, or a Staff Engineer / SME Input directive. Do NOT invent numeric thresholds — if a metric (latency target, throughput limit, concurrent user count, RPS capacity) does not appear in any source, do NOT propose a "reasonable" value. Instead, flag it as an open question in the Open Questions section with a note like "No performance target specified in RFE or architecture context — needs PM/Engineering input." Architectural facts from the context (replica counts, TLS versions, storage mechanisms, HPA ranges) ARE valid NFRs because they are grounded in the platform's actual deployment. Do NOT write generic statements like "good performance", "secure access", or "high availability" — these are not testable.
 7. **Out-of-Scope** — What is explicitly NOT part of this strategy. Include adjacent features that might be confused with this one, future phases, and integrations deferred to later releases. Generate for ALL sizes.
 8. **Acceptance Criteria** — Derive testable criteria from the RFE requirements and the technical approach. Prefer Given/When/Then format with "measured by" clauses where it fits naturally. Binary verification checks (e.g., "Component X is absent from config") do not need Given/When/Then framing. Mark the section as "(Proposed — requires PM/Engineering validation)". Do NOT use: "works correctly" (vague), "users can easily..." (subjective), or capability lists without verification methods.
 9. **Effort Estimate** — T-shirt size (S/M/L/XL) with justification based on component count, cross-team coordination, and technical complexity.
@@ -199,13 +199,13 @@ Each strategy file has three top-level sections with strict ownership rules:
 |---------|-------|-------|
 | `## Business Need (from RFE)` | RFE (verbatim) | NEVER modify — character-for-character copy from the source RFE |
 | `## Strategy (AI Generated by Agentic SDLC Pipeline)` | Pipeline | Your content goes here. Regenerate on each run. |
-| `## Staff Engineer Input` | Human | NEVER modify, remove, or reorder — read-only input for you |
+| `## Staff Engineer / SME Input` | Human | NEVER modify, remove, or reorder — read-only input for you |
 
-On initial refinement, generate the `## Strategy` section content. On revision runs, regenerate the `## Strategy` section content informed by review feedback, Staff Engineer Input, and removed RFE context. Never touch the other two sections.
+On initial refinement, generate the `## Strategy` section content. On revision runs, regenerate the `## Strategy` section content informed by review feedback, Staff Engineer / SME Input, and removed RFE context. Never touch the other two sections.
 
 ## Output
 
-Update each file in `artifacts/strat-tasks/` with the completed strategy. Only write within the `## Strategy (AI Generated by Agentic SDLC Pipeline)` section. The `## Business Need (from RFE)` and `## Staff Engineer Input` sections MUST remain untouched.
+Update each file in `artifacts/strat-tasks/` with the completed strategy. Only write within the `## Strategy (AI Generated by Agentic SDLC Pipeline)` section. The `## Business Need (from RFE)` and `## Staff Engineer / SME Input` sections MUST remain untouched.
 
 After writing the strategy content, update the frontmatter status:
 

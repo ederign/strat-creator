@@ -1002,7 +1002,7 @@ graph LR
         LA --> PA{{"AI Strategy HOW\\nReady\\n(optional &#128100; review)"}}
         LR --> HR["&#128100; Human Review\\nStaff Eng or Architect"]
         HR -->|"Path A: Update\\narchitecture context"| RL["Remove label\\nneeds-attention"]
-        HR -->|"Path B: Edit\\nStaff Engineer Input"| RL
+        HR -->|"Path B: Edit\\nStaff Engineer / SME Input"| RL
         RL -->|"Re-trigger pipeline\\nvia CI or strategy-submit"| SF
     end
 
