@@ -51,6 +51,8 @@ This fetches into `local/` (gitignored, isolated from CI):
 - `local/strat-originals/RHAIRFE-NNNN.md` — the original RFE for reference
 - `local/strat-reviews/RHAISTRAT-NNNN-review.md` — the Strat Creator review
 
+> **Large strategies:** When a strategy exceeds Jira's description size limit (~32K chars), the full strategy is stored as a Jira attachment (`RHAISTRAT-NNNN-strategy.md`) and the Jira description shows a TL;DR stub with a note pointing to the attachment. This is handled transparently — `/strategy-pull` reassembles the full content into your local file, and `/strategy-push` and `/strategy-signoff` automatically decide whether to use an attachment based on size.
+
 ### 2. Read the strategy
 
 Open `local/strat-tasks/RHAISTRAT-NNNN.md`. The document has three sections:
