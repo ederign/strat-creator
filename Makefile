@@ -9,13 +9,15 @@ test:               ## Run all tests
 test-unit:          ## Run unit tests only
 	uv run pytest tests/test_artifact_utils.py tests/test_state.py tests/test_frontmatter_cli.py \
 	       tests/test_apply_scores.py tests/test_markdown_adf.py tests/test_push_strategy.py \
-	       tests/test_jql_builder.py tests/test_list_rfe_ids.py -v --tb=short
+	       tests/test_jql_builder.py tests/test_list_rfe_ids.py \
+	       tests/test_skill_integrity.py -v --tb=short
 
 test-integration:   ## Run integration tests (jira-emulator)
 	uv run pytest tests/test_clone_issue.py tests/test_push_strategy_integration.py \
 	       tests/test_push_refined_strategies.py \
 	       tests/test_fetch_issue.py tests/test_find_strat_for_rfe.py \
-	       tests/test_search_and_filter.py tests/test_pull_strategy.py -v --tb=short
+	       tests/test_search_and_filter.py tests/test_pull_strategy.py \
+	       tests/test_skill_paths.py -v --tb=short
 
 test-e2e:           ## Run E2E pipeline replay tests
 	uv run pytest tests/test_pipeline_e2e.py -v --tb=short
