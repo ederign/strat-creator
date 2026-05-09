@@ -168,7 +168,7 @@ jql:
         jql = build_jql_from_config(config)
         assert "ORDER BY" not in jql
 
-    def test_exact_format_matches(self, tmp_path):
+    def test_exact_format_without_target_versions(self, tmp_path):
         config = self._write_config(tmp_path, """\
 jql:
   project: RHAIRFE
@@ -193,3 +193,66 @@ jql:
             ' ORDER BY key ASC'
         )
         assert jql == expected
+
+    def test_exact_format_with_target_versions(self, tmp_path):
+        config = self._write_config(tmp_path, """\
+jql:
+  project: RHAIRFE
+  required_labels:
+    - strat-creator-3.5
+  target_versions:
+    - rhoai-3.5
+    - rhoai-3.5.EA2
+    - rhoai-3.5.EA1
+  quality_labels:
+    - rfe-creator-autofix-rubric-pass
+    - tech-reviewed
+  excluded_statuses:
+    - Closed
+    - Resolved
+    - Draft
+  order_by: key ASC
+""")
+        jql = build_jql_from_config(config)
+        expected = (
+            'project = RHAIRFE'
+            ' AND (labels = "strat-creator-3.5"'
+            ' OR cf[10855] in ("rhoai-3.5", "rhoai-3.5.EA2", "rhoai-3.5.EA1"))'
+            ' AND (labels = "rfe-creator-autofix-rubric-pass"'
+            ' OR labels = "tech-reviewed")'
+            ' AND status NOT IN ("Closed", "Resolved", "Draft")'
+            ' ORDER BY key ASC'
+        )
+        assert jql == expected
+
+    def test_target_versions_only_no_required_labels(self, tmp_path):
+        config = self._write_config(tmp_path, """\
+jql:
+  project: RHAIRFE
+  required_labels: []
+  target_versions:
+    - rhoai-3.5
+  quality_labels:
+    - tech-reviewed
+  excluded_statuses: []
+  order_by: key ASC
+""")
+        jql = build_jql_from_config(config)
+        assert 'cf[10855] in ("rhoai-3.5")' in jql
+        assert "labels = " not in jql.split("AND")[1] or "tech-reviewed" in jql
+
+    def test_target_versions_empty_list(self, tmp_path):
+        config = self._write_config(tmp_path, """\
+jql:
+  project: RHAIRFE
+  required_labels:
+    - strat-creator-3.5
+  target_versions: []
+  quality_labels:
+    - tech-reviewed
+  excluded_statuses: []
+  order_by: key ASC
+""")
+        jql = build_jql_from_config(config)
+        assert 'labels = "strat-creator-3.5"' in jql
+        assert "cf[10855]" not in jql

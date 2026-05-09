@@ -8,6 +8,19 @@
 > | `strat-creator-needs-attention` | CI flagged — needs fixes before sign-off |
 > | `strat-creator-human-sign-off` | Human signed off — feature-ready |
 
+## Which RFEs Enter the Pipeline
+
+Not every RHAIRFE issue gets a strategy. The pipeline selects RFEs that pass two gates:
+
+1. **Scope gate** — the RFE is tagged for the current release cycle:
+   - Has the `strat-creator-3.5` label, **OR**
+   - Has a Target Version of `rhoai-3.5`, `rhoai-3.5.EA1`, or `rhoai-3.5.EA2`
+2. **Quality gate** — the RFE has been validated:
+   - `rfe-creator-autofix-rubric-pass` (CI-approved), **OR**
+   - `tech-reviewed` (human-approved)
+
+RFEs in Closed, Resolved, or Draft status are excluded. The filter configuration lives in [`config/pipeline-settings.yaml`](../config/pipeline-settings.yaml).
+
 ## Two Paths to Sign-Off
 
 Every strategy arriving here has been through the CI pipeline but still requires a human in the loop. The goal is the same in both cases: **sign off the strategy so it becomes a feature.** The path depends on CI's verdict:

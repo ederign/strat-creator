@@ -3,7 +3,11 @@ jql:
   project: RHAIRFE
   required_labels:
     - strat-creator-3.5
-  quality_labels:    # at least one required
+  target_versions:     # OR'd with required_labels via cf[10855]
+    - rhoai-3.5
+    - rhoai-3.5.EA2
+    - rhoai-3.5.EA1
+  quality_labels:      # at least one required
     - rfe-creator-autofix-rubric-pass
     - tech-reviewed
   excluded_statuses:
@@ -25,7 +29,6 @@ skip_labels:
 excluded_strat_statuses:
   - In Progress
   - Review
-  - Refinement
   - Release Pending
   - Closed
   - Resolved
