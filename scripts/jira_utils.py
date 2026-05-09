@@ -138,13 +138,23 @@ def build_jql_from_config(config_path):
     jql_cfg = cfg.get("jql", {})
     project = jql_cfg.get("project", "RHAIRFE")
     required = jql_cfg.get("required_labels", [])
+    target_versions = jql_cfg.get("target_versions", [])
     quality = jql_cfg.get("quality_labels", [])
     excluded = jql_cfg.get("excluded_statuses", [])
     order = jql_cfg.get("order_by", "key ASC")
 
     clauses = [f'project = {project}']
-    for label in required:
-        clauses.append(f'labels = "{label}"')
+    label_clause = " AND ".join(f'labels = "{l}"' for l in required)
+    version_clause = ""
+    if target_versions:
+        versions_csv = ", ".join(f'"{v}"' for v in target_versions)
+        version_clause = f'cf[10855] in ({versions_csv})'
+    if label_clause and version_clause:
+        clauses.append(f'({label_clause} OR {version_clause})')
+    elif label_clause:
+        clauses.append(label_clause)
+    elif version_clause:
+        clauses.append(version_clause)
     if quality:
         quality_clause = " OR ".join(f'labels = "{l}"' for l in quality)
         clauses.append(f'({quality_clause})')
