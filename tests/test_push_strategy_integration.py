@@ -266,7 +266,10 @@ class TestPushLegacyHeading:
 
         md = _get_description_markdown(jira, "RHAISTRAT-1051")
         assert "New strat" in md
-        assert "Existing legacy notes" not in md or STAFF_INPUT_HEADING in md
+        assert "Existing legacy notes" in md
+        count_new = md.count("Staff Engineer / SME Input")
+        count_legacy = md.count("Staff Engineer Input")
+        assert count_new + count_legacy == 1
 
     def test_legacy_heading_no_duplicate_with_template(self, jira, art_dir):
         existing_desc = (
