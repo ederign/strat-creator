@@ -369,6 +369,38 @@ def download_attachment(server, user, token, content_url, dest_path):
             f.write(resp.read())
 
 
+def delete_attachment(server, user, token, attachment_id, max_retries=3):
+    """DELETE /rest/api/3/attachment/{id} — remove an attachment."""
+    url = f"{server.rstrip('/')}/rest/api/3/attachment/{attachment_id}"
+    credentials = base64.b64encode(f"{user}:{token}".encode()).decode()
+    headers = {
+        "Authorization": f"Basic {credentials}",
+        "Accept": "application/json",
+    }
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            req = urllib.request.Request(url, headers=headers, method="DELETE")
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                return None
+        except urllib.error.HTTPError as e:
+            if e.code in (429, 502, 503, 504):
+                wait = max(int(e.headers.get("Retry-After", 1)), 4 ** attempt)
+                print(f"  HTTP {e.code}, retrying in {wait}s...",
+                      file=sys.stderr)
+                time.sleep(wait)
+                last_error = e
+                continue
+            raise
+        except urllib.error.URLError as e:
+            wait = 4 ** attempt
+            print(f"  Network error: {e.reason}, retrying in {wait}s...",
+                  file=sys.stderr)
+            time.sleep(wait)
+            last_error = e
+    raise last_error
+
+
 def get_transitions(server, user, token, issue_key):
     """GET available transitions for an issue."""
     path = f"/issue/{issue_key}/transitions"

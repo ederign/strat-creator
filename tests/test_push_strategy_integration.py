@@ -7,7 +7,8 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
-from jira_utils import adf_to_markdown
+from jira_utils import adf_to_markdown, download_attachment
+from push_strategy import ADF_SIZE_THRESHOLD
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 SCRIPT = os.path.join(PROJECT_ROOT, "scripts", "push_strategy.py")
@@ -322,3 +323,158 @@ class TestPushWithFrontmatter:
         assert "source_rfe:" not in md
         assert "RHAISTRAT-1030: Test Title" not in md
         assert "Strategy content after frontmatter" in md
+
+
+def _make_large_strategy(size_chars=25000):
+    """Generate a strategy section large enough to exceed ADF_SIZE_THRESHOLD.
+
+    ADF JSON is ~2x the size of the markdown source, so we need ~15K+ of
+    markdown to exceed the 28K ADF threshold.
+    """
+    lines = [
+        f"{STRATEGY_HEADING}\n",
+        "### TL;DR\n",
+        "Enable GPU sharing via MIG profiles for cost-efficient multi-tenant workloads.\n",
+        "**Components**: nvidia-device-plugin, dashboard, model-serving\n",
+        "### Technical Approach\n",
+    ]
+    while sum(len(l) for l in lines) < size_chars:
+        lines.append(
+            "This is a detailed technical paragraph explaining the implementation "
+            "approach for GPU time-slicing using NVIDIA MIG profiles. It covers "
+            "the configuration of device plugins, resource quotas, scheduling "
+            "policies, and integration with the model serving infrastructure.\n\n"
+        )
+    return "\n".join(lines)
+
+
+def _get_attachments(jira, key):
+    """Get attachments for an issue."""
+    issue = jira.get(key)
+    return issue.get("fields", {}).get("attachment", [])
+
+
+class TestPushContentLimit:
+
+    def test_large_strategy_uses_attachment(self, jira, art_dir):
+        jira.create("RHAISTRAT-1100", "Large strategy",
+                     "## Business Need\n\nUsers need GPU sharing.")
+
+        large_strategy = _make_large_strategy()
+        local_file = art_dir / "artifacts" / "strat-tasks" / "RHAISTRAT-1100.md"
+        local_file.write_text(large_strategy)
+
+        result = _run(jira, "RHAISTRAT-1100", local_file)
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "attachment" in result.stdout.lower() or "attachment" in result.stderr.lower()
+
+        md = _get_description_markdown(jira, "RHAISTRAT-1100")
+        assert "Business Need" in md
+        assert "### TL;DR" in md
+        assert "GPU sharing via MIG profiles" in md
+        assert "RHAISTRAT-1100-strategy.md" in md
+        assert "Technical Approach" not in md
+
+        attachments = _get_attachments(jira, "RHAISTRAT-1100")
+        strategy_atts = [a for a in attachments
+                         if a["filename"] == "RHAISTRAT-1100-strategy.md"]
+        assert len(strategy_atts) == 1
+
+    def test_small_strategy_stays_in_description(self, jira, art_dir):
+        jira.create("RHAISTRAT-1101", "Small strategy",
+                     "## Business Need\n\nSmall feature.")
+
+        local_file = art_dir / "artifacts" / "strat-tasks" / "RHAISTRAT-1101.md"
+        local_file.write_text(
+            f"{STRATEGY_HEADING}\n\n"
+            "### TL;DR\n\nSimple feature.\n\n"
+            "### Technical Approach\n\nStraightforward.\n"
+        )
+
+        result = _run(jira, "RHAISTRAT-1101", local_file)
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+
+        md = _get_description_markdown(jira, "RHAISTRAT-1101")
+        assert "Technical Approach" in md
+        assert "Straightforward" in md
+
+        attachments = _get_attachments(jira, "RHAISTRAT-1101")
+        strategy_atts = [a for a in attachments
+                         if a["filename"] == "RHAISTRAT-1101-strategy.md"]
+        assert len(strategy_atts) == 0
+
+    def test_attachment_overwritten_on_second_push(self, jira, art_dir):
+        jira.create("RHAISTRAT-1102", "Overwrite test",
+                     "## Business Need\n\nContext.")
+
+        local_file = art_dir / "artifacts" / "strat-tasks" / "RHAISTRAT-1102.md"
+
+        local_file.write_text(_make_large_strategy())
+        result1 = _run(jira, "RHAISTRAT-1102", local_file)
+        assert result1.returncode == 0, f"stderr: {result1.stderr}"
+
+        v2_strategy = _make_large_strategy().replace(
+            "GPU time-slicing", "UPDATED GPU time-slicing v2")
+        local_file.write_text(v2_strategy)
+        result2 = _run(jira, "RHAISTRAT-1102", local_file)
+        assert result2.returncode == 0, f"stderr: {result2.stderr}"
+
+        attachments = _get_attachments(jira, "RHAISTRAT-1102")
+        strategy_atts = [a for a in attachments
+                         if a["filename"] == "RHAISTRAT-1102-strategy.md"]
+        assert len(strategy_atts) == 1
+
+        dl_path = art_dir / "dl-check.md"
+        download_attachment(jira.url, "admin", "admin",
+                            strategy_atts[0]["content"], str(dl_path))
+        content = dl_path.read_text()
+        assert "UPDATED GPU time-slicing v2" in content
+
+    def test_small_strategy_cleans_up_attachment(self, jira, art_dir):
+        jira.create("RHAISTRAT-1103", "Cleanup test",
+                     "## Business Need\n\nContext.")
+
+        local_file = art_dir / "artifacts" / "strat-tasks" / "RHAISTRAT-1103.md"
+        local_file.write_text(_make_large_strategy())
+        result1 = _run(jira, "RHAISTRAT-1103", local_file)
+        assert result1.returncode == 0, f"stderr: {result1.stderr}"
+
+        atts_before = _get_attachments(jira, "RHAISTRAT-1103")
+        assert any(a["filename"] == "RHAISTRAT-1103-strategy.md"
+                   for a in atts_before)
+
+        local_file.write_text(
+            f"{STRATEGY_HEADING}\n\n"
+            "### TL;DR\n\nNow it's small.\n\n"
+            "### Technical Approach\n\nSimple.\n"
+        )
+        result2 = _run(jira, "RHAISTRAT-1103", local_file)
+        assert result2.returncode == 0, f"stderr: {result2.stderr}"
+
+        md = _get_description_markdown(jira, "RHAISTRAT-1103")
+        assert "Technical Approach" in md
+        assert "Simple" in md
+
+        atts_after = _get_attachments(jira, "RHAISTRAT-1103")
+        strategy_atts = [a for a in atts_after
+                         if a["filename"] == "RHAISTRAT-1103-strategy.md"]
+        assert len(strategy_atts) == 0
+
+    def test_stub_preserves_staff_input(self, jira, art_dir):
+        jira.create("RHAISTRAT-1104", "Staff input preservation",
+                     "## Business Need\n\nContext.")
+
+        large_strategy = _make_large_strategy()
+        staff_input = (
+            f"{STAFF_INPUT_HEADING}\n\n"
+            "Effort estimate should be L, not M.\n"
+        )
+        local_file = art_dir / "artifacts" / "strat-tasks" / "RHAISTRAT-1104.md"
+        local_file.write_text(large_strategy + "\n\n" + staff_input)
+
+        result = _run(jira, "RHAISTRAT-1104", local_file)
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+
+        md = _get_description_markdown(jira, "RHAISTRAT-1104")
+        assert STAFF_INPUT_HEADING in md
+        assert "Effort estimate should be L" in md
