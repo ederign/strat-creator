@@ -205,15 +205,7 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/fetch_issue.py RHAISTRAT-NNNN --fields summa
 
 ## Staff Engineer / SME Input
 
-<!-- HIGH-PRIORITY: Content here is used as primary guidance during strategy refinement. -->
-
-<!-- Add technical corrections, architectural direction, component preferences, or domain expertise. -->
-
-<!-- Write it using declarative, cumulative form; policy and statement that shall always be valid in any iteration of the STRAT Refinement -->
-
-<!-- This input takes priority over architecture context and removed-context when they conflict. -->
-
-<!-- After review: address findings below, then remove the needs_attention label from Jira. -->
+*Add technical corrections, architectural direction, component preferences, or domain expertise below. Write in declarative, cumulative form — statements that remain valid across refinement iterations. This input takes priority over architecture context when they conflict. After review: address findings, then remove the needs-attention label from Jira.*
 ```
 
 4. Set frontmatter:
@@ -256,15 +248,7 @@ echo "[CLONE] $STRAT_KEY cloned from RHAIRFE-NNNN"
 
 ## Staff Engineer / SME Input
 
-<!-- HIGH-PRIORITY: Content here is used as primary guidance during strategy refinement. -->
-
-<!-- Add technical corrections, architectural direction, component preferences, or domain expertise. -->
-
-<!-- Write it using declarative, cumulative form; policy and statement that shall always be valid in any iteration of the STRAT Refinement -->
-
-<!-- This input takes priority over architecture context and removed-context when they conflict. -->
-
-<!-- After review: address findings below, then remove the needs_attention label from Jira. -->
+*Add technical corrections, architectural direction, component preferences, or domain expertise below. Write in declarative, cumulative form — statements that remain valid across refinement iterations. This input takes priority over architecture context when they conflict. After review: address findings, then remove the needs-attention label from Jira.*
 ```
 
 2. Set frontmatter:

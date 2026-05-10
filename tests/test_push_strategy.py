@@ -80,7 +80,7 @@ class TestExtractStrategySection:
             "### Architecture\n\n"
             "Use the NVIDIA device plugin.\n\n"
             "## Staff Engineer / SME Input\n\n"
-            "<!-- Add technical corrections here. -->\n"
+            "*Add technical corrections here.*\n"
         )
         result = extract_strategy_section(content)
         assert result is not None
@@ -154,7 +154,7 @@ class TestExtractStaffInputSection:
     def test_extracts_template_only(self):
         content = (
             "## Staff Engineer / SME Input\n\n"
-            "<!-- Add technical corrections here. -->\n"
+            "*Add technical corrections here.*\n"
         )
         result = extract_staff_input_section(content)
         assert result is not None
