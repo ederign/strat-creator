@@ -49,7 +49,7 @@ STAFF_INPUT_TEMPLATE = """## Staff Engineer / SME Input
 
 <!-- After review: address findings below, then remove the needs_attention label from Jira. -->"""
 
-ADF_SIZE_THRESHOLD = 28_000
+ADF_SIZE_THRESHOLD = 32_000
 STRATEGY_ATTACHMENT_TEMPLATE = "{issue_key}-strategy.md"
 ATTACHMENT_NOTICE = (
     "> **Note:** The full strategy exceeds Jira's description size limit "
