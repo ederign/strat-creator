@@ -94,6 +94,8 @@ Not yet implemented for strat-creator. Strategy submission to Jira will be added
 
 After every code change, run the test suite in a background subagent before reporting the change as complete. Use `make test-unit` for changes to scripts or library code. Use `make test` to run all tests when integration/E2E tests are also relevant. Never skip this step — a change is not done until tests pass.
 
+**Always run `make test` (full suite including integration tests) before pushing to remote.** Unit tests alone are not sufficient — the jira-emulator integration tests catch issues that unit tests miss.
+
 ## Architecture Context
 
 Strategy skills fetch architecture context from opendatahub-io/architecture-context into `.context/architecture-context/`. Used during refinement and review to ground feedback in real platform architecture.

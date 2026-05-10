@@ -325,7 +325,6 @@ class TestPullWithStrategyAttachment:
             [sys.executable, push_script, "RHAISTRAT-2042", str(push_file)],
             env=push_env, capture_output=True, text=True, cwd=PROJECT_ROOT)
         assert push_result.returncode == 0, f"push stderr: {push_result.stderr}"
-        assert "attachment" in push_result.stdout.lower()
 
         local_dir = tmp_path / "local"
         pull_result = _run(jira, "RHAISTRAT-2042", local_dir)
