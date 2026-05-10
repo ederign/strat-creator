@@ -67,8 +67,10 @@ For each selected RFE, fetch its status and labels from Jira (the `status` and `
 
 **Label check**: Check that the RFE has **both**:
 
-1. `strat-creator-3.5`
+1. `strat-creator-3.5` label **OR** a Target Version (`customfield_10855`) of `rhoai-3.5`, `rhoai-3.5.EA1`, or `rhoai-3.5.EA2`
 2. At least one of: `rfe-creator-autofix-rubric-pass` or `tech-reviewed`
+
+To check Target Version, fetch the `customfield_10855` field from Jira. It is an array of version objects with a `name` property (e.g., `[{"name": "rhoai-3.5"}]`).
 
 If an RFE fails the label gate, **skip it** — do not create a strategy stub. Instead, append it to `artifacts/strat-skipped.md`.
 
@@ -170,7 +172,7 @@ The script returns a JSON array of RHAISTRAT clones with their status and labels
 
 The STRAT was already cloned from the RFE in Jira. Import its content instead of creating a new stub. Skip Step 3 (Jira clone) for this RFE.
 
-From the script output, filter out any with status **Closed**, **Resolved**, **In Progress**, **Review**, **Release Pending**, or **Refinement** — these are already being worked on or completed and must not be touched. If all STRATs are filtered out by status, **skip this RFE** — do NOT fall through to Path B (creating a new clone would duplicate active or completed work). Append to `artifacts/strat-skipped.md` with reason: `existing STRAT(s) in active/completed state: RHAISTRAT-NNNN (status)`. Print `[SKIP] RHAIRFE-NNNN — RHAISTRAT-NNNN already in <status>`.
+From the script output, filter out any with status **Closed**, **Resolved**, **In Progress**, **Review**, or **Release Pending** — these are already being worked on or completed and must not be touched. STRATs in **Refinement** are NOT excluded — the pipeline should process them to provide early review feedback. If all STRATs are filtered out by status, **skip this RFE** — do NOT fall through to Path B (creating a new clone would duplicate active or completed work). Append to `artifacts/strat-skipped.md` with reason: `existing STRAT(s) in active/completed state: RHAISTRAT-NNNN (status)`. Print `[SKIP] RHAIRFE-NNNN — RHAISTRAT-NNNN already in <status>`.
 
 **Multiple open STRATs**: After filtering, if **more than one** RHAISTRAT remains in early states (e.g., New, Open), **skip this RFE** — multiple open STRATs means ambiguity that requires human resolution. Append to `artifacts/strat-skipped.md` with reason: `multiple open STRATs: RHAISTRAT-NNNN, RHAISTRAT-MMMM`. Print `[SKIP] RHAIRFE-NNNN — multiple open STRATs found, requires human decision`. If exactly one remains, import it.
 
