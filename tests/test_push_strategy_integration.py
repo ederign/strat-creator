@@ -8,7 +8,6 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
 from jira_utils import adf_to_markdown, download_attachment
-from push_strategy import ADF_SIZE_THRESHOLD
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 SCRIPT = os.path.join(PROJECT_ROOT, "scripts", "push_strategy.py")
@@ -401,12 +400,8 @@ class TestPushWithFrontmatter:
         assert "Strategy content after frontmatter" in md
 
 
-def _make_large_strategy(size_chars=25000):
-    """Generate a strategy section large enough to exceed ADF_SIZE_THRESHOLD.
-
-    ADF JSON is ~2x the size of the markdown source, so we need ~15K+ of
-    markdown to exceed the 28K ADF threshold.
-    """
+def _make_large_strategy(size_chars=35000):
+    """Generate a strategy section large enough to trigger Jira's CONTENT_LIMIT_EXCEEDED."""
     lines = [
         f"{STRATEGY_HEADING}\n",
         "### TL;DR\n",

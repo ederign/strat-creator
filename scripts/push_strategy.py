@@ -49,7 +49,6 @@ STAFF_INPUT_TEMPLATE = """## Staff Engineer / SME Input
 
 <!-- After review: address findings below, then remove the needs_attention label from Jira. -->"""
 
-ADF_SIZE_THRESHOLD = 32_000
 STRATEGY_ATTACHMENT_TEMPLATE = "{issue_key}-strategy.md"
 ATTACHMENT_NOTICE = (
     "> **Note:** The full strategy exceeds Jira's description size limit "
@@ -245,26 +244,16 @@ def main():
         updated_md = updated_md.rstrip() + "\n\n" + STAFF_INPUT_TEMPLATE
 
     updated_adf = markdown_to_adf(updated_md)
-    adf_size = len(json.dumps(updated_adf))
 
-    if adf_size > ADF_SIZE_THRESHOLD:
-        print(f"  Strategy too large for description ({adf_size} chars ADF, "
-              f"threshold {ADF_SIZE_THRESHOLD}). Using attachment.",
-              file=sys.stderr)
-        _push_via_attachment(server, user, token, args.issue_key,
-                             existing_md, strategy_section,
-                             staff_input_section, attachments)
-        return
-
-    # Content fits — try pushing to description
     try:
         update_description(server, user, token, args.issue_key, updated_adf)
     except urllib.error.HTTPError as e:
         if e.code == 400:
             error_body = e.read().decode("utf-8", errors="replace")
             if "CONTENT_LIMIT_EXCEEDED" in error_body:
+                adf_size = len(json.dumps(updated_adf))
                 print(f"  Jira rejected description (CONTENT_LIMIT_EXCEEDED, "
-                      f"{adf_size} chars ADF). Retrying with attachment.",
+                      f"{adf_size:,} chars ADF). Falling back to attachment.",
                       file=sys.stderr)
                 _push_via_attachment(server, user, token, args.issue_key,
                                      existing_md, strategy_section,
@@ -279,8 +268,8 @@ def main():
         print(f"  Removed previous strategy attachment "
               f"(content now fits in description)", file=sys.stderr)
 
-    print(f"OK: Strategy and Staff Engineer / SME Input pushed to {args.issue_key}"
-          f" ({adf_size} chars ADF)")
+    print(f"OK: Strategy and Staff Engineer / SME Input pushed to "
+          f"{args.issue_key}")
 
 
 if __name__ == "__main__":
