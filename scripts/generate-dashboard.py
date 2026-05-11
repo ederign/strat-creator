@@ -664,7 +664,8 @@ def _delta_html(current, prev, field, is_pct=True):
     return f'<span style="color:{color}">{sign}{delta}{suffix} vs prev</span>'
 
 
-def generate_dashboard(runs, exec_summary, output_path, jira_counts=None):
+def generate_dashboard(runs, exec_summary, output_path, jira_counts=None,
+                       processing_issues=None):
     """Generate the full dashboard HTML."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
     current = runs[-1] if runs else None
@@ -673,6 +674,7 @@ def generate_dashboard(runs, exec_summary, output_path, jira_counts=None):
     # Prepare JSON data (strip strategy HTML bodies for overview; keep for detail)
     runs_json = json.dumps(runs, indent=None)
     jira_counts_json = json.dumps(jira_counts) if jira_counts else "null"
+    processing_json = json.dumps(processing_issues) if processing_issues else "[]"
 
     # Delta arrows
     if current and current.get("delta_approval") is not None:
@@ -867,6 +869,7 @@ tr.clickable {{ cursor: pointer; }}
     <div class="nav-tab" onclick="switchPage('run-detail')">Run Detail</div>
     <div class="nav-tab" onclick="switchPage('attention')">Needs Attention</div>
     <div class="nav-tab" onclick="switchPage('blocked')">Blocked RFEs</div>
+    <div class="nav-tab" onclick="switchPage('processing')">Currently Processing</div>
     <div class="nav-tab" onclick="switchPage('pipeline')">Pipeline</div>
 </div>
 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#8b949e;padding:8px 16px;background:#161b22;border:1px solid #30363d;border-radius:6px;user-select:none;white-space:nowrap">
@@ -935,6 +938,11 @@ tr.clickable {{ cursor: pointer; }}
 <!-- ═══ BLOCKED RFES PAGE ═══ -->
 <div class="nav-page" id="page-blocked">
 <div id="blocked-content"></div>
+</div>
+
+<!-- ═══ CURRENTLY PROCESSING PAGE ═══ -->
+<div class="nav-page" id="page-processing">
+<div id="processing-content"></div>
 </div>
 
 <!-- ═══ PIPELINE PAGE ═══ -->
@@ -1099,6 +1107,7 @@ graph LR
 <script>
 const ALL_RUNS = {runs_json};
 const JIRA_COUNTS = {jira_counts_json};
+const PROCESSING_ISSUES = {processing_json};
 let RUNS = ALL_RUNS.filter(r => !r.dry_run);
 let EXEC = recomputeExec(RUNS);
 
@@ -1389,6 +1398,72 @@ function renderBlocked() {{
     if (totalAll === 0) {{
         html += '<div style="text-align:center;padding:48px;color:#3fb950;font-size:16px">All in-scope RFEs are entering the pipeline — no blockers.</div>';
     }}
+
+    el.innerHTML = html;
+}}
+
+// ─── Currently Processing ────────────────────────────────────────────────────
+function renderProcessing() {{
+    const el = document.getElementById('processing-content');
+    const issues = PROCESSING_ISSUES;
+    const now = new Date();
+
+    const heroColor = issues.length > 0 ? '#d29922' : '#3fb950';
+    let html = `<div class="hero">
+        <div class="hero-statement" style="color:${{heroColor}}">${{issues.length}} RFE${{issues.length !== 1 ? 's' : ''}} currently processing</div>
+        <div class="hero-sub">RFEs with <code style="background:#21262d;padding:2px 6px;border-radius:3px">strat-creator-processing</code> label in Jira</div>
+    </div>`;
+
+    if (issues.length === 0) {{
+        html += '<div style="text-align:center;padding:48px;color:#3fb950;font-size:16px">No RFEs are currently being processed by the pipeline.</div>';
+        el.innerHTML = html;
+        return;
+    }}
+
+    html += `<table><thead><tr>
+        <th>RFE Key</th><th>Title</th><th>Processing Since</th><th>Duration</th><th>Status</th>
+    </tr></thead><tbody>`;
+
+    issues.forEach(issue => {{
+        let since = '—';
+        let duration = '—';
+        let status = '<span style="color:#3fb950">Running</span>';
+
+        if (issue.started) {{
+            const start = new Date(issue.started);
+            since = start.toLocaleString();
+            const diffMs = now - start;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHrs = Math.floor(diffMins / 60);
+            const remainMins = diffMins % 60;
+
+            if (diffHrs > 0) {{
+                duration = `${{diffHrs}}h ${{remainMins}}m`;
+            }} else {{
+                duration = `${{diffMins}}m`;
+            }}
+
+            if (diffMins > 120) {{
+                status = '<span style="color:#f85149;font-weight:600">⚠ Possibly stuck (>2h)</span>';
+            }} else if (diffMins > 60) {{
+                status = '<span style="color:#d29922">⏳ Long running (>1h)</span>';
+            }}
+        }}
+
+        html += `<tr>
+            <td><a href="https://issues.redhat.com/browse/${{issue.key}}" target="_blank" style="color:#58a6ff">${{issue.key}}</a></td>
+            <td>${{issue.summary}}</td>
+            <td style="font-size:13px;color:#8b949e">${{since}}</td>
+            <td>${{duration}}</td>
+            <td>${{status}}</td>
+        </tr>`;
+    }});
+
+    html += '</tbody></table>';
+    html += '<div style="margin-top:16px;padding:12px 16px;background:#161b22;border:1px solid #30363d;border-radius:8px;font-size:13px;color:#8b949e">';
+    html += '<strong style="color:#c9d1d9">How to interpret:</strong> Pipeline runs typically take 20–40 minutes per RFE. ';
+    html += 'If an RFE has been processing for over 2 hours, the pipeline job may have failed — check GitLab CI.';
+    html += '</div>';
 
     el.innerHTML = html;
 }}
@@ -2176,6 +2251,7 @@ renderExecutiveSummary();
 renderOverviewKPIs();
 renderAttention();
 renderBlocked();
+renderProcessing();
 buildRunList();
 buildRunSelector();
 initCharts();
@@ -2246,6 +2322,55 @@ def _query_jira_kpis():
         return None
 
 
+def _query_processing_issues():
+    """Query Jira for RFEs with strat-creator-processing label.
+
+    Returns list of {key, summary, started} dicts where started is the
+    ISO timestamp when the label was added (from changelog), or None.
+    """
+    try:
+        from jira_utils import require_env, search_issues, api_call_with_retry
+        server, user, token = require_env()
+        if not all([server, user, token]):
+            print("Warning: JIRA env vars not set, skipping processing query",
+                  file=sys.stderr)
+            return None
+        issues = search_issues(
+            server, user, token,
+            'labels = "strat-creator-processing"',
+            fields=["key", "summary"],
+        )
+        result = []
+        for issue in issues:
+            key = issue["key"]
+            summary = issue["fields"].get("summary", "")
+            started = None
+            try:
+                data = api_call_with_retry(
+                    server,
+                    f"/issue/{key}/changelog",
+                    user, token,
+                )
+                for entry in reversed(data.get("values", [])):
+                    for item in entry.get("items", []):
+                        if (item.get("field") == "labels"
+                                and "strat-creator-processing"
+                                in (item.get("toString") or "")):
+                            started = entry.get("created")
+                            break
+                    if started:
+                        break
+            except Exception as e:
+                print(f"Warning: changelog fetch failed for {key}: {e}",
+                      file=sys.stderr)
+            result.append({"key": key, "summary": summary, "started": started})
+        print(f"Processing issues: {len(result)}")
+        return result
+    except Exception as e:
+        print(f"Warning: processing query failed: {e}", file=sys.stderr)
+        return None
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate multi-run strategy dashboard")
     parser.add_argument("--data-dir", required=True,
@@ -2268,8 +2393,9 @@ def main():
         except Exception as e:
             print(f"Warning: failed to read config: {e}", file=sys.stderr)
 
-    # Query Jira for live KPIs (optional)
+    # Query Jira for live KPIs and processing status (optional)
     jira_counts = _query_jira_kpis() if args.jira_kpis else None
+    processing_issues = _query_processing_issues() if args.jira_kpis else None
 
     # Scan all runs
     print(f"Scanning {args.data_dir} for runs...")
@@ -2284,7 +2410,8 @@ def main():
     exec_summary = compute_executive_summary(runs)
     print(f"Executive summary: {exec_summary['total']} unique strategies "
           f"({exec_summary['approved']} approved, {exec_summary['needs_attention']} need attention)")
-    generate_dashboard(runs, exec_summary, args.output, jira_counts)
+    generate_dashboard(runs, exec_summary, args.output, jira_counts,
+                       processing_issues)
 
 
 if __name__ == "__main__":
