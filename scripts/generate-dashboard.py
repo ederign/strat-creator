@@ -866,6 +866,7 @@ tr.clickable {{ cursor: pointer; }}
     <div class="nav-tab" onclick="switchPage('overview')">Per-Run Trends</div>
     <div class="nav-tab" onclick="switchPage('run-detail')">Run Detail</div>
     <div class="nav-tab" onclick="switchPage('attention')">Needs Attention</div>
+    <div class="nav-tab" onclick="switchPage('blocked')">Blocked RFEs</div>
     <div class="nav-tab" onclick="switchPage('pipeline')">Pipeline</div>
 </div>
 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#8b949e;padding:8px 16px;background:#161b22;border:1px solid #30363d;border-radius:6px;user-select:none;white-space:nowrap">
@@ -929,6 +930,11 @@ tr.clickable {{ cursor: pointer; }}
 <!-- ═══ NEEDS ATTENTION PAGE ═══ -->
 <div class="nav-page" id="page-attention">
 <div id="attention-content"></div>
+</div>
+
+<!-- ═══ BLOCKED RFES PAGE ═══ -->
+<div class="nav-page" id="page-blocked">
+<div id="blocked-content"></div>
 </div>
 
 <!-- ═══ PIPELINE PAGE ═══ -->
@@ -1169,6 +1175,7 @@ function toggleDryRuns() {{
     renderExecutiveSummary();
     renderOverviewKPIs();
     renderAttention();
+    renderBlocked();
     buildRunList();
     buildRunSelector();
     initCharts();
@@ -1294,6 +1301,96 @@ function renderAttention() {{
 function toggleAttentionDetail(idx) {{
     const panel = document.getElementById(`attn-panel-${{idx}}`);
     panel.classList.toggle('open');
+}}
+
+// ─── Blocked RFEs ───────────────────────────────────────────────────────────
+function renderBlocked() {{
+    const el = document.getElementById('blocked-content');
+    const seen = {{}};
+    for (let i = RUNS.length - 1; i >= 0; i--) {{
+        for (const s of (RUNS[i].skipped || [])) {{
+            if (s.rfe_key && !seen[s.rfe_key]) seen[s.rfe_key] = s;
+        }}
+    }}
+    const all = Object.values(seen).sort((a, b) => (a.rfe_key || '').localeCompare(b.rfe_key || ''));
+
+    const categories = [
+        {{
+            id: 'missing-release',
+            label: 'Missing Release Targeting',
+            color: '#f85149',
+            icon: '🏷',
+            action: 'Set Target Version to rhoai-3.5 in Jira <strong>or</strong> add <code>strat-creator-3.5</code> label.',
+            filter: s => s.labels && s.labels.includes('missing labels') && s.labels.includes('strat-creator-3.5')
+        }},
+        {{
+            id: 'missing-approval',
+            label: 'Missing Quality Approval',
+            color: '#f85149',
+            icon: '✅',
+            action: 'RFE needs <code>rfe-creator-autofix-rubric-pass</code> or <code>tech-reviewed</code> label.',
+            filter: s => s.labels && s.labels.includes('missing labels') && s.labels.includes('rfe-creator-autofix-rubric-pass')
+        }},
+        {{
+            id: 'needs-attention',
+            label: 'STRAT Needs Attention',
+            color: '#d29922',
+            icon: '⚠',
+            action: 'Existing strategy flagged for review. Open the STRAT in Jira and resolve issues or sign off.',
+            filter: s => s.labels && s.labels.includes('already processed') && s.labels.includes('needs-attention')
+        }},
+        {{
+            id: 'in-progress',
+            label: 'STRAT In Progress',
+            color: '#8b949e',
+            icon: '🔄',
+            action: 'Strategy exists in an active state (Refinement / In Progress). Pipeline will not reprocess until current work completes.',
+            filter: s => s.labels && s.labels.includes('existing STRAT')
+        }}
+    ];
+
+    categories.forEach(c => {{ c.items = all.filter(c.filter); }});
+    const blocked = categories.filter(c => c.id !== 'in-progress');
+    const totalBlocked = blocked.reduce((n, c) => n + c.items.length, 0);
+    const totalAll = categories.reduce((n, c) => n + c.items.length, 0);
+
+    let html = `<div class="hero">
+        <div class="hero-statement" style="color:${{totalBlocked > 0 ? '#d29922' : '#3fb950'}}">${{totalBlocked}} RFE${{totalBlocked !== 1 ? 's' : ''}} blocked</div>
+        <div class="hero-sub">${{totalAll}} total RFEs not entering the strategy pipeline (${{categories[3].items.length}} already in progress)</div>
+    </div>`;
+
+    html += '<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">';
+    categories.forEach(c => {{
+        html += `<div class="kpi">
+            <div class="kpi-value" style="color:${{c.color}}">${{c.items.length}}</div>
+            <div class="kpi-label">${{c.label}}</div>
+        </div>`;
+    }});
+    html += '</div>';
+
+    categories.forEach(c => {{
+        if (c.items.length === 0) return;
+        html += `<div style="margin-bottom:24px;padding:16px;background:#161b22;border:1px solid #30363d;border-radius:8px;">
+            <h3 style="color:${{c.color}};margin:0 0 8px;font-size:15px">${{c.icon}} ${{c.label}} (${{c.items.length}})</h3>
+            <p style="color:#8b949e;margin:0 0 12px;font-size:13px">${{c.action}}</p>
+            <table><thead><tr>
+                <th>RFE Key</th><th>Title</th><th>Reason</th>
+            </tr></thead><tbody>`;
+        c.items.forEach(s => {{
+            html += `<tr>
+                <td><a href="https://issues.redhat.com/browse/${{s.rfe_key}}" target="_blank" style="color:#58a6ff">${{s.rfe_key}}</a></td>
+                <td>${{s.title}}</td>
+                <td style="color:${{c.color}};font-size:13px">${{s.labels}}</td>
+            </tr>`;
+        }});
+        html += '</tbody></table></div>';
+    }});
+
+    if (totalAll === 0) {{
+        html += '<div style="text-align:center;padding:48px;color:#3fb950;font-size:16px">All in-scope RFEs are entering the pipeline — no blockers.</div>';
+    }}
+
+    el.innerHTML = html;
 }}
 
 // ─── Executive summary ──────────────────────────────────────────────────────
@@ -2078,6 +2175,7 @@ if (dContainer) {{
 renderExecutiveSummary();
 renderOverviewKPIs();
 renderAttention();
+renderBlocked();
 buildRunList();
 buildRunSelector();
 initCharts();
