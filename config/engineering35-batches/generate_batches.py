@@ -137,7 +137,7 @@ def fetch_rfe(rfe_num):
         "Accept": "application/json",
     })
     try:
-        with urllib.request.urlopen(req, context=ssl_ctx) as resp:
+        with urllib.request.urlopen(req, timeout=60, context=ssl_ctx) as resp:
             data = json.loads(resp.read())
         fields = data["fields"]
         return {
