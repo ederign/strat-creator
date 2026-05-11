@@ -19,11 +19,12 @@ import unicodedata
 import urllib.error
 import urllib.request
 
+ssl_ctx = ssl.create_default_context()
 try:
     import certifi
-    _ssl_ctx = ssl.create_default_context(cafile=certifi.where())
-except ImportError:
-    _ssl_ctx = ssl.create_default_context()
+    ssl_ctx.load_verify_locations(certifi.where())
+except (ImportError, OSError):
+    pass
 
 
 # ─── HTTP Layer ───────────────────────────────────────────────────────────────
@@ -40,7 +41,7 @@ def make_request(url, user, token, body=None, method=None):
         headers["Content-Type"] = "application/json"
         data = json.dumps(body).encode()
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    with urllib.request.urlopen(req, timeout=60, context=_ssl_ctx) as resp:
+    with urllib.request.urlopen(req, timeout=60, context=ssl_ctx) as resp:
         if resp.status == 204:
             return None
         resp_body = resp.read()
@@ -353,7 +354,7 @@ def add_attachment(server, user, token, issue_key, filepath, filename=None,
         try:
             req = urllib.request.Request(url, data=body, headers=headers,
                                         method="POST")
-            with urllib.request.urlopen(req, timeout=120, context=_ssl_ctx) as resp:
+            with urllib.request.urlopen(req, timeout=120, context=ssl_ctx) as resp:
                 return json.loads(resp.read())
         except urllib.error.HTTPError as e:
             if e.code in (429, 502, 503, 504):
@@ -381,7 +382,7 @@ def download_attachment(server, user, token, content_url, dest_path):
         "Accept": "*/*",
     }
     req = urllib.request.Request(content_url, headers=headers)
-    with urllib.request.urlopen(req, timeout=120, context=_ssl_ctx) as resp:
+    with urllib.request.urlopen(req, timeout=120, context=ssl_ctx) as resp:
         with open(dest_path, "wb") as f:
             f.write(resp.read())
 
@@ -398,7 +399,7 @@ def delete_attachment(server, user, token, attachment_id, max_retries=3):
     for attempt in range(max_retries):
         try:
             req = urllib.request.Request(url, headers=headers, method="DELETE")
-            with urllib.request.urlopen(req, timeout=60, context=_ssl_ctx) as resp:
+            with urllib.request.urlopen(req, timeout=60, context=ssl_ctx) as resp:
                 return None
         except urllib.error.HTTPError as e:
             if e.code in (429, 502, 503, 504):
