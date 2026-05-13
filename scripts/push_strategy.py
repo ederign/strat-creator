@@ -241,7 +241,7 @@ def main():
         update_description(server, user, token, args.issue_key, updated_adf)
     except urllib.error.HTTPError as e:
         if e.code == 400:
-            error_body = e.read().decode("utf-8", errors="replace")
+            error_body = getattr(e, "error_body", "") or e.read().decode("utf-8", errors="replace")
             if "CONTENT_LIMIT_EXCEEDED" in error_body:
                 adf_size = len(json.dumps(updated_adf))
                 print(f"  Jira rejected description (CONTENT_LIMIT_EXCEEDED, "

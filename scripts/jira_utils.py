@@ -80,6 +80,7 @@ def api_call_with_retry(server, path, user, token, body=None, method=None,
                 continue
             error_body = e.read().decode("utf-8", errors="replace")
             print(f"HTTP {e.code}: {error_body}", file=sys.stderr)
+            e.error_body = error_body
             raise
         except urllib.error.URLError as e:
             wait = 4 ** attempt
