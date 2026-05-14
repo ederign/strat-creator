@@ -50,4 +50,12 @@ Then advise the user on next steps:
 - **If rubric-pass**: "The strategy passed CI review. Run `/strategy-refine` and `/strategy-review` to iterate locally, then `/strategy-signoff` when you're satisfied."
 - **If needs-attention**: "The strategy was flagged by CI. Run `/strategy-refine` and `/strategy-review` to fix issues locally, then `/strategy-push` to resubmit to CI."
 
+## Prototype Suggestion
+
+After summarizing, scan the pulled strategy and RFE original for UI-related keywords: dashboard, user interface, UI, GUI, visualization, page, screen, form, modal, dialog, navigation, wizard, frontend, web console, monitoring view, configuration page, workflow editor.
+
+If any UI indicators are found, append to your summary: "This strategy appears to involve a user interface. You can generate a clickable prototype to visualize the proposed experience: `/strategy-prototype RHAISTRAT-NNNN`"
+
+If no UI indicators are found, say nothing — do not mention prototyping for non-UI strategies.
+
 $ARGUMENTS
