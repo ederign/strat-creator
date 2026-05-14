@@ -5,6 +5,31 @@ user-invocable: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent
 ---
 
+## Argument Validation
+
+Before doing anything else, check `$ARGUMENTS` for invalid input.
+
+**Valid flags:** `--dry-run`, `--architecture-context <path>`, `--assess-strat <path>`
+**Valid positional args:** strategy keys matching `STRAT-\d+` or `RHAISTRAT-\d+` (optional — filters which strategies to process)
+
+1. **Unknown flags.** If any token in `$ARGUMENTS` starts with `--` and is not exactly `--dry-run`, `--architecture-context`, or `--assess-strat`, print the following and **stop — do not proceed with any further steps:**
+   ```
+   Error: Unknown flag `<flag>`.
+
+   Valid flags: --dry-run, --architecture-context <path>, --assess-strat <path>
+   Valid positional args: strategy keys (e.g., STRAT-745, RHAISTRAT-1469)
+
+   Examples:
+     /strategy-review --dry-run
+     /strategy-review STRAT-745 --dry-run
+     /strategy-review --dry-run --assess-strat /path/to/assess-strat
+   ```
+
+2. **Positional argument validation.** Each non-flag token that is not the path value immediately following `--architecture-context` or `--assess-strat` must match a strategy key pattern: `STRAT-\d+` or `RHAISTRAT-\d+`. If a positional token matches neither, print the following and **stop:**
+   ```
+   Error: Unrecognized argument `<token>`. Expected a strategy key (e.g., STRAT-745 or RHAISTRAT-1469).
+   ```
+
 You are a strategy review orchestrator. Your job is to score and review the strategies in `artifacts/strat-tasks/`, producing per-strategy review files with numeric scores and detailed prose.
 
 ## Dry Run Mode
@@ -31,9 +56,15 @@ Local mode is also active if any strategy file's frontmatter contains `workflow:
 
 If both `local/strat-tasks/` and `artifacts/strat-tasks/` have files, prefer `local/strat-tasks/`.
 
+## Strategy Filtering
+
+If `$ARGUMENTS` contains strategy keys (e.g., `STRAT-745`, `RHAISTRAT-1469`), process **only** those strategies. Look for matching files in `artifacts/strat-tasks/` (e.g., `STRAT-745.md`, `RHAISTRAT-1469.md`). If a requested key has no matching file, report it and continue with the others.
+
+If no strategy keys are provided, process all strategies in `artifacts/strat-tasks/`.
+
 ## Step 1: Verify Artifacts Exist
 
-Read files in `artifacts/strat-tasks/`. If no strategy artifacts exist or they haven't been refined yet (no "Strategy" section), tell the user to run `/strategy-refine` first and stop.
+Read the selected strategy files in `artifacts/strat-tasks/`. If no strategy artifacts exist or they haven't been refined yet (no "Strategy" section), tell the user to run `/strategy-refine` first and stop.
 
 Check if prior reviews exist in `artifacts/strat-reviews/`. If any exist for the strategies being reviewed, read them — this is a re-review after revisions.
 
@@ -68,11 +99,19 @@ bash ${CLAUDE_SKILL_DIR}/scripts/fetch-architecture-context.sh
 
 ## Step 3: Bootstrap assess-strat
 
+If `--assess-strat <path>` is in `$ARGUMENTS`, use the local path:
+
+```bash
+bash ${CLAUDE_SKILL_DIR}/scripts/bootstrap-assess-strat.sh <path>
+```
+
+Otherwise, bootstrap from remote:
+
 ```bash
 bash ${CLAUDE_SKILL_DIR}/scripts/bootstrap-assess-strat.sh
 ```
 
-This clones the assess-strat plugin into `.context/assess-strat/`, copies skills and agent definitions, and exports the rubric to `artifacts/strat-rubric.md`.
+This makes the assess-strat plugin available at `.context/assess-strat/`, copies skills and agent definitions, and exports the rubric to `artifacts/strat-rubric.md`.
 
 ## Step 4: Score Strategies
 

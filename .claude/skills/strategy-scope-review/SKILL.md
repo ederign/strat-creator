@@ -25,6 +25,10 @@ If `$ARGUMENTS` contains a strategy key (e.g., `RHAISTRAT-133`), review only tha
 
 Cross-reference against the source RFEs. If this is a re-review (prior review files exist), read them.
 
+## Platform Concerns and Scope
+
+Platform operational requirements (disconnected deployment, upgrade migration) can inflate effort beyond what the feature scope suggests. Effort estimate credibility for these concerns is assessed by the **feasibility reviewer**, not the scope reviewer. Your focus is whether the strategy bundles too many independent features, whether the scope is bounded, and whether the effort estimate matches the visible scope of work described — not whether hidden platform work is missing from the estimate.
+
 ## What to Assess
 
 For each strategy:

@@ -120,6 +120,8 @@ Scale output depth to match the strategy size. All sizes produce all sections â€
 |-------------|--------|-------|
 | Architecture Review | _Pending human review_ | |
 | ODH/RHOAI Build Onboarding | _Pending human review_ | |
+| Disconnected Deployment Validation | _Pending human review_ | |
+| Upgrade Path Review | _Pending human review_ | |
 | Licence Validation | _Pending human review_ | |
 | Accelerator/Package Support | _Pending human review_ | |
 | Documentation Support | _Pending human review_ | |
