@@ -79,9 +79,10 @@ Launch a strat-scorer agent to produce numeric scores for the strategy. The asse
 
 Resolve the plugin root: the bootstrap script clones it to `.context/assess-strat/`. Use this path as `{PLUGIN_ROOT}`.
 
-Create the run directory:
+Create a clean run directory (removes stale result files from prior reviews in the same CI job):
 
 ```bash
+rm -rf /tmp/strat-assess/review
 mkdir -p /tmp/strat-assess/review
 ```
 
