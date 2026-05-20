@@ -1,11 +1,12 @@
 ---
 name: strategy-review
-description: Adversarial review of refined strategies. Scores against rubric, then runs independent forked reviewers for detailed prose.
+description: Adversarial review of a single refined strategy. Scores against rubric, then runs independent forked reviewers for detailed prose. Requires a strategy key argument.
+context: fork
 user-invocable: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent
 ---
 
-You are a strategy review orchestrator. Your job is to score and review the strategies in `artifacts/strat-tasks/`, producing per-strategy review files with numeric scores and detailed prose.
+You are a strategy review orchestrator. Your job is to score and review a single strategy in `artifacts/strat-tasks/`, producing a review file with numeric scores and detailed prose.
 
 ## Dry Run Mode
 
@@ -33,24 +34,23 @@ If both `local/strat-tasks/` and `artifacts/strat-tasks/` have files, prefer `lo
 
 ## Step 1: Verify Artifacts Exist
 
-Read files in `artifacts/strat-tasks/`. If no strategy artifacts exist or they haven't been refined yet (no "Strategy" section), tell the user to run `/strategy-refine` first and stop.
+This skill processes exactly **one strategy per invocation**. `$ARGUMENTS` must contain a strategy key (e.g., `RHAISTRAT-1531` or `STRAT-001`). If no key is provided, **stop with an error**: "No strategy key provided. Usage: /strategy-review RHAISTRAT-NNNN"
 
-Check if prior reviews exist in `artifacts/strat-reviews/`. If any exist for the strategies being reviewed, read them — this is a re-review after revisions.
+Read the strategy file in `artifacts/strat-tasks/`. If it doesn't exist or hasn't been refined yet (no "Strategy" section), tell the user to run `/strategy-refine` first and stop.
+
+Check if a prior review exists in `artifacts/strat-reviews/`. If one exists for this strategy, read it — this is a re-review after revisions.
 
 ## Step 1a: Pipeline Label Gate
 
-For each strategy found in `artifacts/strat-tasks/`, read its frontmatter to get the `jira_key`. If `jira_key` is not null, fetch the STRAT's labels from Jira:
+Read the strategy's frontmatter to get the `jira_key`. If `jira_key` is not null, fetch the STRAT's labels from Jira:
 
 ```bash
 python3 ${CLAUDE_SKILL_DIR}/scripts/fetch_issue.py RHAISTRAT-NNNN --fields labels --markdown
 ```
 
-If the STRAT has either `strat-creator-rubric-pass` or `strat-creator-needs-attention` in its labels, **skip this strategy** — it has already been processed by the pipeline:
+If the STRAT has either `strat-creator-rubric-pass` or `strat-creator-needs-attention` in its labels, **stop** — it has already been processed by the pipeline:
 - Do NOT review it
 - Print `[SKIP] RHAISTRAT-NNNN — already has <label>, skipping review`
-- Continue to the next strategy
-
-If all strategies are skipped, print a summary and stop.
 
 ## Step 2: Fetch Architecture Context
 
@@ -74,9 +74,9 @@ bash ${CLAUDE_SKILL_DIR}/scripts/bootstrap-assess-strat.sh
 
 This clones the assess-strat plugin into `.context/assess-strat/`, copies skills and agent definitions, and exports the rubric to `artifacts/strat-rubric.md`.
 
-## Step 4: Score Strategies
+## Step 4: Score Strategy
 
-For each strategy in `artifacts/strat-tasks/`, launch a strat-scorer agent to produce numeric scores. The assess-strat plugin provides the rubric and agent definition.
+Launch a strat-scorer agent to produce numeric scores for the strategy. The assess-strat plugin provides the rubric and agent definition.
 
 Resolve the plugin root: the bootstrap script clones it to `.context/assess-strat/`. Use this path as `{PLUGIN_ROOT}`.
 
@@ -86,7 +86,7 @@ Create the run directory:
 mkdir -p /tmp/strat-assess/review
 ```
 
-For each strategy file, spawn one agent (model: opus, run_in_background: true) with this prompt:
+Spawn one agent (model: opus, run_in_background: true) with this prompt:
 
 ```
 You are a strategy quality assessor. Your task:
@@ -104,11 +104,11 @@ Substitute all placeholders:
 - `{KEY}` → the strategy key (e.g., `RHAISTRAT-1469`)
 - `{RUN_DIR}` → `/tmp/strat-assess/review`
 
-Wait for all scorer agents to complete.
+Wait for the scorer agent to complete.
 
 ## Step 5: Parse Scores and Apply Verdicts (AUTOMATED — no LLM judgment)
 
-After all scorer agents have completed, run the scoring scripts to deterministically compute verdicts and apply them to review files:
+After the scorer agent has completed, run the scoring scripts to deterministically compute the verdict and apply it to the review file:
 
 ```bash
 # Parse .result.md files → scores.csv with deterministic verdicts
@@ -132,9 +132,7 @@ REJECT:   total < 3   OR   2+ zeros       → needs_attention=true
 
 ## Step 6: Run Prose Reviews
 
-Use the **Skill tool** to invoke each of these reviewer skills in parallel. Call all four via the Skill tool simultaneously — each runs in its own isolated context and no reviewer sees another's output.
-
-Pass the strategy key(s) being reviewed as arguments so each reviewer targets only the relevant strategies. If reviewing multiple strategies, pass all keys space-separated.
+Use the **Skill tool** to invoke all four reviewer skills in parallel. Each runs in its own isolated `context: fork` — no reviewer sees another's output. Pass the strategy key to each:
 
 ```
 Skill(skill="strategy-feasibility-review", args="RHAISTRAT-NNNN")
@@ -147,14 +145,14 @@ Do NOT use the Agent tool for reviews. Use the Skill tool — the reviewer skill
 
 - **`strategy-feasibility-review`**: Can we build this with the proposed approach? Are effort estimates credible?
 - **`strategy-testability-review`**: Are acceptance criteria testable? What edge cases are missing?
-- **`strategy-scope-review`**: Is each strategy right-sized? Does the effort match the scope?
+- **`strategy-scope-review`**: Is the strategy right-sized? Does the effort match the scope?
 - **`strategy-architecture-review`** (if architecture context available): Are dependencies correctly identified? Are integration patterns correct?
 
-Each reviewer auto-detects local mode (`local/strat-tasks/` vs `artifacts/strat-tasks/`) and reads the appropriate directories for strategies, RFE originals, and prior reviews.
+Each reviewer auto-detects local mode (`local/strat-tasks/` vs `artifacts/strat-tasks/`) and reads the appropriate directories.
 
 ## Step 7: Write Prose to Review Files
 
-For each reviewed strategy, update the review file body in `artifacts/strat-reviews/{id}-review.md` with the prose from all four reviewers. The scores table was already written by `apply_scores.py` in Step 5 — add the prose sections after it.
+Update the review file body in `artifacts/strat-reviews/{id}-review.md` with the prose from all four reviewers. The scores table was already written by `apply_scores.py` in Step 5 — add the prose sections after it.
 
 The review file body should contain:
 
@@ -197,7 +195,7 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/frontmatter.py set artifacts/strat-reviews/<
 
 ## Step 7a: Post Review Summary to Jira
 
-For each reviewed strategy, compose a review summary comment and post it to the RHAISTRAT issue (or save to file in dry-run mode).
+Compose a review summary comment and post it to the RHAISTRAT issue (or save to file in dry-run mode).
 
 Read the review file frontmatter to get scores and recommendation:
 
@@ -286,9 +284,9 @@ In dry-run mode, skip and print `[DRY RUN] Skipping labels for RHAISTRAT-NNNN`.
 
 ## Step 8: Advise the User
 
-Based on the results:
-- **All approved** (`needs_attention=false`): Tell the user strategies are ready for `/strat.prioritize`.
-- **Some need revision** (`needs_attention=true`, verdict=REVISE): List specific issues by dimension. Tell the user to edit the strategy files, remove `needs-attention`, and re-run `/strategy-review`.
+Based on the result:
+- **Approved** (`needs_attention=false`): Tell the user the strategy is ready for sign-off.
+- **Needs revision** (`needs_attention=true`, verdict=REVISE): List specific issues by dimension. Tell the user to edit the strategy, remove `needs-attention`, and re-run `/strategy-review`.
 - **Fundamental problems** (`needs_attention=true`, verdict=REJECT): Recommend revisiting the RFE or re-running `/strategy-refine` with different constraints.
 
 $ARGUMENTS

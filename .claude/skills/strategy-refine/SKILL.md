@@ -1,12 +1,12 @@
 ---
 name: strategy-refine
-description: Refine strategies — add the HOW, dependencies, impacted teams/components, and non-functional requirements. Uses architecture context.
+description: Refine a single strategy — add the HOW, dependencies, impacted teams/components, and non-functional requirements. Requires a strategy key argument.
 context: fork
 user-invocable: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 
-You are a senior engineer performing feature refinement. Your job is to take approved RFEs (the WHAT/WHY) and produce a strategy (the HOW) for each one — grounded in the platform's actual architecture.
+You are a senior engineer performing feature refinement. Your job is to take an approved RFE (the WHAT/WHY) and produce a strategy (the HOW) — grounded in the platform's actual architecture.
 
 ## Dry Run Mode
 
@@ -48,7 +48,9 @@ bash ${CLAUDE_SKILL_DIR}/scripts/fetch-architecture-context.sh
 
 ## Inputs
 
-Read the strategy files in `artifacts/strat-tasks/`. Each has YAML frontmatter with structured metadata (strat_id, title, source_rfe, priority, status). Read frontmatter with:
+This skill processes exactly **one strategy per invocation**. `$ARGUMENTS` must contain a strategy key (e.g., `RHAISTRAT-1531` or `STRAT-001`). If no key is provided, **stop with an error**: "No strategy key provided. Usage: /strategy-refine RHAISTRAT-NNNN"
+
+Read the strategy file in `artifacts/strat-tasks/`. It has YAML frontmatter with structured metadata (strat_id, title, source_rfe, priority, status). Read frontmatter with:
 
 ```bash
 python3 ${CLAUDE_SKILL_DIR}/scripts/frontmatter.py read artifacts/strat-tasks/<filename>.md
@@ -58,22 +60,19 @@ Each file also contains the business need from the source RFE. This business nee
 
 ## Pipeline Label Gate
 
-For each strategy in `artifacts/strat-tasks/`, read its frontmatter to get the `jira_key`. If `jira_key` is not null, fetch the STRAT's labels from Jira:
+Read the strategy's frontmatter to get the `jira_key`. If `jira_key` is not null, fetch the STRAT's labels from Jira:
 
 ```bash
 python3 ${CLAUDE_SKILL_DIR}/scripts/fetch_issue.py RHAISTRAT-NNNN --fields labels --markdown
 ```
 
-If the STRAT has either `strat-creator-rubric-pass` or `strat-creator-needs-attention` in its labels, **skip this strategy** — it has already been processed by the pipeline:
+If the STRAT has either `strat-creator-rubric-pass` or `strat-creator-needs-attention` in its labels, **stop** — it has already been processed by the pipeline:
 - Do NOT refine it
 - Print `[SKIP] RHAISTRAT-NNNN — already has <label>, skipping refinement`
-- Continue to the next strategy
-
-If all strategies are skipped, print a summary and stop.
 
 ## Revision Mode
 
-Check if prior reviews exist in `artifacts/strat-reviews/` for any of the strategies being refined. If they do, this is a revision — the strategies have already been refined and reviewed. Read each strategy's review file.
+Check if a prior review exists in `artifacts/strat-reviews/` for the strategy being refined. If one exists, this is a revision — the strategy has already been refined and reviewed. Read the review file.
 
 In revision mode:
 - **Do not regenerate from scratch.** Read the existing strategy content and the review feedback.
@@ -89,7 +88,7 @@ If no review files exist, this is initial refinement — generate the strategy f
 
 ## Architecture Context
 
-Check for architecture context in `.context/architecture-context/architecture/`. Find the `rhoai-*` version directory. If found, read `PLATFORM.md` to understand the platform structure, then read component docs relevant to each strategy.
+Check for architecture context in `.context/architecture-context/architecture/`. Find the `rhoai-*` version directory. If found, read `PLATFORM.md` to understand the platform structure, then read component docs relevant to the strategy.
 
 If architecture context is not available, note this and produce the best refinement you can from the RFE content alone.
 
@@ -149,7 +148,7 @@ Check for overlay files in `.context/architecture-context/overlays/`. If the dir
 Filter for relevant overlays:
 1. **Status**: `status` must be `active` (ignore `superseded`)
 2. **Release**: `release` list must contain the target RHOAI release (e.g., `"3.5"`) or `"all"`
-3. **Component match**: `affects` list must intersect with the components mentioned in this strategy's `## Affected Components` table. Overlays with `affects: [platform]` match all strategies.
+3. **Component match**: `affects` list must intersect with the components mentioned in this strategy's `## Affected Components` table. Overlays with `affects: [platform]` match any strategy.
 
 For each matched overlay, read its `## Fact` and `## Impact on Strategies` sections. Inject these into your refinement context alongside the architecture docs and other sources.
 
@@ -166,7 +165,7 @@ If no overlays directory exists or no overlays match, proceed without them.
 
 ## What to Produce
 
-For each strategy, use the unified template in `${CLAUDE_SKILL_DIR}/strat-template.md`. All sizes produce all sections — scale depth, not section count. Fill in:
+Use the unified template in `${CLAUDE_SKILL_DIR}/strat-template.md`. All sizes produce all sections — scale depth, not section count. Fill in:
 
 1. **Technical Approach** — How do we deliver this business need? What components are involved? What's the high-level design? Reference specific personas and scenarios from the RFE to ground technical decisions in user outcomes. If the RFE lacks personas or scenarios, flag this in Open Questions. If removed implementation context or Staff Engineer / SME Input is available (see HOW Context Sources above), use it as primary input for this section.
 2. **Affected Components** — Which platform components are touched? Reference actual component names from the architecture context.
@@ -205,7 +204,7 @@ On initial refinement, generate the `## Strategy` section content. On revision r
 
 ## Output
 
-Update each file in `artifacts/strat-tasks/` with the completed strategy. Only write within the `## Strategy (AI Generated by Agentic SDLC Pipeline)` section. The `## Business Need (from RFE)` and `## Staff Engineer / SME Input` sections MUST remain untouched.
+Update the strategy file in `artifacts/strat-tasks/` with the completed strategy. Only write within the `## Strategy (AI Generated by Agentic SDLC Pipeline)` section. The `## Business Need (from RFE)` and `## Staff Engineer / SME Input` sections MUST remain untouched.
 
 After writing the strategy content, update the frontmatter status:
 
