@@ -1,7 +1,6 @@
 ---
 name: strategy-review
 description: Adversarial review of a single refined strategy. Scores against rubric, then runs independent forked reviewers for detailed prose. Requires a strategy key argument.
-context: fork
 user-invocable: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent
 ---
