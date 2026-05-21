@@ -247,7 +247,7 @@ def load_cost_backfill(data_dir):
     return {}
 
 
-def get_run_cost(run_id, entry_path, pdata, cost_backfill):
+def get_run_cost(run_id, pdata, cost_backfill):
     """Get cost data for a run from pipeline-data.json or backfill."""
     if pdata and "cost" in pdata:
         return pdata["cost"]
@@ -299,7 +299,7 @@ def scan_runs(data_dir, max_runs=None):
             run_data["dry_run"] = True
             run_data["config"] = None
 
-        cost = get_run_cost(entry, entry_path, pdata, cost_backfill)
+        cost = get_run_cost(entry, pdata, cost_backfill)
         if cost is not None:
             run_data["cost"] = cost
 

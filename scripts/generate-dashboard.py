@@ -489,6 +489,7 @@ def load_run_from_json(run_dir, config):
         "strategies": strategies,
         "skipped": data.get("skipped", []),
         "dry_run": data.get("dry_run", False),
+        "cost": data.get("cost"),
     }
 
 
@@ -2305,7 +2306,7 @@ function initCharts() {{
                             footer: items => {{
                                 const r = costRuns[items[0].dataIndex];
                                 const total = items.reduce((s, i) => s + i.raw, 0);
-                                return `Total: $${{total.toFixed(2)}} | ${{r.reviewed}} strategies ($$${{(total / (r.reviewed || 1)).toFixed(2)}}/strat)`;
+                                return `Total: $${{total.toFixed(2)}} | ${{r.reviewed}} strategies ($${{(total / (r.reviewed || 1)).toFixed(2)}}/strat)`;
                             }},
                         }}
                     }}

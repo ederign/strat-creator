@@ -406,7 +406,7 @@ def generate_html(tasks, reviews, review_comments, skipped, pending_review, conf
     # Cost data
     cost = cost_data or {}
     cost_total = cost.get("total_usd")
-    cost_per_strat = round(cost_total / total_reviewed, 2) if cost_total and total_reviewed else None
+    cost_per_strat = round(cost_total / total_reviewed, 2) if cost_total is not None and total_reviewed else None
 
     # Hero statement
     attention_count = revise + split + reject
