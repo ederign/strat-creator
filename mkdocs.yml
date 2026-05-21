@@ -6,43 +6,78 @@ repo_name: ugiordan/strat-creator
 
 theme:
   name: material
+  language: en
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: Red Hat Text
+    code: Red Hat Mono
   palette:
     - scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: black
       toggle:
         icon: material/brightness-4
+        name: Switch to dark mode
+    - scheme: slate
+      primary: black
+      toggle:
+        icon: material/brightness-7
         name: Switch to light mode
   features:
-    - navigation.sections
-    - navigation.expand
+    - navigation.tabs
     - navigation.top
+    - navigation.indexes
+    - navigation.instant
+    - navigation.path
+    - navigation.sections
     - search.suggest
+    - search.highlight
+    - search.share
     - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
     - toc.follow
 
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      name: Strat Creator on GitHub
+      link: https://github.com/ederign/strat-creator
+
+extra_css:
+  - stylesheets/extra.css
+
 markdown_extensions:
+  - admonition
+  - pymdownx.details
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
   - pymdownx.tabbed:
       alternate_style: true
-  - admonition
-  - pymdownx.details
+  - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tasklist:
+      custom_checkbox: true
   - attr_list
   - md_in_html
-  - tables
   - def_list
+  - tables
   - toc:
       permalink: true
+
+exclude_docs: |
+  superpowers/
 
 nav:
   - Home: index.md
@@ -69,8 +104,5 @@ nav:
     - Architecture Context: reference/architecture-context.md
     - System Architecture: reference/system-architecture.md
     - Troubleshooting: reference/troubleshooting.md
-
-exclude_docs: |
-  superpowers/
 
 copyright: Copyright &copy; Red Hat, Inc.

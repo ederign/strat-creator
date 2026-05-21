@@ -35,15 +35,32 @@ Based on scores and feasibility, rfe-creator produces one of four recommendation
 
 ```mermaid
 flowchart TD
-    A["Score RFE"] --> B{Score >= 7\nno zeros?}
-    B -->|Yes| C{Feasible?}
-    C -->|Yes| D["Submit"]
-    C -->|No| E["Reject"]
-    B -->|No| F{Right-sized = 0\nonly zero?}
-    F -->|Yes| G["Split"]
-    F -->|No| H["Revise"]
-    H --> I["Auto-revise\n(up to 2 cycles)"]
-    I --> B
+    A["RFE Input"] --> B["Score against 5 criteria\n(what, why, open-to-how,\nnot-a-task, right-sized)"]
+    B --> C["Feasibility check\nvs architecture context"]
+    C --> D{Score >= 7\nno zeros?}
+    
+    D -->|Yes| E{Feasible?}
+    E -->|Yes| F["✅ Submit"]
+    E -->|No| G["❌ Reject"]
+    
+    D -->|No| H{Right-sized = 0\nonly zero?}
+    H -->|Yes| I["Split into\nchild RFEs"]
+    I --> J["Score children"]
+    J --> D
+    
+    H -->|No| K["Auto-revise\n(cycle 1)"]
+    K --> L["Re-score"]
+    L --> M{Passes now?}
+    M -->|Yes| F
+    M -->|No| N["Auto-revise\n(cycle 2)"]
+    N --> O["Re-score"]
+    O --> P{Passes now?}
+    P -->|Yes| F
+    P -->|No| Q["⚠️ needs_attention"]
+
+    style F fill:#c8e6c9,stroke:#2e7d32
+    style G fill:#ffcdd2,stroke:#c62828
+    style Q fill:#fff9c4,stroke:#f9a825
 ```
 
 | Recommendation | Condition | Next Action |

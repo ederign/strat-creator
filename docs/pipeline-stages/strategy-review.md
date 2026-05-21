@@ -23,6 +23,46 @@ flowchart TD
     E --- E5["Security"]
 ```
 
+## Scoring Pipeline Detail
+
+```mermaid
+flowchart TD
+    A["Refined Strategy"] --> B["Bootstrap assess-strat\nfrom GitHub"]
+    B --> C["Export rubric to\nartifacts/strat-rubric.md"]
+    C --> D["Spawn strat-scorer agent\n(restricted: Read/Write/Glob/Grep)"]
+    D --> E["Score against 4 dimensions"]
+    E --> F["parse_results.py\n(deterministic)"]
+    F --> G["apply_scores.py\n(update frontmatter)"]
+    G --> H{Total >= 6\nno zeros?}
+    H -->|Yes| I["APPROVE\nrubric-pass"]
+    H -->|No| J{Total >= 3\n≤1 zero?}
+    J -->|Yes| K["REVISE\nneeds-attention"]
+    J -->|No| L["REJECT\nneeds-attention"]
+
+    I --> M["5 Prose Reviews\n(parallel skills)"]
+    K --> M
+    L --> M
+
+    M --> M1["Feasibility"]
+    M --> M2["Testability"]
+    M --> M3["Scope"]
+    M --> M4["Architecture"]
+    M --> M5["Security\n(prose-only)"]
+
+    M1 --> N["Merge prose into\nreview file"]
+    M2 --> N
+    M3 --> N
+    M4 --> N
+    M5 --> N
+
+    N --> O["Post to Jira\n(comment + attachment)"]
+
+    style I fill:#c8e6c9,stroke:#2e7d32
+    style K fill:#fff9c4,stroke:#f9a825
+    style L fill:#ffcdd2,stroke:#c62828
+    style M5 fill:#e1f5fe,stroke:#0277bd
+```
+
 ### Phase 1: Numeric Scoring
 
 A restricted scorer agent (`strat-scorer`) evaluates the strategy against 4 dimensions:

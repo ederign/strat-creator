@@ -50,6 +50,38 @@ flowchart TD
 4. **strat-pipeline** publishes run artifacts to **strat-pipeline-data**
 5. **strat-dashboard** serves the data from strat-pipeline-data as a static site
 
+## Pipeline Execution Sequence
+
+```mermaid
+sequenceDiagram
+    participant GL as GitLab CI
+    participant SC as strat-creator
+    participant AC as architecture-context
+    participant Jira as Jira (RHAIRFE/RHAISTRAT)
+    participant DB as strat-pipeline-data
+
+    GL->>SC: Execute strategy-create
+    SC->>Jira: Query RHAIRFE (JQL)
+    Jira-->>SC: Eligible RFEs
+    SC->>Jira: Lock RFEs (processing label)
+    SC->>Jira: Clone RHAIRFE → RHAISTRAT
+    
+    GL->>SC: Execute strategy-refine
+    SC->>AC: Fetch architecture context
+    AC-->>SC: Component docs + overlays
+    SC->>SC: Generate strategy (HOW)
+    SC->>Jira: Update RHAISTRAT description
+    
+    GL->>SC: Execute strategy-review
+    SC->>SC: Score (strat-scorer agent)
+    SC->>SC: 5 prose reviews (parallel)
+    SC->>Jira: Apply verdict label
+    SC->>Jira: Post review comment
+    SC->>Jira: Unlock RFEs
+    
+    GL->>DB: Publish run artifacts
+```
+
 ## Where to Look When Troubleshooting
 
 | Problem | Check |
