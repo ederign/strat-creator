@@ -70,4 +70,7 @@ nav:
     - System Architecture: reference/system-architecture.md
     - Troubleshooting: reference/troubleshooting.md
 
+exclude_docs: |
+  superpowers/
+
 copyright: Copyright &copy; Red Hat, Inc.
