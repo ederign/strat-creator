@@ -12,13 +12,21 @@ Complete the [Getting Started](../getting-started.md) setup before proceeding.
 
 ## Step 1: Find Strategies to Review
 
-Check for strategies assigned to you in Jira, or use JQL:
+There is no automated assignment of strategies to staff engineers. You need to find strategies that are relevant to your domain and claim them.
 
-```
-project = RHAISTRAT AND (labels = "strat-creator-rubric-pass" OR labels = "strat-creator-needs-attention") AND labels != "strat-creator-human-sign-off"
-```
+**How to find strategies that need review:**
 
-You can also check the [dashboard](https://strat-dashboard-0f1209.gitlab.io/) for an overview of pending strategies and their scores.
+1. Search for unreviewed strategies in your area using JQL:
+    ```
+    project = RHAISTRAT
+    AND (labels = "strat-creator-rubric-pass" OR labels = "strat-creator-needs-attention")
+    AND labels != "strat-creator-human-sign-off"
+    AND assignee is EMPTY
+    ```
+2. Check the [dashboard](https://strat-dashboard-0f1209.gitlab.io/) for an overview of pending strategies and their scores
+3. Look at the linked RHAIRFE to understand which component area the strategy covers
+
+**Claiming a strategy:** Assign the RHAISTRAT ticket to yourself in Jira so other staff engineers know you're working on it. There's no formal routing today. Pick strategies that match the components you know best.
 
 ## Step 2: Pull the Strategy
 

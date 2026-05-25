@@ -2,7 +2,7 @@ name: Docs
 
 on:
   push:
-    branches: [main, feat/documentation-site]
+    branches: [main]
     paths:
       - 'docs/**'
       - 'mkdocs.yml'

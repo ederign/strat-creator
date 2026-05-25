@@ -1,8 +1,8 @@
 site_name: Strat Creator
 site_description: Strategy creation pipeline for RHOAI
-site_url: https://ugiordan.github.io/strat-creator/
-repo_url: https://github.com/ugiordan/strat-creator
-repo_name: ugiordan/strat-creator
+site_url: https://ederign.github.io/strat-creator/
+repo_url: https://github.com/ederign/strat-creator
+repo_name: ederign/strat-creator
 
 theme:
   name: material
